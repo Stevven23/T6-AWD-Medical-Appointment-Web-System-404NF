@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clìnica San Miguel </title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/loginStyle.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="left-side">
+      <div class="logo-container">
+        <img src="../sources/img/logo.png" alt="Logo Clínica San Miguel" class="logo-login">
+      </div>
+      <div class="welcome-text">
+        <h2>¡Bienvenido!</h2> 
+      </div>
+    </div>
+    <div class="right-side">
+      <div class="login-header">
+        <h1>Accede a tu cuenta</h1>
+      </div>
+      <form id="loginForm" class="login-form" action="config/login.php" method="POST">
+        <div class="group-field">
+          <input type="text" name="email" id="email" placeholder="Correo Electrónico" class="form-control" required>
+        </div>
+        <div class="group-field">
+          <input type="password" name="clave" id="contrasena" placeholder="Contraseña" class="form-control" required>
+        </div>
+        <div class="register-option text-center mb-3">
+            <p class="mb-0">¿No tienes una cuenta? <a href="registro.php" class="register-link">Regístrate aquí</a></p>
+        </div>
+        <button type="submit" class="enter-button">Ingresar</button>
+      </form>
+    </div>
+  </div>
+  <script src="recursos/js/main.js"></script>
+</body>
+</html>
+ 

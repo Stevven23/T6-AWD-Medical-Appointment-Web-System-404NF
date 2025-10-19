@@ -1,0 +1,239 @@
+:root {
+    --color-azul-oscuro: #4A90E2;
+    --color-azul-claro: #357ABD;
+    --color-azul-medio: #6b7ba0;
+    --color-amarillo: #e2d49b;
+    --color-beige: #fbecb1;
+    --color-gris-fondo: #f8f9fa;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--color-azul-medio), transparent 95%) 50%,
+        color-mix(in srgb, #409dfd, transparent 98%) 25%,
+        transparent 50%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+}
+
+.login-container {
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 450px;
+    display: flex;
+    position: relative;
+}
+
+.left-side {
+    flex: 1;
+    background: var(--color-azul-oscuro);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    border-radius: 0 100px 100px 0;
+}
+
+.logo-container {
+    width: 250px;
+    height: 170px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo-container img {
+    max-width: 220px;
+    max-height: 140px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.welcome-text {
+    text-align: center;
+    max-width: 300px;
+}
+
+.welcome-text h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.right-side {
+    flex: 1;
+    padding: 60px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.login-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-azul-oscuro);
+    background: linear-gradient(135deg, #22274f 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.group-field input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #e1e8ed;
+    border-radius: 20px;
+    font-size: 1rem;
+    background: var(--color-gris-fondo);
+    color: #2c3e50;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+}
+
+.group-field input:focus {
+    outline: none;
+    border-color: #22274f;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(34, 39, 79, 0.1);
+    transform: translateY(-2px);
+}
+
+.group-field input::placeholder {
+    color: #95a5a6;
+}
+
+.enter-button {
+    background: linear-gradient(135deg, #6aa567 0%, #4c8d54 100%);
+    color: white;
+    border: none;
+    padding: 18px 30px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    transition: all 0.3s ease;
+}
+
+.enter-button:hover {
+    background: linear-gradient(135deg, #1a1e3c 0%, #3a4058 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(34, 39, 79, 0.35);
+}
+
+.enter-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(34, 39, 79, 0.2);
+}
+
+.enter-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .login-container {
+        flex-direction: column;
+        max-width: 400px;
+        min-height: auto;
+    }
+
+    .left-side {
+        padding: 40px 20px;
+        border-radius: 0;
+    }
+
+    .logo-container {
+        width: 200px;
+        height: 120px;
+    }
+
+    .logo-container img {
+        max-width: 160px;
+        max-height: 80px;
+    }
+
+    .welcome-text h2 {
+        font-size: 1.8rem;
+    }
+
+    .right-side {
+        padding: 40px 30px;
+    }
+
+    .login-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        border-radius: 20px;
+        margin: 10px;
+    }
+
+    .left-side {
+        padding: 30px 20px;
+    }
+
+    .right-side {
+        padding: 30px 20px;
+    }
+
+    .login-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .welcome-text h2 {
+        font-size: 1.6rem;
+    }
+
+    .logo-container {
+        width: 180px;
+        height: 100px;
+    }
+
+    .logo-container img {
+        max-width: 140px;
+        max-height: 70px;
+    }
+}
