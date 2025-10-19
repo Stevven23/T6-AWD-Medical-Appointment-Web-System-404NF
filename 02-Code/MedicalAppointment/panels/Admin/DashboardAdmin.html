@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clínica San Miguel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+<body>
+
+    <nav class="top-navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="../../sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+            </div>
+            <button class="login-btn">Mi cuenta</button>
+        </div>
+    </nav>
+
+
+    <button class="hamburger-btn" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin - Menú</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="DashboardAdmin.html">Inicio</a>
+            </li>
+            <li class="has-submenu">
+                <a href="#servicios">Doctores</a>
+                <ul class="submenu">
+                    <li><a href="GestionDoctores.html">Gestionar Doctores</a></li>
+                    <li><a href="GestionEspecialidad.html">Especialidades</a></li>
+                    <li><a href="GestionHorarios.html">Horarios</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#pacientes">Información</a>
+                <ul class="submenu">
+                    <li><a href="Calendario.html">Calendario</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#recursos">Recursos</a>
+                <ul class="submenu">
+                    <li><a href="#educacion">Ayuda</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#contacto">Contacto</a>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <section class="hero-section">
+            <h1>Admin Dashboard</h1>
+            <p>Panel de Control y Estadísticas</p>
+        </section>
+
+        <section class="filter-section">
+            <h2>Filtros</h2>
+            <div class="filter-controls">
+                <select id="specialtyFilter">
+                    <option value="all">Todas las Especialidades</option>
+                </select>
+                <button onclick="applyFilter()">Aplicar Filtro</button>
+                <button onclick="resetFilter()">Resetear</button>
+            </div>
+        </section>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Doctores Activos</h3>
+                <div class="stat-value" id="activeDoctors">0</div>
+                <div class="stat-label">médicos en servicio</div>
+            </div>
+            <div class="stat-card">
+                <h3>Especialidades</h3>
+                <div class="stat-value" id="totalSpecialties">0</div>
+                <div class="stat-label">áreas médicas</div>
+            </div>
+            <div class="stat-card">
+                <h3>Citas Hoy</h3>
+                <div class="stat-value" id="todayAppointments">0</div>
+                <div class="stat-label">consultas programadas</div>
+            </div>
+            <div class="stat-card">
+                <h3>Tiempo Promedio</h3>
+                <div class="stat-value" id="avgTime">0</div>
+                <div class="stat-label">minutos por cita</div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>Doctores por Especialidad</h3>
+                <div class="chart-wrapper">
+                    <canvas id="doctorsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Distribución de Especialidades</h3>
+                <div class="chart-wrapper">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Citas por Día (Última Semana)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="appointmentsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Tiempo Promedio por Cita</h3>
+                <div class="chart-wrapper">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="specialty-list">
+            <h3>Lista de Especialidades</h3>
+            <div id="specialtyListContainer"></div>
+        </div>
+    </main>
+    <script src="../../js/navInteraction.js"></script>
+    <script src="../../js/dashboard.js"></script>
+</body>
+</html>

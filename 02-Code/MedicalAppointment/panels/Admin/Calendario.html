@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clìnica San Miguel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/table.css">
+</head>
+<body>
+
+    <nav class="top-navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="../../sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+            </div>
+            <button class="login-btn">Mi Cuenta</button>
+        </div>
+    </nav>
+
+
+    <button class="hamburger-btn" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin - Menú</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="DashboardAdmin.html">Inicio</a>
+            </li>
+            <li class="has-submenu">
+                <a href="#servicios">Doctores</a>
+                <ul class="submenu">
+                    <li><a href="GestionDoctores.html">Gestionar Doctores</a></li>
+                    <li><a href="GestionEspecialidad.html">Especialidades</a></li>
+                    <li><a href="GestionHorarios.html">Horarios</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#pacientes">Información</a>
+                <ul class="submenu">
+                    <li><a href="Calendario.html">Calendario</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#recursos">Recursos</a>
+                <ul class="submenu">
+                    <li><a href="#educacion">Ayuda</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#contacto">Contacto</a>
+            </li>
+        </ul>
+    </aside>
+
+
+    <main class="main-content">
+        <section class="hero-section">
+            <h1>📅 Calendario de Citas</h1>
+            <p>Gestión de Citas Médicas</p>
+        </section>
+
+        <section class="filters-section">
+            <h3>Filtros</h3>
+            <div class="filter-group">
+                <select id="filterDoctor">
+                    <option value="">Todos los Doctores</option>
+                </select>
+                <select id="filterSpecialty">
+                    <option value="">Todas las Especialidades</option>
+                </select>
+                <input type="text" id="filterPatient" placeholder="Buscar paciente...">
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-today"></div>
+                    <span>Hoy</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-has-appointments"></div>
+                    <span>Tiene citas</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-selected"></div>
+                    <span>Día seleccionado</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="calendar-container">
+            <section class="calendar-section">
+                <div class="calendar-header">
+                    <h2>Calendario</h2>
+                    <div class="calendar-controls">
+                        <button class="btn-nav" onclick="previousMonth()">◀</button>
+                        <span class="current-month" id="currentMonth"></span>
+                        <button class="btn-nav" onclick="nextMonth()">▶</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </section>
+
+            <section class="appointments-panel">
+                <h3>Citas del Día</h3>
+                <div class="appointment-date" id="selectedDate"></div>
+                <div id="appointmentsList"></div>
+                <button class="btn-add" onclick="addAppointment()">+ Agregar Nueva Cita</button>
+            </section>
+        </div>
+    </main>
+    <script src="../../js/navInteraction.js"></script>
+    <script src="../../js/calendar.js"></script>
+</body>
+</html>
