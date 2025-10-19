@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clìnica San Miguel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="top-navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+            </div>
+            <button class="login-btn">Iniciar Sesión</button>
+        </div>
+    </nav>
+
+
+    <button class="hamburger-btn" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menú</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="#inicio">Inicio</a>
+            </li>
+            <li class="has-submenu">
+                <a href="#servicios">Servicios</a>
+                <ul class="submenu">
+                    <li><a href="#consulta">Consulta General</a></li>
+                    <li><a href="#especialidades">Especialidades</a></li>
+                    <li><a href="#urgencias">Urgencias</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#pacientes">Pacientes</a>
+                <ul class="submenu">
+                    <li><a href="#registro">Registro</a></li>
+                    <li><a href="#historial">Historial Médico</a></li>
+                    <li><a href="#citas">Agendar Cita</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#recursos">Recursos</a>
+                <ul class="submenu">
+                    <li><a href="#educacion">Educación</a></li>
+                    <li><a href="#prevencion">Prevención</a></li>
+                    <li><a href="#faq">Preguntas Frecuentes</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#contacto">Contacto</a>
+            </li>
+        </ul>
+    </aside>
+
+
+    <main class="main-content">
+
+        <section class="hero-section">
+            <h1>Bienvenido a Clínica San Miguel</h1>
+            <p>Tu salud es nuestra prioridad</p>
+        </section>
+
+        <section class="image-section">
+            <h2>Nuestras Instalaciones</h2>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="sources/img/fachadaclinicasanmiguel.jpg" alt="fachadaclinicasanmiguel" class="card-image">
+                    <p>Clìnica de especialidades</p>
+                </div>
+                <div class="image-card">
+                    <img src="sources/img/personal.jpg" alt="Personalclinicasanmiguel" class="card-image">
+                    <p>Personal Calificado</p>
+                </div>
+                <div class="image-card">
+                    <img src="sources/img/instalaciones.jpg" alt="instalacionesclinicasanmiguel" class="card-image">
+                    <p>Instalaciones Modernas</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="quote-section">
+            <blockquote class="quote">
+                <p>"La salud no lo es todo, pero sin ella, todo lo demás es nada."</p>
+                <cite>— Arthur Schopenhauer</cite>
+            </blockquote>
+        </section>
+
+        <section class="video-section">
+            <h2>Conoce Nuestro Centro</h2>
+            <div class="video-container">
+                <div class="video-placeholder">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/-KId984cnzk?si=2WbrgKUzH22fMds4" 
+                    title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-section">
+            <h2>Estadísticas del Sistema</h2>
+            <div class="chart-container">
+                <canvas id="statsChart"></canvas>
+            </div>
+            <p class="chart-note">*Gráfico de ejemplo - Conectar con base de datos</p>
+        </section>
+
+
+        <section class="quote-section secondary">
+            <blockquote class="quote">
+                <p>"El mejor médico es el que conoce la inutilidad de la mayor parte de las medicinas."</p>
+                <cite>— Benjamin Franklin</cite>
+            </blockquote>
+        </section>
+
+        <section class="info-section">
+            <h2>Nuestros Servicios</h2>
+            <div class="info-cards">
+                <div class="info-card">
+                    <h3>Consulta General</h3>
+                    <p>Atención médica integral para toda la familia con profesionales altamente capacitados.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Especialidades</h3>
+                    <p>Contamos con especialistas en cardiología, pediatría, ginecología y más áreas médicas.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Laboratorio</h3>
+                    <p>Análisis clínicos con tecnología de última generación y resultados rápidos.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Urgencias 24/7</h3>
+                    <p>Servicio de emergencias disponible las 24 horas del día, todos los días del año.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="js/navInteraction.js"></script>
+</body>
+</html>
