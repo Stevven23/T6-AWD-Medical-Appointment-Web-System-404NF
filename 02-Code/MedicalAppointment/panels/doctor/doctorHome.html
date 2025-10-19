@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Dashboard</title>
+    <link rel="stylesheet" href="/css/doctorStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Dr.Eduardo Perez</span>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="active"><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i>
+                            Inicio</a></li>
+                    <li><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
+                    </li>
+                    <li><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li><a href="#"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="dashboard-header">
+                <div class="header">
+                    <h1>Bienvenido, Dr. Perez</h1>
+                    <p>Martes 18 de julio de 2024</p>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                <div class="card calendar-card">
+                    <h2>Calendario de Citas</h2>
+                    <div class="calendar-nav">
+                        <button id="prevMonthBtn">&lt;</button>
+                        <span id="currentMonthYear">Julio 2024</span>
+                        <button id="nextMonthBtn">&gt;</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="day-names">
+                            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+                        </div>
+                        <div class="days" id="calendarDays">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card upcoming-appointments-card">
+                    <h2>Próximas Citas</h2>
+                    <ul>
+                        <li>
+                            <div class="time">09:00 AM</div>
+                            <div class="details">
+                                <h3>Maria Rodríguez</h3>
+                                <p>Revisión General</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="time">10:15 AM</div>
+                            <div class="details">
+                                <h3>Juan Pérez</h3>
+                                <p>Seguimiento</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="time">1:00 PM</div>
+                            <div class="details">
+                                <h3>Sofía Gómez</h3>
+                                <p>Nuevo Paciente</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card notifications-card">
+                    <h2>Notificaciones</h2>
+                    <div class="notifications-container">
+                        <div class="notification reminder">
+                            <i class="fas fa-bell"></i>
+                            <div>
+                                <h3>Nueva solicitud de cita</h3>
+                                <p>De Laura Díaz.</p>
+                            </div>
+                        </div>
+
+                        <div class="notification results">
+                            <i class="fas fa-calendar-check"></i>
+                            <div>
+                                <h3>Cita reconfirmada</h3>
+                                <p>Con Juan Pérez.</p>
+                            </div>
+                        </div>
+
+                        <div class="notification message">
+                            <i class="fas fa-comment-alt"></i>
+                            <div>
+                                <h3>Mensaje nuevo</h3>
+                                <p>De Sofía Gómez.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="card quick-stats-card">
+                    <h2>Estadísticas Rápidas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">58</div>
+                            <div class="stat-label">Citas Atendidas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">55</div>
+                            <div class="stat-label">Citas Completadas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">95%</div>
+                            <div class="stat-label">Tasa de Completado</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+
+    <script src="/js/calendar.js"></script>
+</body>
+
+</html>

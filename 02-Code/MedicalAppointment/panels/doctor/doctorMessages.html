@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes - Clínica San Miguel</title>
+    <link rel="stylesheet" href="/css/patientStyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Dr.Eduardo Perez</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i>
+                            Inicio</a></li>
+                    <li><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
+                    </li>
+                    <li><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li><a href="/panels/doctor/doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li class="active"><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i>
+                            Mensajes</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>Mensajes</h1>
+                <button class="btn-primary"><i class="fas fa-plus"></i> Nuevo Mensaje</button>
+            </header>
+
+            <section class="messages-section">
+                <div class="messages-layout">
+                    <div class="messages-list">
+                        <div class="messages-search">
+                            <input type="text" placeholder="Buscar mensajes..." class="search-input">
+                        </div>
+
+                        <div class="message-item active unread">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-preview">
+                                <div class="message-header">
+                                    <h4>Sofía Narvaez</h4>
+                                    <span class="message-time">Hoy 10:30 AM</span>
+                                </div>
+                                <p class="message-subject">Consulta sobre resultados</p>
+                                <p class="message-text">Hola Dr. Mendoza, quería consultar sobre mis resultados...</p>
+                            </div>
+                        </div>
+
+                        <div class="message-item unread">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-preview">
+                                <div class="message-header">
+                                    <h4>Juan Martínez</h4>
+                                    <span class="message-time">Ayer 3:15 PM</span>
+                                </div>
+                                <p class="message-subject">Pregunta sobre medicación</p>
+                                <p class="message-text">Dr., tengo una pregunta sobre la dosis de mi medicación...</p>
+                            </div>
+                        </div>
+
+                        <div class="message-item">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-preview">
+                                <div class="message-header">
+                                    <h4>Ana López</h4>
+                                    <span class="message-time">15 Oct</span>
+                                </div>
+                                <p class="message-subject">Solicitud de receta</p>
+                                <p class="message-text">Hola Dr., necesito una renovación para mi receta...</p>
+                            </div>
+                        </div>
+
+                        <div class="message-item">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-preview">
+                                <div class="message-header">
+                                    <h4>Pedro García</h4>
+                                    <span class="message-time">10 Sep</span>
+                                </div>
+                                <p class="message-subject">Confirmación de cita</p>
+                                <p class="message-text">Quería confirmar mi cita para la próxima semana...</p>
+                            </div>
+                        </div>
+
+                        <div class="message-item">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-preview">
+                                <div class="message-header">
+                                    <h4>María Rodríguez</h4>
+                                    <span class="message-time">28 Ago</span>
+                                </div>
+                                <p class="message-subject">Síntomas recientes</p>
+                                <p class="message-text">Dr., he estado experimentando algunos síntomas nuevos...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message-content">
+                        <div class="message-detail-header">
+                            <div class="message-sender">
+                                <div class="sender-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="sender-info">
+                                    <h3>Sofía Pérez</h3>
+                                    <p>Paciente</p>
+                                </div>
+                            </div>
+                            <div class="message-actions">
+                                <button class="btn-icon" title="Responder"><i class="fas fa-reply"></i></button>
+                                <button class="btn-icon" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="message-detail-body">
+                            <div class="message-detail-subject">
+                                <h4>Consulta sobre resultados de análisis</h4>
+                                <span class="message-detail-time">Hoy a las 10:30 AM</span>
+                            </div>
+                            <div class="message-detail-text">
+                                <p>Estimado Dr. Mendoza,</p>
+                                <p>Espero que esté muy bien. Le escribo porque he revisado los resultados de mi análisis
+                                    de sangre del 10 de septiembre en el portal del paciente y tengo algunas preguntas.
+                                </p>
+                                <p>Vi que algunos valores, específicamente en mi perfil lipídico, están ligeramente
+                                    elevados. Me gustaría entender qué significan y si esto implica algún cambio en mi
+                                    medicación o en mi dieta actual.</p>
+                                <p>¿Sería posible programar una breve consulta o una llamada para discutir estos
+                                    resultados en más detalle cuando tenga un momento?</p>
+                                <p>Agradezco su atención y espero su respuesta.</p>
+                                <p>Saludos cordiales,<br>Sofía Narvaez<br>ID Paciente: 12345</p>
+                            </div>
+                            <div class="message-attachments">
+                                <h5>Archivos adjuntos:</h5>
+                                <div class="attachment-item">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>Resultados_Laboratorio_Sep2025.pdf</span>
+                                    <button class="btn-download"><i class="fas fa-download"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="message-reply">
+                            <textarea class="reply-input" placeholder="Escriba su respuesta aquí..."
+                                rows="4"></textarea>
+                            <div class="reply-actions">
+                                <button class="btn-icon" title="Adjuntar archivo"><i
+                                        class="fas fa-paperclip"></i></button>
+                                <button class="btn-primary">Enviar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

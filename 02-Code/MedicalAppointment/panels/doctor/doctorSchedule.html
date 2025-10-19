@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/doctorStyle.css">
+
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Dr.Eduardo Perez</span>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="active"><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i>
+                            Mi Agenda</a></li>
+                    <li><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li><a href="/panels/doctor/doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>Agenda Semanal</h1>
+
+            </header>
+
+            <div class="weekly-calendar">
+                <div class="calendar-header-week">
+                    <div class="time-label"></div>
+                    <div class="days-header-scrollable">
+                        <div class="day-label">
+                            <span class="day-name">DOM</span>
+                            <span class="day-number">10</span>
+                        </div>
+                        <div class="day-label">
+                            <span class="day-name">LUN</span>
+                            <span class="day-number">11</span>
+                        </div>
+                        <div class="day-label">
+                            <span class="day-name">MAR</span>
+                            <span class="day-number">12</span>
+                        </div>
+                        <div class="day-label">
+                            <span class="day-name">MIÉ</span>
+                            <span class="day-number">13</span>
+                        </div>
+                        <div class="day-label">
+                            <span class="day-name">JUE</span>
+                            <span class="day-number">14</span>
+                        </div>
+                        <div class="day-label today">
+                            <span class="day-name">VIE</span>
+                            <span class="day-number">15</span>
+                        </div>
+                        <div class="day-label">
+                            <span class="day-name">SÁB</span>
+                            <span class="day-number">16</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calendar-body-scrollable">
+                    <div class="time-column">
+                        <div class="time-slot-label">7 AM</div>
+                        <div class="time-slot-label">8 AM</div>
+                        <div class="time-slot-label">9 AM</div>
+                        <div class="time-slot-label">10 AM</div>
+                        <div class="time-slot-label">11 AM</div>
+                        <div class="time-slot-label">12 PM</div>
+                        <div class="time-slot-label">1 PM</div>
+                        <div class="time-slot-label">2 PM</div>
+                        <div class="time-slot-label">3 PM</div>
+                        <div class="time-slot-label">4 PM</div>
+                        <div class="time-slot-label">5 PM</div>
+                        <div class="time-slot-label">6 PM</div>
+                        <div class="time-slot-label">7 PM</div>
+                        <div class="time-slot-label">8 PM</div>
+                        <div class="time-slot-label">9 PM</div>
+                        <div class="time-slot-label">10 PM</div>
+                    </div>
+
+                    <div class="days-columns-scrollable">
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Laura G.</span>
+                                    <span class="appointment-time">9 - 10 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Pedro M.</span>
+                                    <span class="appointment-time">10 - 11 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Ana S.</span>
+                                    <span class="appointment-time">12 - 1 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Sofía R.</span>
+                                    <span class="appointment-time">3 - 4 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Javier P.</span>
+                                    <span class="appointment-time">11 - 12 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Oduardo L.</span>
+                                    <span class="appointment-time">12 - 1 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Rafa T.</span>
+                                    <span class="appointment-time">2 - 3 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot">
+                                <div class="appointment status-pending" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Carmen F.</span>
+                                    <span class="appointment-time">3 - 4 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Elena C.</span>
+                                    <span class="appointment-time">9 - 10 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Jordi V.</span>
+                                    <span class="appointment-time">10 - 11 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Pablo N.</span>
+                                    <span class="appointment-time">1 - 2 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment status-cancelled" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Giancarlo D.</span>
+                                    <span class="appointment-time">4 - 5 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <!-- Jueves (Day 5) -->
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Marta B.</span>
+                                    <span class="appointment-time">8 - 9 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Ricardo E.</span>
+                                    <span class="appointment-time">11 - 12 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Lucía K.</span>
+                                    <span class="appointment-time">3 - 4 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Carlos W.</span>
+                                    <span class="appointment-time">5 - 6 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <div class="day-column today">
+                            <div class="current-time-line" style="top: 90px;"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment status-pending" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Aury F.</span>
+                                    <span class="appointment-time">10 - 11 am</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Jorge O.</span>
+                                    <span class="appointment-time">12 - 1 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot">
+                                <div class="appointment status-cancelled" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Daniel J.</span>
+                                    <span class="appointment-time">2 - 3 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot">
+                                <div class="appointment" style="top: 0px; height: 60px;">
+                                    <span class="appointment-title">Cita con Gaby Q.</span>
+                                    <span class="appointment-time">3 - 4 pm</span>
+                                </div>
+                            </div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+
+                        <div class="day-column">
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                            <div class="time-slot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/calendar.js"></script>
+</body>
+
+</html>

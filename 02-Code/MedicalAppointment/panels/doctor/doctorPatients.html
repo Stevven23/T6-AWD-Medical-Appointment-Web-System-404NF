@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Cita y Expediente - Doctor's Dashboard</title>
+    <link rel="stylesheet" href="/css/doctorStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Dr.Eduardo Perez</span>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
+                    </li>
+                    <li class="active"><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i>
+                            Pacientes</a>
+                    </li>
+                    <li><a href="/panels/doctor/doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="appointment-details-page">
+            <header class="appointment-header">
+                <div class="header-left">
+                    <h1>Detalles de la Cita</h1>
+                    <p>Paciente: María Rodríguez - Revisión General</p>
+                </div>
+            </header>
+
+            <section class="patient-overview">
+                <div class="card patient-info-card">
+                    <h2>Información del Paciente</h2>
+                    <div class="patient-profile">
+                        <img src="https://via.placeholder.com/80" alt="Patient Avatar" class="patient-avatar">
+                        <div class="patient-details">
+                            <h3>María Rodríguez</h3>
+                            <p><strong>Edad:</strong> 35 años</p>
+                            <p><strong>Contacto:</strong> 0987564883 | maria.r@gmail.com</p>
+                            <p><strong>Cédula:</strong> 1726456754</p>
+                            <p><strong>Alergias:</strong> Penicilina</p>
+                            <p><strong>Condiciones Previas:</strong> Asma leve</p>
+                            <p><strong>Última Cita:</strong> 10 de Julio de 2025</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card appointment-details-card">
+                    <h2>Información de la Cita</h2>
+                    <p><strong>Fecha:</strong> Martes, 18 de Julio de 2024</p>
+                    <p><strong>Hora:</strong> 09:00 AM - 09:45 AM</p>
+                    <p><strong>Tipo de Consulta:</strong> Revisión General</p>
+                    <p><strong>Sala:</strong> Sala #12</p>
+                    <p><strong>Estado:</strong> Concluida</p>
+                </div>
+            </section>
+
+            <section class="patient-record-details">
+                <div class="card previous-consultations-card">
+                    <h2>Consultas Anteriores</h2>
+                    <div class="consultation-entry">
+                        <strong>10 Enero 2024 - Revisión Anual</strong>
+                        <p>Diagnóstico: Control rutinario, todo normal. <a href="#">Ver detalles</a></p>
+                    </div>
+                    <div class="consultation-entry">
+                        <strong>15 Mayo 2023 - Control de Asma</strong>
+                        <p>Diagnóstico: Ajuste de medicación inhalatoria. <a href="#">Ver detalles</a></p>
+                    </div>
+                </div>
+
+                <div class="card test-results-card">
+                    <h2>Resultados de Exámenes</h2>
+                    <div class="test-result">
+                        <strong>25 Febrero 2024 - Hemograma Completo</strong>
+                        <p>Resultados normales en glóbulos rojos y blancos</p>
+                        <p><a href="#"><i class="fas fa-file-pdf"></i> Ver PDF</a></p>
+                    </div>
+                    <div class="test-result">
+                        <strong>05 Junio 2023 - Radiografía de Tórax</strong>
+                        <p>Sin hallazgos significativos</p>
+                        <p><a href="#"><i class="fas fa-image"></i> Ver Imagen</a></p>
+                    </div>
+                    <div class="test-result">
+                        <strong>15 Enero 2023 - Análisis de Sangre</strong>
+                        <p>Niveles de colesterol ligeramente elevados</p>
+                        <p><a href="#"><i class="fas fa-file-pdf"></i> Ver PDF</a></p>
+                    </div>
+                </div>
+
+                <div class="card prescriptions-card">
+                    <h2>Prescripciones</h2>
+                    <div class="prescription-entry">
+                        <strong>Salbutamol - 1 puff c/8h</strong>
+                        <p>Duración: 30 días</p>
+                        <p>Notas: Usar en caso de crisis asmática</p>
+                    </div>
+                    <div class="prescription-entry">
+                        <strong>Loratadina - 10mg diario</strong>
+                        <p>Duración: 15 días</p>
+                        <p>Notas: Tomar en ayunas por la mañana</p>
+                    </div>
+                    <div class="prescription-entry">
+                        <strong>Paracetamol - 500mg</strong>
+                        <p>Duración: 5 días</p>
+                        <p>Notas: Tomar cada 8 horas si hay dolor o fiebre</p>
+                    </div>
+                </div>
+
+                <div class="card notes-card full-width-card">
+                    <h2>Notas de la Cita</h2>
+                    <textarea class="consultation-notes"
+                        placeholder="Escriba aquí las observaciones, diagnóstico, tratamiento y prescripciones..."></textarea>
+                </div>
+                <div class="form-actions full-width-card">
+                    <button class="submit-button">Enviar</button>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

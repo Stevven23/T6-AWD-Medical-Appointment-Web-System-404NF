@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes del Doctor</title>
+    <link rel="stylesheet" href="/css/doctorStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Estilos básicos para las secciones de reportes (pueden ir en doctorStyle.css) */
+        .report-section {
+            display: none;
+            /* Oculta todas las secciones por defecto */
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .report-section.active-report-content {
+            display: block;
+            /* Muestra la sección activa */
+        }
+
+        .reports-nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .reports-nav ul li a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            transition: background-color 0.3s ease;
+        }
+
+        .reports-nav ul li a:hover,
+        .reports-nav ul li a.active-report-link {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .chart-container {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .simple-list {
+            list-style: disc;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Dr.Eduardo Perez</span>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="active"><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i>
+                            Inicio</a></li>
+                    <li><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
+                    </li>
+                    <li><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li><a href="/panels/doctor/doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="dashboard-header">
+                <h1>Reportes del Doctor</h1>
+                <div class="header-right">
+                    <input type="text" placeholder="Buscar..." class="search-bar">
+                    <button class="icon-button"><i class="fas fa-bell"></i></button>
+                </div>
+            </header>
+
+            <section id="reports-overview" class="reports-grid">
+                <nav class="reports-nav card">
+                    <ul>
+                        <li><a href="#citas" class="active-report-link" data-target="citas-section">Citas por
+                                Periodo</a></li>
+                        <li><a href="#pacientes" data-target="pacientes-section">Pacientes Atendidos</a></li>
+                        <li><a href="#consultas" data-target="consultas-section">Consultas Modificadas</a></li>
+                        <li><a href="#tipos-consulta" data-target="tipos-consulta-section">Tipos de Consulta</a></li>
+                        <li><a href="#graficas" data-target="graficas-section">Gráficas de Actividad</a></li>
+                    </ul>
+                </nav>
+
+                <div id="citas-section" class="card report-section active-report-content">
+                    <h2>Citas por Periodo</h2>
+                    <div class="filter-controls">
+                        <label for="citas-periodo">Ver citas:</label>
+                        <select id="citas-periodo">
+                            <option value="dia">Hoy</option>
+                            <option value="semana" selected>Esta Semana</option>
+                            <option value="mes">Este Mes</option>
+                        </select>
+                    </div>
+                    <div class="report-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Paciente</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="citas-data">
+                            </tbody>
+                        </table>
+                        <p>Total de Citas: <span id="total-citas"></span></p>
+                    </div>
+                </div>
+
+                <div id="pacientes-section" class="card report-section">
+                    <h2>Pacientes Atendidos en un Periodo</h2>
+                    <div class="filter-controls">
+                        <label for="pacientes-periodo">Ver pacientes:</label>
+                        <select id="pacientes-periodo">
+                            <option value="dia">Hoy</option>
+                            <option value="semana" selected>Esta Semana</option>
+                            <option value="mes">Este Mes</option>
+                        </select>
+                    </div>
+                    <div class="report-content">
+                        <ul id="pacientes-data" class="simple-list">
+                        </ul>
+                        <p>Total de Pacientes: <span id="total-pacientes"></span></p>
+                    </div>
+                </div>
+
+                <div id="consultas-section" class="card report-section">
+                    <h2>Consultas Canceladas o Reprogramadas</h2>
+                    <div class="filter-controls">
+                        <label for="consultas-estado">Estado:</label>
+                        <select id="consultas-estado">
+                            <option value="canceladas">Canceladas</option>
+                            <option value="reprogramadas">Reprogramadas</option>
+                        </select>
+                        <label for="consultas-periodo">Ver:</label>
+                        <select id="consultas-periodo">
+                            <option value="semana" selected>Esta Semana</option>
+                            <option value="mes">Este Mes</option>
+                        </select>
+                    </div>
+                    <div class="report-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha Original</th>
+                                    <th>Nueva Fecha (si aplica)</th>
+                                    <th>Paciente</th>
+                                    <th>Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consultas-data">
+                            </tbody>
+                        </table>
+                        <p>Total de Consultas: <span id="total-consultas"></span></p>
+                    </div>
+                </div>
+
+                <div id="tipos-consulta-section" class="card report-section">
+                    <h2>Resumen de Tipo de Consulta</h2>
+                    <div class="filter-controls">
+                        <label for="tipos-consulta-periodo">Ver:</label>
+                        <select id="tipos-consulta-periodo">
+                            <option value="semana" selected>Esta Semana</option>
+                            <option value="mes">Este Mes</option>
+                        </select>
+                    </div>
+                    <div class="report-content">
+                        <ul id="tipos-consulta-data" class="simple-list">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="graficas-section" class="card report-section">
+                    <h2>Gráficas de Actividad</h2>
+                    <div class="chart-container">
+                        <h3>Citas por Tipo</h3>
+                        <canvas id="citasTipoChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Actividad Semanal</h3>
+                        <canvas id="actividadSemanalChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="/js/report.js"></script>
+</body>
+
+</html>
