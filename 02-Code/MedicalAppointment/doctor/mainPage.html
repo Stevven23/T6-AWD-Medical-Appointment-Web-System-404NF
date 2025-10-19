@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Doctor</title>
+    <link rel="stylesheet" href="../css/doctorStyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-bars"></i>
+                <div class="logo">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Dra. Sofia Pérez</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Panel Principal</a></li>
+                    <li><a href="#"><i class="fas fa-calendar-alt"></i> Mi Horario</a></li>
+                    <li><a href="#"><i class="fas fa-user-injured"></i> Pacientes</a></li>
+                    <li><a href="#"><i class="fas fa-file-alt"></i> Informes</a></li>
+                    <li><a href="#"><i class="fas fa-user-circle"></i> Perfil</a></li>
+                    <li><a href="#"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <h1>Bienvenido, Dr. Pérez</h1>
+            </header>
+            <section class="dashboard-grid">
+                <div class="card today-appointments">
+                    <h3>Citas de Hoy</h3>
+                    <div class="appointment-item">
+                        <span class="time">9:00 AM</span>
+                        <span class="patient-name">Juan Garcia</span>
+                        <span class="status-tag general">Consulta General</span>
+                    </div>
+                    <div class="appointment-item now">
+                        <span class="time">9:30 AM</span>
+                        <span class="patient-name">Maria Fernandez</span>
+                        <span class="status-tag now-tag">AHORA</span>
+                        <span class="status-tag follow-up">(Seguimiento)</span>
+                    </div>
+                    <div class="appointment-item">
+                        <span class="time">10:00 AM</span>
+                        <span class="patient-name">Elena López</span>
+                        <span class="status-tag new-patient">(Nuevo Paciente)</span>
+                    </div>
+                </div>
+                <div class="card pending-appointments">
+                    <h3>Citas Pendientes</h3>
+                    <p class="count">14</p>
+                    <div class="alert">
+                        <h4>Alertas Importantes</h4>
+                        <p>Nuevo mensaje de Administración</p>
+                    </div>
+                </div>
+                <div class="card appointments-week">
+                    <h3>Citas Esta Semana</h3>
+                    <div class="chart-placeholder">
+                        <img src="chart-placeholder-week.png" alt="Gráfico de Citas Esta Semana">
+                    </div>
+                    <p class="summary">25 completadas</p>
+                </div>
+                <div class="card patient-satisfaction">
+                    <h3>Satisfacción del Paciente</h3>
+                    <div class="chart-placeholder">
+                        <img src="chart-placeholder-satisfaction.png" alt="Gráfico de Satisfacción del Paciente">
+                    </div>
+                    <p class="summary">4.7/5 promedio</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
