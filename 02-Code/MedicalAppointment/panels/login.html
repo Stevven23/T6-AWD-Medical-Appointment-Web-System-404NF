@@ -29,6 +29,14 @@
         <div class="group-field">
           <input type="password" name="clave" id="contrasena" placeholder="Contraseña" class="form-control" required>
         </div>
+        <div class="group-field">
+          <label for="role" class="form-label">Entrar como</label>
+          <select id="role" class="form-control">
+            <option value="patient">Paciente</option>
+            <option value="doctor">Doctor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
         <div class="register-option text-center mb-3">
             <p class="mb-0">¿No tienes una cuenta? <a href="registro.php" class="register-link">Regístrate aquí</a></p>
         </div>
@@ -36,7 +44,24 @@
       </form>
     </div>
   </div>
-  <script src="recursos/js/main.js"></script>
+  <script>
+    // Prototipo: interceptar submit y redirigir según rol seleccionado
+    document.getElementById('loginForm').addEventListener('submit', function(e){
+      e.preventDefault(); // evitar envío real
+      var role = document.getElementById('role').value;
+      // redirecciones locales para prototipo
+      if(role === 'patient'){
+        window.location.href = '../patient/patientDashboard.html';
+      } else if(role === 'doctor'){
+        window.location.href = 'doctor/doctorHome.html';
+      } else if(role === 'admin'){
+        window.location.href = 'admin/DashboardAdmin.html';
+      } else {
+        // fallback
+        window.location.href = '../index.html';
+      }
+    });
+  </script>
 </body>
 </html>
  
