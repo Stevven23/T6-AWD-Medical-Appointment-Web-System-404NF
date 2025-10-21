@@ -56,12 +56,30 @@ document.addEventListener('DOMContentLoaded', () => {
             { fecha: formatDate(getPastDate(15)), hora: '12:00', paciente: 'Diego Fernández', tipo: 'Revisión', estado: 'Confirmada' },
             { fecha: formatDate(getPastDate(20)), hora: '09:00', paciente: 'Elena Díaz', tipo: 'Consulta General', estado: 'Confirmada' },
             { fecha: formatDate(getPastDate(25)), hora: '13:00', paciente: 'Jorge Herrera', tipo: 'Seguimiento', estado: 'Cancelada' },
+
+            { fecha: formatDate(today), hora: '14:30', paciente: 'Luisa Mendoza', tipo: 'Revisión', estado: 'Pendiente' },
+            { fecha: formatDate(today), hora: '15:00', paciente: 'Miguel Torres', tipo: 'Urgencia', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(1)), hora: '12:00', paciente: 'Carmen Vega', tipo: 'Consulta General', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(4)), hora: '11:30', paciente: 'Ricardo Solís', tipo: 'Vacunación', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(5)), hora: '10:00', paciente: 'Verónica Salas', tipo: 'Seguimiento', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(7)), hora: '08:00', paciente: 'Javier Alonso', tipo: 'Consulta General', estado: 'Confirmada' }, // Semana pasada
+            { fecha: formatDate(getPastDate(12)), hora: '16:30', paciente: 'Isabel Reyes', tipo: 'Revisión', estado: 'Cancelada' },
+            { fecha: formatDate(getPastDate(18)), hora: '11:00', paciente: 'Andrés Navarro', tipo: 'Urgencia', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(22)), hora: '15:00', paciente: 'Gabriela Ponce', tipo: 'Consulta General', estado: 'Confirmada' },
+            { fecha: formatDate(getPastDate(28)), hora: '10:00', paciente: 'Simón Bolívar', tipo: 'Seguimiento', estado: 'Pendiente' },
+            { fecha: formatDate(getPastDate(35)), hora: '13:30', paciente: 'Manuela Sáenz', tipo: 'Revisión', estado: 'Confirmada' }, // Mes pasado
+            { fecha: formatDate(getPastDate(40)), hora: '09:00', paciente: 'Antonio Nariño', tipo: 'Consulta General', estado: 'Confirmada' } // Mes pasado
         ];
 
         const allConsultasModificadas = [
             { fechaOriginal: formatDate(getPastDate(5)), nuevaFecha: formatDate(today), paciente: 'Jorge Herrera', motivo: 'Cancelada por paciente' },
             { fechaOriginal: formatDate(getPastDate(10)), nuevaFecha: formatDate(getPastDate(2)), paciente: 'Lucía Morales', motivo: 'Reprogramada por médico' },
-            { fechaOriginal: formatDate(getPastDate(12)), nuevaFecha: 'N/A', paciente: 'Roberto Vega', motivo: 'Cancelada por médico' },
+            { fechaOriginal: formatDate(getPastDate(12)), nuevaFecha: formatDate(getPastDate(45)), paciente: 'Roberto Vega', motivo: 'Cancelada por médico' },
+            { fechaOriginal: formatDate(getPastDate(1)), nuevaFecha: formatDate(today), paciente: 'David Cárdenas', motivo: 'Reprogramada por paciente' },
+            { fechaOriginal: formatDate(getPastDate(15)), nuevaFecha: formatDate(getPastDate(50)), paciente: 'Mónica Rivas', motivo: 'Cancelada por paciente' },
+            { fechaOriginal: formatDate(getPastDate(20)), nuevaFecha: formatDate(getPastDate(19)), paciente: 'Fernando Paz', motivo: 'Reprogramada por médico' },
+            { fechaOriginal: formatDate(getPastDate(30)), nuevaFecha: formatDate(getPastDate(25)), paciente: 'Clara Luna', motivo: 'Cancelada por médico' }, // Mes pasado
+            { fechaOriginal: formatDate(getPastDate(3),), nuevaFecha: formatDate(getPastDate(30)), paciente: 'Ana García', motivo: 'Cancelada por paciente' }
         ];
 
         return { allCitas, allConsultasModificadas };
@@ -93,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('total-citas').textContent = filteredCitas.length;
     };
 
-    // Renderizar datos de pacientes (se mantiene igual, ya que usa `allCitas`)
+
     const renderPacientes = (periodo) => {
         const { startDate, endDate } = getDateRange(periodo);
         const uniquePacientes = new Set();
@@ -107,7 +125,19 @@ document.addEventListener('DOMContentLoaded', () => {
         ul.innerHTML = '';
         uniquePacientes.forEach(paciente => {
             const li = document.createElement('li');
-            li.textContent = paciente;
+
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Ya no usamos li.textContent, sino li.innerHTML
+            // para poder añadir el botón.
+            li.innerHTML = `
+                <span>${paciente}</span>
+                <button class="historial-btn" data-paciente="${paciente}">Ver historial clínico</button>
+            `;
+            // Nota: Agregué 'data-paciente' al botón para que 
+            // luego puedas identificar fácilmente a qué paciente 
+            // corresponde el clic en un futuro event listener.
+            // --- FIN DE LA MODIFICACIÓN ---
+
             ul.appendChild(li);
         });
         document.getElementById('total-pacientes').textContent = uniquePacientes.size;

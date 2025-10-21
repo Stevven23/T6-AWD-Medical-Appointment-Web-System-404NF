@@ -1,4 +1,4 @@
-/* VARIABLES GLOBALES */
+/* Global Variable */
 :root {
     --primary-color: #4A90E2;
     --secondary-color: #6c757d;
@@ -22,7 +22,7 @@
     --sidebar-width: 250px;
 }
 
-/* RESET BÁSICO */
+/* Basic Reset */
 * {
     margin: 0;
     padding: 0;
@@ -38,7 +38,7 @@ body {
     min-height: 100vh;
 }
 
-/* CONTENEDOR PRINCIPAL */
+/* Principal Container */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -75,7 +75,7 @@ body {
     width: 100%;
 }
 
-/* SIDEBAR (Integrado y unificado) */
+/* SIDEBAR */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--sidebar-bg);
@@ -167,14 +167,14 @@ body {
     color: var(--primary-color);
 }
 
-/* CONTENIDO PRINCIPAL */
+/* Principal Content */
 .main-content {
     flex-grow: 1;
     padding: 30px;
     background-color: var(--background-color);
 }
 
-/* HEADER DEL DASHBOARD */
+/* HEADER DASHBOARD */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -238,7 +238,7 @@ body {
     border: 2px solid var(--primary-color);
 }
 
-/* GRIDS PRINCIPALES */
+/* GRIDS */
 .appointment-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -261,7 +261,7 @@ body {
     font-weight: 500;
 }
 
-/* CALENDARIO */
+/* Calendar */
 .calendar-card h2,
 .upcoming-appointments-card h2,
 .notifications-card h2 {
@@ -337,7 +337,7 @@ body {
     background-color: var(--border-color);
 }
 
-/* PRÓXIMAS CITAS */
+/* Next Date */
 .upcoming-appointments-card ul {
     list-style: none;
     padding: 0;
@@ -379,7 +379,7 @@ body {
     color: var(--light-text-color);
 }
 
-/* NOTIFICACIONES MODERNAS */
+/* Notification*/
 .notifications-container {
     display: flex;
     flex-direction: column;
@@ -421,7 +421,6 @@ body {
     color: var(--light-text-color);
 }
 
-/* Colores por tipo */
 .notification.reminder {
     background-color: #fff5d6;
     border-left-color: #ffce54;
@@ -437,7 +436,6 @@ body {
     border-left-color: #28a745;
 }
 
-/* ESTADÍSTICAS RÁPIDAS */
 .quick-stats-card .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -587,7 +585,7 @@ body {
     }
 }
 
-/* Contenedor principal para los detalles de la cita */
+/*Date Container */
 #appointment-details-page {
     display: flex;
     flex-direction: column;
@@ -613,7 +611,6 @@ body {
     color: var(--light-text-color);
 }
 
-/* Secciones de dos columnas */
 .patient-overview,
 .patient-record-details {
     display: grid;
@@ -621,7 +618,7 @@ body {
     gap: 20px;
 }
 
-/* Estilos de tarjeta generales para la información de la cita y paciente */
+/* Patient Style */
 .patient-info-card,
 .appointment-details-card,
 .previous-consultations-card,
@@ -636,7 +633,7 @@ body {
     overflow: hidden;
 }
 
-/* Títulos de las tarjetas */
+/* Title */
 .patient-info-card h2,
 .appointment-details-card h2,
 .previous-consultations-card h2,
@@ -651,7 +648,7 @@ body {
     padding-bottom: 10px;
 }
 
-/* Información del Paciente */
+/* Patient Information */
 .patient-profile {
     display: flex;
     align-items: center;
@@ -691,7 +688,7 @@ body {
     display: inline-block;
 }
 
-/* Información de la Cita */
+/* Date Information*/
 .appointment-details-card p {
     font-size: 0.95rem;
     color: var(--text-color);
@@ -707,7 +704,7 @@ body {
     display: inline-block;
 }
 
-/* Estilos para "Consultas Anteriores", "Resultados de Exámenes", "Prescripciones" */
+/* Style to "Consultas Anteriores", "Resultados de Exámenes", "Prescripciones" */
 .consultation-entry,
 .test-result,
 .prescription-entry {
@@ -801,7 +798,6 @@ body {
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
-/* Media Queries para responsividad */
 @media (max-width: 992px) {
 
     .patient-overview,
@@ -895,12 +891,27 @@ body {
     }
 }
 
-/* Estilos para el botón de Enviar */
+/* Button */
 .form-actions {
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
     padding: 0 10px;
+}
+
+
+
+.historial-btn {
+    background-color: var(--primary-color);
+    color: var(--card-background);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 100;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button {
@@ -946,7 +957,7 @@ body {
 }
 
 
-/*Calendario*/
+/*Calendar*/
 :root {
     --primary-color: #4A90E2;
     --secondary-color: #6c757d;
@@ -968,8 +979,6 @@ body {
     --accent-green: #B0DFC4;
     --accent-gold: #D4AF37;
     --sidebar-width: 250px;
-
-    /* Nuevas variables para el calendario de horas */
     --header-bg: #ffffff;
     --day-header-border: #e0e0e0;
     --time-slot-border: #f0f0f0;
@@ -1154,7 +1163,6 @@ body {
     border-bottom: none;
 }
 
-/* Línea de tiempo actual */
 .current-time-line {
     position: absolute;
     left: 80px;
@@ -1176,7 +1184,7 @@ body {
 }
 
 
-/* Estilos para las citas */
+/* Appointment Style */
 .appointment {
     position: absolute;
     left: 5px;
@@ -1235,7 +1243,6 @@ body {
     color: rgba(var(--appointment-text-red), 0.8);
 }
 
-/* Media Queries para responsividad (ajusta según necesites) */
 @media (max-width: 768px) {
     .calendar-header-week {
         grid-template-columns: 50px repeat(7, 1fr);
@@ -1316,7 +1323,6 @@ body {
     flex-grow: 1;
 }
 
-/* Ajusta el time-label para que no tenga borde a la derecha en el header */
 .calendar-header-week .time-label {
     border-right: none;
     min-width: 80px;
@@ -1348,7 +1354,6 @@ body {
     border-right: none;
 }
 
-/* La línea de tiempo actual debe ajustarse para el nuevo layout */
 .current-time-line {
     position: absolute;
     left: 0;
@@ -2022,4 +2027,77 @@ table tbody tr:last-child td {
     .chart-container h3 {
         font-size: 1.1rem;
     }
+}
+
+/*Report Style*/
+.report-section {
+    display: none;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.report-section.active-report-content {
+    display: block;
+}
+
+.reports-nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.reports-nav ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s ease;
+}
+
+.reports-nav ul li a:hover,
+.reports-nav ul li a.active-report-link {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.chart-container {
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table th,
+table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+table th {
+    background-color: #f2f2f2;
+}
+
+.simple-list {
+    list-style: disc;
+    margin-left: 20px;
 }

@@ -5,84 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes del Doctor</title>
-    <link rel="stylesheet" href="/css/doctorStyle.css">
+    <link rel="stylesheet" href="../../css/doctorStyle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Estilos básicos para las secciones de reportes (pueden ir en doctorStyle.css) */
-        .report-section {
-            display: none;
-            /* Oculta todas las secciones por defecto */
-            padding: 20px;
-            border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
 
-        .report-section.active-report-content {
-            display: block;
-            /* Muestra la sección activa */
-        }
-
-        .reports-nav ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .reports-nav ul li a {
-            text-decoration: none;
-            color: #333;
-            padding: 10px 15px;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-            transition: background-color 0.3s ease;
-        }
-
-        .reports-nav ul li a:hover,
-        .reports-nav ul li a.active-report-link {
-            background-color: #007bff;
-            color: #fff;
-        }
-
-        .chart-container {
-            margin-bottom: 40px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .chart-container h3 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        table th,
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        table th {
-            background-color: #f2f2f2;
-        }
-
-        .simple-list {
-            list-style: disc;
-            margin-left: 20px;
-        }
     </style>
 </head>
 
@@ -98,13 +25,14 @@
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li class="active"><a href="/panels/doctor/doctorHome.html"><i class="fas fa-home"></i>
+                    <li><a href="./doctorHome.html"><i class="fas fa-home"></i>
                             Inicio</a></li>
-                    <li><a href="/panels/doctor/doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
+                    <li><a href="./doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
                     </li>
-                    <li><a href="/panels/doctor/doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
-                    <li><a href="/panels/doctor/doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
-                    <li><a href="/panels/doctor/doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="./doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li class="active"><a href="./doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a>
+                    </li>
+                    <li><a href="./doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
                     <li><a href="#"><i class="fas fa-cog"></i> Ajustes</a></li>
                 </ul>
             </nav>
@@ -126,7 +54,7 @@
                                 Periodo</a></li>
                         <li><a href="#pacientes" data-target="pacientes-section">Pacientes Atendidos</a></li>
                         <li><a href="#consultas" data-target="consultas-section">Consultas Modificadas</a></li>
-                        <li><a href="#tipos-consulta" data-target="tipos-consulta-section">Tipos de Consulta</a></li>
+
                         <li><a href="#graficas" data-target="graficas-section">Gráficas de Actividad</a></li>
                     </ul>
                 </nav>
@@ -236,7 +164,7 @@
             </section>
         </div>
     </div>
-    <script src="/js/report.js"></script>
+    <script src="../../js/report.js"></script>
 </body>
 
 </html>
