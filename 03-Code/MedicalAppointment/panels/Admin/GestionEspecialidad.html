@@ -3,100 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clìnica San Miguel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../css/style.css">
+    <title>Gestión de Especialidades - Clínica San Miguel</title>
+    <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="../../css/table.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-
-    <nav class="top-navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="../../sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div> 
             </div>
-            <button class="login-btn">Mi Cuenta</button>
-        </div>
-    </nav>
-
-
-    <button class="hamburger-btn" id="hamburgerBtn">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-
-
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3>Admin - Menú</h3>
-        </div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="DashboardAdmin.html">Inicio</a>
-            </li>
-            <li class="has-submenu">
-                <a href="#servicios">Doctores</a>
-                <ul class="submenu">
-                    <li><a href="GestionDoctores.html">Gestionar Doctores</a></li>
-                    <li><a href="GestionEspecialidad.html">Especialidades</a></li>
-                    <li><a href="GestionHorarios.html">Horarios</a></li>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
+                    <li><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión Doctores</a></li>
+                    <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li class="active"><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
+                    <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
                 </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#pacientes">Información</a>
-                <ul class="submenu">
-                    <li><a href="Calendario.html">Calendario</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#recursos">Recursos</a>
-                <ul class="submenu">
-                    <li><a href="#educacion">Ayuda</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#contacto">Contacto</a>
-            </li>
-        </ul>
-    </aside>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Gestión de Especialidades</h1>
+                <div class="user-profile">
+                    <span>Samantha Villagomez</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
 
+            <!-- Filtros -->
+            <div class="filters-section">
+                <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="statusFilter">Estado</label>
+                        <select id="statusFilter" class="filter-select">
+                            <option value="">Todos los Estados</option>
+                            <option value="active">Activa</option>
+                            <option value="inactive">Inactiva</option>
+                        </select>
+                    </div>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <h1>Gestión de Doctores</h1>
-            <p>Administración del Personal Médico</p>
-        </section>
+                    <div class="filter-group">
+                        <label for="departmentFilter">Departamento</label>
+                        <select id="departmentFilter" class="filter-select">
+                            <option value="">Todos los Departamentos</option>
+                            <option value="medicina-interna">Medicina Interna</option>
+                            <option value="cirugia">Cirugía</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="ginecologia">Ginecología</option>
+                            <option value="diagnostico">Diagnóstico</option>
+                        </select>
+                    </div>
 
-        <section class="table-section">
-            <h2>
-                Lista de Especialidades
-            </h2>
-            <div class="table-controls">
-                <input type="text" class="search-box" id="searchDoctors" placeholder="Buscar por nombre o especialidad...">
-                <button class="btn btn-success" onclick="addDoctor()">+ Agregar Especialidad</button>
+                    <div class="filter-group">
+                        <label for="doctorCountFilter">Número de Doctores</label>
+                        <select id="doctorCountFilter" class="filter-select">
+                            <option value="">Todos</option>
+                            <option value="0">Sin doctores</option>
+                            <option value="1-3">1-3 doctores</option>
+                            <option value="4-6">4-6 doctores</option>
+                            <option value="7+">7+ doctores</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="searchSpecialty">Buscar Especialidad</label>
+                        <input type="text" id="searchSpecialty" class="filter-search" placeholder="Nombre de especialidad...">
+                    </div>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="btn-primary" id="applyFilters">
+                        <i class="fas fa-check"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn-secondary" id="clearFilters">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table id="doctorsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Especialidad</th>
-                            <th>Tipo</th>
-                            <th>Doctores Activos</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="doctorsTableBody">
-                        <!-- data -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
-    </main>
-    <script src="../../js/navInteraction.js"></script>
+            <!-- Tabla de Especialidades -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3><i class="fas fa-stethoscope"></i> Lista de Especialidades</h3>
+                    <button class="btn-primary" onclick="openAddSpecialtyModal()">
+                        <i class="fas fa-plus"></i> Agregar Especialidad
+                    </button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Especialidad</th>
+                                <th>Descripción</th>
+                                <th>Departamento</th>
+                                <th>Doctores Disponibles</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="specialtiesTableBody">
+                            <!-- Datos de ejemplo -->
+                            <tr>
+                                <td>001</td>
+                                <td><strong>Cardiología</strong></td>
+                                <td>Diagnóstico y tratamiento de enfermedades del corazón</td>
+                                <td>Medicina Interna</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">5 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(1)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(1)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(1)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>002</td>
+                                <td><strong>Pediatría</strong></td>
+                                <td>Atención médica de lactantes, niños y adolescentes</td>
+                                <td>Pediatría</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">8 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(2)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(2)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(2)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>003</td>
+                                <td><strong>Traumatología</strong></td>
+                                <td>Tratamiento de lesiones del sistema musculoesquelético</td>
+                                <td>Cirugía</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">4 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(3)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(3)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(3)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>004</td>
+                                <td><strong>Dermatología</strong></td>
+                                <td>Diagnóstico y tratamiento de enfermedades de la piel</td>
+                                <td>Medicina Interna</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">3 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(4)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(4)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(4)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>005</td>
+                                <td><strong>Neurología</strong></td>
+                                <td>Tratamiento de trastornos del sistema nervioso</td>
+                                <td>Medicina Interna</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">6 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(5)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(5)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(5)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>006</td>
+                                <td><strong>Ginecología</strong></td>
+                                <td>Salud del sistema reproductor femenino</td>
+                                <td>Ginecología</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">7 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(6)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(6)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(6)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>007</td>
+                                <td><strong>Medicina General</strong></td>
+                                <td>Atención médica integral y de primer nivel</td>
+                                <td>Medicina Interna</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--primary-color);"></i>
+                                        <span style="font-weight: 600;">12 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(7)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(7)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(7)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>008</td>
+                                <td><strong>Radiología</strong></td>
+                                <td>Diagnóstico por imágenes médicas</td>
+                                <td>Diagnóstico</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--warning-color);"></i>
+                                        <span style="font-weight: 600;">2 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">Activa</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(8)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(8)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(8)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>009</td>
+                                <td><strong>Oftalmología</strong></td>
+                                <td>Diagnóstico y tratamiento de enfermedades oculares</td>
+                                <td>Cirugía</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-user-md" style="color: var(--danger-color);"></i>
+                                        <span style="font-weight: 600;">0 doctores</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-warning">Inactiva</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSpecialty(9)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSpecialty(9)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteSpecialty(9)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../../js/tables.js"></script>
 </body>
 </html>

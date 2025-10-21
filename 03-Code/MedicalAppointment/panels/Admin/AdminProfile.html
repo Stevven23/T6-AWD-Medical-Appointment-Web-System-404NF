@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Clínica San Miguel</title>
+    <link rel="stylesheet" href="../../css/mainStyle.css">
+    <link rel="stylesheet" href="../../css/table.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 3rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .profile-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .profile-role {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .form-section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #4A90E2;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #f8f9fa;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4A90E2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #e9ecef;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+
+        .btn-update {
+            background: linear-gradient(135deg, #6aa567 0%, #4c8d54 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-update:hover {
+            background: linear-gradient(135deg, #5a9457 0%, #3c7d44 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(106, 165, 103, 0.3);
+        }
+
+        .btn-update:active {
+            transform: translateY(0);
+        }
+
+        .password-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 6px;
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            border-left: 4px solid #4A90E2;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div> 
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
+                    <li><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión Doctores</a></li>
+                    <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
+                    <li class="active"><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Mi Perfil</h1>
+                <div class="user-profile">
+                    <span>Samantha Villagomez</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="profile-name">Samantha Villagomez</div>
+                    <div class="profile-role">Administrador del Sistema</div>
+                </div>
+
+                <div class="info-message">
+                    <i class="fas fa-info-circle"></i> 
+                    Por seguridad, solo puedes modificar tu correo electrónico y contraseña desde esta sección.
+                </div>
+
+                <!-- Sección de Correo Electrónico -->
+                <form id="emailForm" class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-envelope"></i>
+                        Correo Electrónico
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="currentEmail">Correo Actual</label>
+                        <input type="email" id="currentEmail" value="samantha.villagomez@clinicasanmiguel.com" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newEmail">Nuevo Correo Electrónico</label>
+                        <input type="email" id="newEmail" placeholder="nuevo.correo@ejemplo.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmEmail">Confirmar Nuevo Correo</label>
+                        <input type="email" id="confirmEmail" placeholder="nuevo.correo@ejemplo.com">
+                    </div>
+
+                    <button type="submit" class="btn-update">
+                        <i class="fas fa-save"></i>
+                        Actualizar Correo
+                    </button>
+                </form>
+
+                <!-- Sección de Contraseña -->
+                <form id="passwordForm" class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-lock"></i>
+                        Cambiar Contraseña
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="currentPassword">Contraseña Actual</label>
+                        <input type="password" id="currentPassword" placeholder="Ingresa tu contraseña actual">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" placeholder="Mínimo 8 caracteres">
+                        <div class="password-hint">
+                            La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas y números.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirma tu nueva contraseña">
+                    </div>
+
+                    <button type="submit" class="btn-update">
+                        <i class="fas fa-key"></i>
+                        Cambiar Contraseña
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Actualizar correo electrónico
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newEmail = document.getElementById('newEmail').value;
+            const confirmEmail = document.getElementById('confirmEmail').value;
+            
+            if (!newEmail || !confirmEmail) {
+                alert('Por favor, completa todos los campos de correo electrónico.');
+                return;
+            }
+            
+            if (newEmail !== confirmEmail) {
+                alert('Los correos electrónicos no coinciden.');
+                return;
+            }
+            
+            if (!validateEmail(newEmail)) {
+                alert('Por favor, ingresa un correo electrónico válido.');
+                return;
+            }
+            
+            // Aquí iría la llamada a la API
+            alert('Correo electrónico actualizado exitosamente.');
+            document.getElementById('currentEmail').value = newEmail;
+            document.getElementById('newEmail').value = '';
+            document.getElementById('confirmEmail').value = '';
+        });
+
+        // Cambiar contraseña
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('Por favor, completa todos los campos de contraseña.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Las contraseñas no coinciden.');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                alert('La contraseña debe tener al menos 8 caracteres.');
+                return;
+            }
+            
+            if (!validatePassword(newPassword)) {
+                alert('La contraseña debe incluir mayúsculas, minúsculas y números.');
+                return;
+            }
+            
+            // Aquí iría la llamada a la API
+            alert('Contraseña cambiada exitosamente.');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        });
+
+        // Validaciones
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasNumbers = /\d/.test(password);
+            return hasUpperCase && hasLowerCase && hasNumbers;
+        }
+    </script>
+</body>
+</html>

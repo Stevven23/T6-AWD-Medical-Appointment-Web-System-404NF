@@ -3,109 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clìnica San Miguel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../css/style.css">
+    <title>Gestión de Horarios - Clínica San Miguel</title>
+    <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="../../css/table.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .schedule-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .schedule-time {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .break-time {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .days-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 2px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+        
+        .hours-total {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        
+        .contract-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .contract-full {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .contract-part {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .contract-call {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+    </style>
 </head>
 <body>
-
-    <nav class="top-navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="../../sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div> 
             </div>
-            <button class="login-btn">Mi Cuenta</button>
-        </div>
-    </nav>
-
-
-    <button class="hamburger-btn" id="hamburgerBtn">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-
-
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3>Admin - Menú</h3>
-        </div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="DashboardAdmin.html">Inicio</a>
-            </li>
-            <li class="has-submenu">
-                <a href="#servicios">Doctores</a>
-                <ul class="submenu">
-                    <li><a href="GestionDoctores.html">Gestionar Doctores</a></li>
-                    <li><a href="GestionEspecialidad.html">Especialidades</a></li>
-                    <li><a href="GestionHorarios.html">Horarios</a></li>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
+                    <li><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión Doctores</a></li>
+                    <li class="active"><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
+                    <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
                 </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#pacientes">Información</a>
-                <ul class="submenu">
-                    <li><a href="Calendario.html">Calendario</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#recursos">Recursos</a>
-                <ul class="submenu">
-                    <li><a href="#educacion">Ayuda</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#contacto">Contacto</a>
-            </li>
-        </ul>
-    </aside>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Gestión de Horarios</h1>
+                <div class="user-profile">
+                    <span>Samantha Villagomez</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
 
+            <div class="filters-section">
+                <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="specialtyFilter">Especialidad</label>
+                        <select id="specialtyFilter" class="filter-select">
+                            <option value="">Todas las Especialidades</option>
+                            <option value="cardiologia">Cardiología</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="traumatologia">Traumatología</option>
+                            <option value="dermatologia">Dermatología</option>
+                            <option value="neurologia">Neurología</option>
+                            <option value="general">Medicina General</option>
+                            <option value="ginecologia">Ginecología</option>
+                        </select>
+                    </div>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <h1>Gestión de Horarios</h1>
-            <p>Administración del Personal Médico</p>
-        </section>
+                    <div class="filter-group">
+                        <label for="contractFilter">Tipo de Contrato</label>
+                        <select id="contractFilter" class="filter-select">
+                            <option value="">Todos los Contratos</option>
+                            <option value="full-time">Tiempo Completo</option>
+                            <option value="part-time">Medio Tiempo</option>
+                            <option value="on-call">Por Llamada</option>
+                        </select>
+                    </div>
 
-        <section class="table-section">
-            <h2>
-                Horarios de Doctores
-            </h2>
-            <div class="table-controls">
-                <input type="text" class="search-box" id="searchSchedules" placeholder="Buscar doctor...">
-                <select class="search-box" id="filterDay" style="flex: 0 0 200px;">
-                    <option value="">Todos los días</option>
-                    <option value="Lunes">Lunes</option>
-                    <option value="Martes">Martes</option>
-                    <option value="Miércoles">Miércoles</option>
-                    <option value="Jueves">Jueves</option>
-                    <option value="Viernes">Viernes</option>
-                    <option value="Sábado">Sábado</option>
-                    <option value="Domingo">Domingo</option>
-                </select>
-                <button class="btn" onclick="filterSchedules()">Filtrar</button>
+                    <div class="filter-group">
+                        <label for="dayFilter">Día Laboral</label>
+                        <select id="dayFilter" class="filter-select">
+                            <option value="">Todos los Días</option>
+                            <option value="lunes">Lunes</option>
+                            <option value="martes">Martes</option>
+                            <option value="miercoles">Miércoles</option>
+                            <option value="jueves">Jueves</option>
+                            <option value="viernes">Viernes</option>
+                            <option value="sabado">Sábado</option>
+                            <option value="domingo">Domingo</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="searchDoctor">Buscar Doctor</label>
+                        <input type="text" id="searchDoctor" class="filter-search" placeholder="Nombre del doctor...">
+                    </div>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="btn-primary" id="applyFilters">
+                        <i class="fas fa-check"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn-secondary" id="clearFilters">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table id="schedulesTable">
-                    <thead>
-                        <tr>
-                            <th>Doctor</th>
-                            <th>Especialidad</th>
-                            <th>Días de Trabajo</th>
-                            <th>Horario</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schedulesTableBody">
-                        <!-- data -->
-                    </tbody>
-                </table>
+
+            <div class="card">
+                <div style="margin-bottom: 20px;">
+                    <h3><i class="fas fa-clock"></i> Horarios de Atención por Doctor</h3>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 8px;">
+                        Configure los horarios de trabajo, descansos y días laborables para cada doctor. 
+                        Estos horarios se utilizarán para el sistema de agendamiento de citas.
+                    </p>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Especialidad</th>
+                                <th>Tipo Contrato</th>
+                                <th>Horario de Trabajo</th>
+                                <th>Hora de Descanso</th>
+                                <th>Días Laborables</th>
+                                <th>Total Horas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                            <tr>
+                                <td>Dr. Carlos García Méndez</td>
+                                <td>Cardiología</td>
+                                <td><span class="contract-type-badge contract-full">Tiempo Completo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">08:00 - 17:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-utensils"></i> 13:00 - 14:00
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Lun</span>
+                                    <span class="days-badge">Mar</span>
+                                    <span class="days-badge">Mié</span>
+                                    <span class="days-badge">Jue</span>
+                                    <span class="days-badge">Vie</span>
+                                </td>
+                                <td><span class="hours-total">40h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(1)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(1)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dra. María López Torres</td>
+                                <td>Pediatría</td>
+                                <td><span class="contract-type-badge contract-full">Tiempo Completo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">07:00 - 16:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-utensils"></i> 12:00 - 13:00
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Lun</span>
+                                    <span class="days-badge">Mar</span>
+                                    <span class="days-badge">Mié</span>
+                                    <span class="days-badge">Jue</span>
+                                    <span class="days-badge">Vie</span>
+                                </td>
+                                <td><span class="hours-total">40h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(2)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(2)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dr. Juan Martínez Silva</td>
+                                <td>Traumatología</td>
+                                <td><span class="contract-type-badge contract-part">Medio Tiempo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">14:00 - 18:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-coffee"></i> No aplica
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Lun</span>
+                                    <span class="days-badge">Mié</span>
+                                    <span class="days-badge">Vie</span>
+                                </td>
+                                <td><span class="hours-total">12h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(3)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(3)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dra. Ana Ruiz Gómez</td>
+                                <td>Dermatología</td>
+                                <td><span class="contract-type-badge contract-full">Tiempo Completo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">09:00 - 18:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-utensils"></i> 13:30 - 14:30
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Lun</span>
+                                    <span class="days-badge">Mar</span>
+                                    <span class="days-badge">Mié</span>
+                                    <span class="days-badge">Jue</span>
+                                    <span class="days-badge">Vie</span>
+                                </td>
+                                <td><span class="hours-total">40h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(4)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(4)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dr. Roberto Sánchez Pérez</td>
+                                <td>Neurología</td>
+                                <td><span class="contract-type-badge contract-full">Tiempo Completo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">08:00 - 17:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-utensils"></i> 12:30 - 13:30
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Lun</span>
+                                    <span class="days-badge">Mar</span>
+                                    <span class="days-badge">Mié</span>
+                                    <span class="days-badge">Jue</span>
+                                    <span class="days-badge">Vie</span>
+                                </td>
+                                <td><span class="hours-total">40h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(5)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(5)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dra. Laura Pérez Ramírez</td>
+                                <td>Ginecología</td>
+                                <td><span class="contract-type-badge contract-call">Por Llamada</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">Variable</span>
+                                        <small style="color: #666;">Según disponibilidad</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-info-circle"></i> Flexible
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Sáb</span>
+                                    <span class="days-badge">Dom</span>
+                                </td>
+                                <td><span class="hours-total">Variable</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(6)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(6)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Dr. Fernando Torres Vega</td>
+                                <td>Medicina General</td>
+                                <td><span class="contract-type-badge contract-part">Medio Tiempo</span></td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-time">08:00 - 13:00</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="break-time">
+                                        <i class="fas fa-coffee"></i> 10:30 - 11:00
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="days-badge">Mar</span>
+                                    <span class="days-badge">Jue</span>
+                                    <span class="days-badge">Sáb</span>
+                                </td>
+                                <td><span class="hours-total">15h/semana</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewSchedule(7)" title="Ver horario detallado">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editSchedule(7)" title="Editar horario">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </section>
-    </main>
-    <script src="../../js/navInteraction.js"></script>
+        </main>
+    </div>
+
+    <script>
+        // Funciones para ver y editar horarios
+        function viewSchedule(doctorId) {
+            alert(`Ver detalles del horario del doctor ID: ${doctorId}\n\nEsta funcionalidad mostrará:\n- Horarios por día\n- Slots disponibles por hora\n- Excepciones y días festivos`);
+        }
+
+        function editSchedule(doctorId) {
+            alert(`Editar horario del doctor ID: ${doctorId}\n\nAquí podrás:\n- Modificar horarios de trabajo\n- Ajustar horas de descanso\n- Cambiar días laborables\n- Definir slots de atención (ej: cada 30min)`);
+        }
+
+        // Filtros
+        document.getElementById('applyFilters').addEventListener('click', function() {
+            const specialty = document.getElementById('specialtyFilter').value;
+            const contract = document.getElementById('contractFilter').value;
+            const day = document.getElementById('dayFilter').value;
+            const search = document.getElementById('searchDoctor').value;
+            
+            console.log('Aplicar filtros:', { specialty, contract, day, search });
+            alert('Filtros aplicados. En producción, esto filtrará la tabla de horarios.');
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            document.getElementById('specialtyFilter').value = '';
+            document.getElementById('contractFilter').value = '';
+            document.getElementById('dayFilter').value = '';
+            document.getElementById('searchDoctor').value = '';
+            console.log('Filtros limpiados');
+        });
+    </script>
 </body>
 </html>

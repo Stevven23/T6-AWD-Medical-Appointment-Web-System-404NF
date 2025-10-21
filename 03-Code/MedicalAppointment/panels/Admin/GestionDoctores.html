@@ -3,101 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clìnica San Miguel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../css/style.css">
+    <title>Calendario - Clínica San Miguel</title>
+    <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="../../css/table.css">
-</head>
+     <link rel="stylesheet" href="../../css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
 <body>
-
-    <nav class="top-navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="../../sources/img/logo.png" alt="MediSystem Logo" class="logo-image">
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div> 
             </div>
-            <button class="login-btn">Mi Cuenta</button>
-        </div>
-    </nav>
-
-
-    <button class="hamburger-btn" id="hamburgerBtn">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-
-
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3>Admin - Menú</h3>
-        </div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="DashboardAdmin.html">Inicio</a>
-            </li>
-            <li class="has-submenu">
-                <a href="#servicios">Doctores</a>
-                <ul class="submenu">
-                    <li><a href="GestionDoctores.html">Gestionar Doctores</a></li>
-                    <li><a href="GestionEspecialidad.html">Especialidades</a></li>
-                    <li><a href="GestionHorarios.html">Horarios</a></li>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
+                    <li class="active"><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión Doctores</a></li>
+                    <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
+                    <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
                 </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#pacientes">Información</a>
-                <ul class="submenu">
-                    <li><a href="Calendario.html">Calendario</a></li>
-                </ul>
-            </li>
-            <li class="has-submenu">
-                <a href="#recursos">Recursos</a>
-                <ul class="submenu">
-                    <li><a href="#educacion">Ayuda</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#contacto">Contacto</a>
-            </li>
-        </ul>
-    </aside>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Gestión de Doctores</h1>
+                <div class="user-profile">
+                    <span>Samantha Villagomez</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
 
-
-    <main class="main-content">
-        <section class="hero-section">
-            <h1>Gestión de Doctores</h1>
-            <p>Administración del Personal Médico</p>
-        </section>
-
-        <section class="table-section">
-            <h2>
-                Lista de Doctores
-            </h2>
-            <div class="table-controls">
-                <input type="text" class="search-box" id="searchDoctors" placeholder="Buscar por nombre o especialidad...">
-                <button class="btn btn-success" onclick="addDoctor()">+ Agregar Doctor</button>
+            <div class="appointments-summary">
+                <div class="summary-card success">
+                    <div class="summary-number">32</div>
+                    <div class="summary-label">Doctores Activos</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">8</div>
+                    <div class="summary-label">Especialidades</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="summary-number">5</div>
+                    <div class="summary-label">Nuevos Este Mes</div>
+                </div>
+                <div class="summary-card danger">
+                    <div class="summary-number">3</div>
+                    <div class="summary-label">Inactivos</div>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table id="doctorsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre Completo</th>
-                            <th>Especialidad</th>
-                            <th>Tipo de Contrato</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="doctorsTableBody">
-                        <!-- Los datos se cargarán aquí -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
-    </main>
-    <script src="../../js/navInteraction.js"></script>
+            <div class="filters-section">
+                <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="specialtyFilter">Especialidad</label>
+                        <select id="specialtyFilter" class="filter-select">
+                            <option value="">Todas las Especialidades</option>
+                            <option value="cardiologia">Cardiología</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="traumatologia">Traumatología</option>
+                            <option value="dermatologia">Dermatología</option>
+                            <option value="neurologia">Neurología</option>
+                            <option value="general">Medicina General</option>
+                            <option value="ginecologia">Ginecología</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="statusFilter">Estado</label>
+                        <select id="statusFilter" class="filter-select">
+                            <option value="">Todos los Estados</option>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="vacation">De Vacaciones</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="contractFilter">Tipo de Contrato</label>
+                        <select id="contractFilter" class="filter-select">
+                            <option value="">Todos los Contratos</option>
+                            <option value="full-time">Tiempo Completo</option>
+                            <option value="part-time">Medio Tiempo</option>
+                            <option value="on-call">Por Llamada</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="searchDoctor">Buscar Doctor</label>
+                        <input type="text" id="searchDoctor" class="filter-search" placeholder="Nombre, cédula, ID...">
+                    </div>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="btn-primary" id="applyFilters">
+                        <i class="fas fa-check"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn-secondary" id="clearFilters">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3><i class="fas fa-user-md"></i> Lista de Doctores</h3>
+                    <button class="btn-primary" onclick="openAddDoctorModal()">
+                        <i class="fas fa-plus"></i> Agregar Doctor
+                    </button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Especialidad</th>
+                                <th>Cédula</th>
+                                <th>Teléfono</th>
+                                <th>Tipo de Contrato</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorsTableBody">
+                            <!-- Example data -->
+                            <tr>
+                                <td>001</td>
+                                <td>Dr. Carlos García Méndez</td>
+                                <td>Cardiología</td>
+                                <td>1234567890</td>
+                                <td>(593) 99-123-4567</td>
+                                <td><span class="badge badge-active">Tiempo Completo</span></td>
+                                <td><span class="badge badge-success">Activo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(1)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(1)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(1)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>002</td>
+                                <td>Dra. María López Torres</td>
+                                <td>Pediatría</td>
+                                <td>0987654321</td>
+                                <td>(593) 98-765-4321</td>
+                                <td><span class="badge badge-active">Tiempo Completo</span></td>
+                                <td><span class="badge badge-success">Activo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(2)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(2)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(2)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>003</td>
+                                <td>Dr. Juan Martínez Silva</td>
+                                <td>Traumatología</td>
+                                <td>1122334455</td>
+                                <td>(593) 99-887-6543</td>
+                                <td><span class="badge badge-warning">Medio Tiempo</span></td>
+                                <td><span class="badge badge-success">Activo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(3)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(3)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(3)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>004</td>
+                                <td>Dra. Ana Ruiz Gómez</td>
+                                <td>Dermatología</td>
+                                <td>5544332211</td>
+                                <td>(593) 97-654-3210</td>
+                                <td><span class="badge badge-active">Tiempo Completo</span></td>
+                                <td><span class="badge badge-warning">De Vacaciones</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(4)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(4)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(4)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>005</td>
+                                <td>Dr. Roberto Sánchez Pérez</td>
+                                <td>Neurología</td>
+                                <td>9988776655</td>
+                                <td>(593) 96-543-2109</td>
+                                <td><span class="badge badge-active">Tiempo Completo</span></td>
+                                <td><span class="badge confirmed">Activo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(5)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(5)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(5)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>006</td>
+                                <td>Dra. Laura Pérez Ramírez</td>
+                                <td>Ginecología</td>
+                                <td>6677889900</td>
+                                <td>(593) 95-432-1098</td>
+                                <td><span class="badge badge-info">Por Llamada</span></td>
+                                <td><span class="badge badge-success">Activo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(6)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(6)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(6)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>007</td>
+                                <td>Dr. Fernando Torres Vega</td>
+                                <td>Medicina General</td>
+                                <td>3344556677</td>
+                                <td>(593) 94-321-0987</td>
+                                <td><span class="badge badge-active">Tiempo Completo</span></td>
+                                <td><span class="badge cancelled">Inactivo</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewDoctor(7)" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="editDoctor(7)" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon" style="color: var(--danger-color);" onclick="deleteDoctor(7)" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../js/tables.js"> </script>
 </body>
 </html>
