@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,331 +11,337 @@
     <link rel="stylesheet" href="../../css/table.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    </head>
-    <body>
-        <div class="container">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <div class="logo">
-                        <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
-                    </div> 
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
                 </div>
-                <nav class="nav-menu">
-                    <ul>
-                        <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
-                        <li class="active"><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
-                        <li><a href="GestionDoctores.html"><i class="fas fa-file-medical"></i> Gestión Doctores</a></li>
-                        <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
-                        <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
-                        <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
-                        <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
-                    </ul>
-                </nav>
-            </aside>
-            
-            <main class="main-content">
-                <header class="header">
-                    <h1>Calendario de Citas</h1>
-                    <div class="user-profile">
-                        <span>Samantha Villagomez</span>
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                </header>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="active"><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a>
+                    </li>
+                    <li><a href="GestionDoctores.html"><i class="fas fa-file-medical"></i> Gestión Doctores</a></li>
+                    <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+                    <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
+                    <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
+                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
+                            Sesion</a>
+                </ul>
+            </nav>
+        </aside>
 
-                <div class="appointments-summary">
-                    <div class="summary-card success">
-                        <div class="summary-number">24</div>
-                        <div class="summary-label">Citas Confirmadas</div>
-                    </div>
-                    <div class="summary-card warning">
-                        <div class="summary-number">8</div>
-                        <div class="summary-label">Pendientes</div>
-                    </div>
-                    <div class="summary-card danger">
-                        <div class="summary-number">3</div>
-                        <div class="summary-label">Canceladas</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-number">35</div>
-                        <div class="summary-label">Total del Mes</div>
-                    </div>
+        <main class="main-content">
+            <header class="header">
+                <h1>Calendario de Citas</h1>
+                <div class="user-profile">
+                    <span>Samantha Villagomez</span>
+                    <i class="fas fa-user-circle"></i>
                 </div>
+            </header>
 
-                <div class="filters-section">
-                    <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
-                    
-                    <div class="filters-grid">
-                        <div class="filter-group">
-                            <label for="doctorFilter">Doctor</label>
-                            <select id="doctorFilter" class="filter-select">
-                                <option value="">Todos los Doctores</option>
-                                <option value="garcia">Dr. García - Cardiología</option>
-                                <option value="lopez">Dra. López - Pediatría</option>
-                                <option value="martinez">Dr. Martínez - Traumatología</option>
-                                <option value="ruiz">Dra. Ruiz - Dermatología</option>
-                                <option value="sanchez">Dr. Sánchez - Neurología</option>
-                                <option value="perez">Dr. Pérez - Medicina General</option>
-                            </select>
-                        </div>
+            <div class="appointments-summary">
+                <div class="summary-card success">
+                    <div class="summary-number">24</div>
+                    <div class="summary-label">Citas Confirmadas</div>
+                </div>
+                <div class="summary-card warning">
+                    <div class="summary-number">8</div>
+                    <div class="summary-label">Pendientes</div>
+                </div>
+                <div class="summary-card danger">
+                    <div class="summary-number">3</div>
+                    <div class="summary-label">Canceladas</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">35</div>
+                    <div class="summary-label">Total del Mes</div>
+                </div>
+            </div>
 
-                        <div class="filter-group">
-                            <label for="specialtyFilter">Especialidad</label>
-                            <select id="specialtyFilter" class="filter-select">
-                                <option value="">Todas las Especialidades</option>
-                                <option value="cardiologia">Cardiología</option>
-                                <option value="pediatria">Pediatría</option>
-                                <option value="traumatologia">Traumatología</option>
-                                <option value="dermatologia">Dermatología</option>
-                                <option value="neurologia">Neurología</option>
-                                <option value="general">Medicina General</option>
-                                <option value="ginecologia">Ginecología</option>
-                            </select>
-                        </div>
+            <div class="filters-section">
+                <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
 
-                        <div class="filter-group">
-                            <label for="statusFilter">Estado de Cita</label>
-                            <select id="statusFilter" class="filter-select">
-                                <option value="">Todos los Estados</option>
-                                <option value="confirmed">Confirmadas</option>
-                                <option value="pending">Pendientes</option>
-                                <option value="cancelled">Canceladas</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label for="patientSearch">Buscar Paciente</label>
-                            <input type="text" id="patientSearch" class="filter-search" placeholder="Buscar por nombre, cédula...">
-                        </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="doctorFilter">Doctor</label>
+                        <select id="doctorFilter" class="filter-select">
+                            <option value="">Todos los Doctores</option>
+                            <option value="garcia">Dr. García - Cardiología</option>
+                            <option value="lopez">Dra. López - Pediatría</option>
+                            <option value="martinez">Dr. Martínez - Traumatología</option>
+                            <option value="ruiz">Dra. Ruiz - Dermatología</option>
+                            <option value="sanchez">Dr. Sánchez - Neurología</option>
+                            <option value="perez">Dr. Pérez - Medicina General</option>
+                        </select>
                     </div>
 
-                    <div class="filter-buttons">
-                        <button class="btn-primary" id="applyFilters">
-                            <i class="fas fa-check"></i> Aplicar Filtros
-                        </button>
-                        <button class="btn-secondary" id="clearFilters">
-                            <i class="fas fa-times"></i> Limpiar Filtros
-                        </button>
+                    <div class="filter-group">
+                        <label for="specialtyFilter">Especialidad</label>
+                        <select id="specialtyFilter" class="filter-select">
+                            <option value="">Todas las Especialidades</option>
+                            <option value="cardiologia">Cardiología</option>
+                            <option value="pediatria">Pediatría</option>
+                            <option value="traumatologia">Traumatología</option>
+                            <option value="dermatologia">Dermatología</option>
+                            <option value="neurologia">Neurología</option>
+                            <option value="general">Medicina General</option>
+                            <option value="ginecologia">Ginecología</option>
+                        </select>
                     </div>
 
-                    <div class="legend-section">
-                        <div class="legend-item">
-                            <div class="legend-color today"></div>
-                            <span>Hoy</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color has-appointments"></div>
-                            <span>Tiene citas</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color selected"></div>
-                            <span>Día seleccionado</span>
-                        </div>
+                    <div class="filter-group">
+                        <label for="statusFilter">Estado de Cita</label>
+                        <select id="statusFilter" class="filter-select">
+                            <option value="">Todos los Estados</option>
+                            <option value="confirmed">Confirmadas</option>
+                            <option value="pending">Pendientes</option>
+                            <option value="cancelled">Canceladas</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="patientSearch">Buscar Paciente</label>
+                        <input type="text" id="patientSearch" class="filter-search"
+                            placeholder="Buscar por nombre, cédula...">
                     </div>
                 </div>
 
-                <div class="calendar-container">
-                    <div class="calendar-header">
-                        <div class="calendar-nav">
-                            <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
-                            <div class="calendar-month">Octubre 2025</div>
-                            <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
-                        </div>
+                <div class="filter-buttons">
+                    <button class="btn-primary" id="applyFilters">
+                        <i class="fas fa-check"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn-secondary" id="clearFilters">
+                        <i class="fas fa-times"></i> Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="legend-section">
+                    <div class="legend-item">
+                        <div class="legend-color today"></div>
+                        <span>Hoy</span>
                     </div>
-
-                    <div class="calendar-grid">
-                        <!-- Headers de días -->
-                        <div class="calendar-day-header">Dom</div>
-                        <div class="calendar-day-header">Lun</div>
-                        <div class="calendar-day-header">Mar</div>
-                        <div class="calendar-day-header">Mié</div>
-                        <div class="calendar-day-header">Jue</div>
-                        <div class="calendar-day-header">Vie</div>
-                        <div class="calendar-day-header">Sáb</div>
-
-                        <!-- Días del mes anterior -->
-                        <div class="calendar-day other-month">
-                            <div class="day-number">29</div>
-                        </div>
-                        <div class="calendar-day other-month">
-                            <div class="day-number">30</div>
-                        </div>
-
-                        <!-- Días de octubre -->
-                        <div class="calendar-day">
-                            <div class="day-number">1</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:00 Dr. García</div>
-                                <div class="appointment-dot confirmed">14:00 Dra. López</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">2</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">10:30 Dr. Martínez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">3</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot pending">11:00 Dra. Ruiz</div>
-                                <div class="appointment-dot confirmed">16:00 Dr. Sánchez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">4</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">5</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:30 Dr. Pérez</div>
-                            </div>
-                        </div>
-
-                        <div class="calendar-day">
-                            <div class="day-number">6</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">7</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">10:00 Dra. Torres</div>
-                                <div class="appointment-dot confirmed">15:30 Dr. Ramírez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">8</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot pending">11:30 Dr. Castro</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">9</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:00 Dra. Méndez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">10</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">11</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">14:00 Dr. Vargas</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">12</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot cancelled">10:00 Cancelada</div>
-                            </div>
-                        </div>
-
-                        <div class="calendar-day">
-                            <div class="day-number">13</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">14</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">11:00 Dra. Flores</div>
-                                <div class="appointment-dot pending">16:00 Dr. Morales</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">15</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:30 Dr. Silva</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">16</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">17</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">10:30 Dra. Ortiz</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">18</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot pending">15:00 Dr. Núñez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">19</div>
-                        </div>
-
-                        <div class="calendar-day">
-                            <div class="day-number">20</div>
-                        </div>
-                        <div class="calendar-day today">
-                            <div class="day-number">21</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:00 Dr. Herrera</div>
-                                <div class="appointment-dot confirmed">14:30 Dra. Guzmán</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">22</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot pending">10:00 Dr. Reyes</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">23</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">11:30 Dra. Vega</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">24</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">25</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">9:30 Dr. Salazar</div>
-                                <div class="appointment-dot pending">16:00 Dra. Ponce</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">26</div>
-                        </div>
-
-                        <div class="calendar-day">
-                            <div class="day-number">27</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">28</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">10:00 Dr. Chávez</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">29</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot pending">15:30 Dra. León</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">30</div>
-                            <div class="day-appointments">
-                                <div class="appointment-dot confirmed">11:00 Dr. Acosta</div>
-                            </div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="day-number">31</div>
-                        </div>
-
-                        <!-- Días del próximo mes -->
-                        <div class="calendar-day other-month">
-                            <div class="day-number">1</div>
-                        </div>
-                        <div class="calendar-day other-month">
-                            <div class="day-number">2</div>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-color has-appointments"></div>
+                        <span>Tiene citas</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color selected"></div>
+                        <span>Día seleccionado</span>
                     </div>
                 </div>
-            </main>
-        </div>
-        <script src="../../js/calendar.js"></script>
-    </body>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                        <div class="calendar-month">Octubre 2025</div>
+                        <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid">
+                    <!-- Headers de días -->
+                    <div class="calendar-day-header">Dom</div>
+                    <div class="calendar-day-header">Lun</div>
+                    <div class="calendar-day-header">Mar</div>
+                    <div class="calendar-day-header">Mié</div>
+                    <div class="calendar-day-header">Jue</div>
+                    <div class="calendar-day-header">Vie</div>
+                    <div class="calendar-day-header">Sáb</div>
+
+                    <!-- Días del mes anterior -->
+                    <div class="calendar-day other-month">
+                        <div class="day-number">29</div>
+                    </div>
+                    <div class="calendar-day other-month">
+                        <div class="day-number">30</div>
+                    </div>
+
+                    <!-- Días de octubre -->
+                    <div class="calendar-day">
+                        <div class="day-number">1</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:00 Dr. García</div>
+                            <div class="appointment-dot confirmed">14:00 Dra. López</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">2</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">10:30 Dr. Martínez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">3</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot pending">11:00 Dra. Ruiz</div>
+                            <div class="appointment-dot confirmed">16:00 Dr. Sánchez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">4</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">5</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:30 Dr. Pérez</div>
+                        </div>
+                    </div>
+
+                    <div class="calendar-day">
+                        <div class="day-number">6</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">7</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">10:00 Dra. Torres</div>
+                            <div class="appointment-dot confirmed">15:30 Dr. Ramírez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">8</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot pending">11:30 Dr. Castro</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">9</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:00 Dra. Méndez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">10</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">11</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">14:00 Dr. Vargas</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">12</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot cancelled">10:00 Cancelada</div>
+                        </div>
+                    </div>
+
+                    <div class="calendar-day">
+                        <div class="day-number">13</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">14</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">11:00 Dra. Flores</div>
+                            <div class="appointment-dot pending">16:00 Dr. Morales</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">15</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:30 Dr. Silva</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">16</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">17</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">10:30 Dra. Ortiz</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">18</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot pending">15:00 Dr. Núñez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">19</div>
+                    </div>
+
+                    <div class="calendar-day">
+                        <div class="day-number">20</div>
+                    </div>
+                    <div class="calendar-day today">
+                        <div class="day-number">21</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:00 Dr. Herrera</div>
+                            <div class="appointment-dot confirmed">14:30 Dra. Guzmán</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">22</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot pending">10:00 Dr. Reyes</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">23</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">11:30 Dra. Vega</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">24</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">25</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">9:30 Dr. Salazar</div>
+                            <div class="appointment-dot pending">16:00 Dra. Ponce</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">26</div>
+                    </div>
+
+                    <div class="calendar-day">
+                        <div class="day-number">27</div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">28</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">10:00 Dr. Chávez</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">29</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot pending">15:30 Dra. León</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">30</div>
+                        <div class="day-appointments">
+                            <div class="appointment-dot confirmed">11:00 Dr. Acosta</div>
+                        </div>
+                    </div>
+                    <div class="calendar-day">
+                        <div class="day-number">31</div>
+                    </div>
+
+                    <!-- Días del próximo mes -->
+                    <div class="calendar-day other-month">
+                        <div class="day-number">1</div>
+                    </div>
+                    <div class="calendar-day other-month">
+                        <div class="day-number">2</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../../js/calendar.js"></script>
+</body>
+
 </html>

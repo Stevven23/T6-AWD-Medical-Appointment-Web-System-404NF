@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -146,13 +147,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
-                </div> 
+                </div>
             </div>
             <nav class="nav-menu">
                 <ul>
@@ -163,10 +165,12 @@
                     <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
                     <li class="active"><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
+                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
+                            Sesion</a>
                 </ul>
             </nav>
         </aside>
-        
+
         <main class="main-content">
             <header class="header">
                 <h1>Mi Perfil</h1>
@@ -186,7 +190,7 @@
                 </div>
 
                 <div class="info-message">
-                    <i class="fas fa-info-circle"></i> 
+                    <i class="fas fa-info-circle"></i>
                     Por seguridad, solo puedes modificar tu correo electrónico y contraseña desde esta sección.
                 </div>
 
@@ -196,7 +200,7 @@
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="currentEmail">Correo Actual</label>
                         <input type="email" id="currentEmail" value="samantha.villagomez@clinicasanmiguel.com" disabled>
@@ -224,7 +228,7 @@
                         <i class="fas fa-lock"></i>
                         Cambiar Contraseña
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="currentPassword">Contraseña Actual</label>
                         <input type="password" id="currentPassword" placeholder="Ingresa tu contraseña actual">
@@ -254,27 +258,27 @@
 
     <script>
         // Actualizar correo electrónico
-        document.getElementById('emailForm').addEventListener('submit', function(e) {
+        document.getElementById('emailForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const newEmail = document.getElementById('newEmail').value;
             const confirmEmail = document.getElementById('confirmEmail').value;
-            
+
             if (!newEmail || !confirmEmail) {
                 alert('Por favor, completa todos los campos de correo electrónico.');
                 return;
             }
-            
+
             if (newEmail !== confirmEmail) {
                 alert('Los correos electrónicos no coinciden.');
                 return;
             }
-            
+
             if (!validateEmail(newEmail)) {
                 alert('Por favor, ingresa un correo electrónico válido.');
                 return;
             }
-            
+
             // Aquí iría la llamada a la API
             alert('Correo electrónico actualizado exitosamente.');
             document.getElementById('currentEmail').value = newEmail;
@@ -283,33 +287,33 @@
         });
 
         // Cambiar contraseña
-        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        document.getElementById('passwordForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            
+
             if (!currentPassword || !newPassword || !confirmPassword) {
                 alert('Por favor, completa todos los campos de contraseña.');
                 return;
             }
-            
+
             if (newPassword !== confirmPassword) {
                 alert('Las contraseñas no coinciden.');
                 return;
             }
-            
+
             if (newPassword.length < 8) {
                 alert('La contraseña debe tener al menos 8 caracteres.');
                 return;
             }
-            
+
             if (!validatePassword(newPassword)) {
                 alert('La contraseña debe incluir mayúsculas, minúsculas y números.');
                 return;
             }
-            
+
             // Aquí iría la llamada a la API
             alert('Contraseña cambiada exitosamente.');
             document.getElementById('currentPassword').value = '';
@@ -331,4 +335,5 @@
         }
     </script>
 </body>
+
 </html>

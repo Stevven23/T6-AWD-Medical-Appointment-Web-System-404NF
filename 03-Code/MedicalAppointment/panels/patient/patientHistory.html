@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,33 +9,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
-                </div> 
+                </div>
             </div>
             <nav class="nav-menu">
                 <ul>
                     <li><a href="patientDashboard.html"><i class="fas fa-home"></i> Inicio</a></li>
                     <li><a href="patientAppointments.html"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
-                    <li class="active"><a href="patientHistory.html"><i class="fas fa-file-medical"></i> Historial Médico</a></li>
+                    <li class="active"><a href="patientHistory.html"><i class="fas fa-file-medical"></i> Historial
+                            Médico</a></li>
                     <li><a href="patientPrescriptions.html"><i class="fas fa-pills"></i> Recetas</a></li>
                     <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
+                            Sesion</a>
                 </ul>
             </nav>
         </aside>
-        
+
         <main class="main-content">
             <header class="header">
                 <h1>Historial Médico</h1>
                 <button class="btn-primary"><i class="fas fa-download"></i> Descargar Historial</button>
             </header>
-            
+
             <section class="history-section">
                 <div class="filter-bar">
                     <input type="text" class="search-input" placeholder="Buscar en historial...">
@@ -111,7 +116,8 @@
                                     <p><strong>Doctor:</strong> Dr. Sofia Pérez</p>
                                     <p><strong>Especialidad:</strong> Cardiología</p>
                                     <p><strong>Diagnóstico:</strong> Control postoperatorio satisfactorio</p>
-                                    <p><strong>Notas:</strong> Evolución favorable, continuar con medicación prescrita</p>
+                                    <p><strong>Notas:</strong> Evolución favorable, continuar con medicación prescrita
+                                    </p>
                                 </div>
                                 <div class="history-card-footer">
                                     <button class="btn-link"><i class="fas fa-file-pdf"></i> Ver Informe</button>
@@ -148,4 +154,5 @@
         </main>
     </div>
 </body>
+
 </html>
