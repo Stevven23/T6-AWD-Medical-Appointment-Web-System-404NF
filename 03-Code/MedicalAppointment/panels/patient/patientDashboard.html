@@ -22,8 +22,7 @@
                 <ul>
                     <li class="active"><a href="#"><i class="fas fa-home"></i> Inicio</a></li>
                     <li><a href="patientAppointments.html"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
-                    <li><a href="patientMedicalHistory.html"><i class="fas fa-file-medical"></i> Historial Médico</a>
-                    </li>
+                    <li><a href="patientHistory.html"><i class="fas fa-file-medical"></i> Historial Médico</a></li>
                     <li><a href="patientPrescriptions.html"><i class="fas fa-pills"></i> Recetas</a></li>
                     <li><a href="patientLabResults.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
@@ -133,6 +132,32 @@
             </section>
         </main>
     </div>
+        <script src="../../js/appointmentManager.js"></script>
+    <script src="../../js/notificationManager.js"></script>
+    <script>
+        // Actualizar próxima cita en el dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window.appointmentManager) {
+                    const nextAppointment = appointmentManager.getNextAppointment();
+                    if (nextAppointment) {
+                        const appointmentCard = document.querySelector('.next-appointment .appointment-card');
+                        if (appointmentCard) {
+                            const date = new Date(nextAppointment.date);
+                            appointmentCard.innerHTML = `
+                                <div class="date">${date.getDate()} ${['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][date.getMonth()]}</div>
+                                <div class="time">${appointmentManager.formatTime(nextAppointment.time)}</div>
+                                <div class="doctor">${nextAppointment.doctorName} - ${nextAppointment.specialty}</div>
+                            `;
+                        }
+                    }
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+
 </body>
 
 </html>

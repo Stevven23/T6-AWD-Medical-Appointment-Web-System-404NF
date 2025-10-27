@@ -65,9 +65,21 @@ body {
 }
 
 .sidebar-header .logo {
+    background-color: #4A90E2;
     display: flex;
     align-items: center;
+    gap: 10px;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: white;
     flex-grow: 1;
+}
+
+.sidebar-header .logo img {
+    width: 210px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .sidebar-header .logo .fa-user-circle {
@@ -145,23 +157,6 @@ body {
     color: var(--text-dark);
 }
 
-.sidebar-header .logo {
-    background-color: #4A90E2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.3em;
-    font-weight: bold;
-    color: white;
-}
-
-.sidebar-header .logo img {
-    width: 210px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
 .user-profile {
     display: flex;
     align-items: center;
@@ -172,7 +167,7 @@ body {
 
 .user-profile i {
     font-size: 32px;
-    color: #4A90E2;;
+    color: #4A90E2;
 }
 
 .user-profile span {
@@ -356,6 +351,16 @@ body {
 .badge-warning {
     background-color: #fff3cd;
     color: #856404;
+}
+
+.badge.cancelled {
+    background: #dc3545;
+    color: white;
+}
+
+.badge.completed {
+    background: #6c757d;
+    color: white;
 }
 
 /* Next Appointment Card */
@@ -546,17 +551,6 @@ body {
     height: 250px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .chart-actions {
-        grid-template-columns: 1fr;
-    }
-    
-    .chart-wrapper {
-        height: 200px;
-    }
-}
-
 /* Health Summary Card */
 .health-summary .summary-item {
     display: flex;
@@ -622,6 +616,7 @@ body {
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    margin-bottom: -2px;
 }
 
 .tab-btn.active {
@@ -1365,8 +1360,363 @@ body {
     align-items: center;
 }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
+/* Toast de notificaciones */
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 10000;
+    max-width: 400px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification-toast i {
+    font-size: 24px;
+    color: #007bff;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: #666;
+}
+
+.toast-close {
+    cursor: pointer;
+    font-size: 20px;
+    color: #999;
+    padding: 0 5px;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+/* Badge de notificaciones no leídas */
+.notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.notification-item.read {
+    opacity: 0.6;
+    border-left-color: #ccc;
+}
+
+.notification-item.high {
+    border-left-color: #dc3545;
+}
+
+.notification-item.medium {
+    border-left-color: #ffc107;
+}
+
+.notification-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.notification-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.btn-mark-read {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+}
+
+.btn-mark-read:hover {
+    color: #0056b3;
+}
+
+/* ========== ESTILOS DE MODAL - CENTRADO Y OVERLAY ========== */
+
+/* Contenedor principal del modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+/* Cuando el modal está activo/visible */
+.modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Contenido del modal */
+.modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    position: relative;
+}
+
+/* Animación de entrada del modal */
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal de confirmación (más pequeño) */
+.modal-content.confirm-modal {
+    max-width: 450px;
+}
+
+/* Header del modal */
+.modal-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-header h2 i {
+    font-size: 22px;
+}
+
+/* Botón de cerrar (X) */
+.modal-header .close {
+    color: white;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.modal-header .close:hover,
+.modal-header .close:focus {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+/* Body del modal */
+.modal-body {
+    padding: 25px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Footer del modal */
+.modal-footer {
+    padding: 15px 25px;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Botones del modal */
+.modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-footer .btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.modal-footer .btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Formularios dentro del modal */
+.modal-body .form-group input,
+.modal-body .form-group select,
+.modal-body .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    transition: all 0.3s;
+    background-color: #fff;
+}
+
+.modal-body .form-group input:focus,
+.modal-body .form-group select:focus,
+.modal-body .form-group textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.modal-body .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-body .form-group input[type="date"],
+.modal-body .form-group input[type="time"] {
+    cursor: pointer;
+}
+
+/* Placeholder styling */
+.modal-body .form-group input::placeholder,
+.modal-body .form-group textarea::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Detalles de cita */
+.appointment-details {
+    padding: 20px 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.detail-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.detail-item strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Evitar scroll del body cuando el modal está abierto */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+        margin: 10px;
+    }
+    
+    .modal-header h2 {
+        font-size: 18px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        padding: 12px 20px;
+        flex-wrap: wrap;
+    }
+    
+    .modal-footer button {
+        flex: 1;
+        min-width: 120px;
+    }
+
     .sidebar {
         width: 80px;
     }
@@ -1411,9 +1761,7 @@ body {
         padding-bottom: 20px;
         margin-bottom: 20px;
     }
-}
 
-@media (max-width: 768px) {
     .container {
         flex-direction: column;
     }
@@ -1442,10 +1790,6 @@ body {
 
     .main-content {
         padding: 20px;
-    }
-
-    .dashboard-grid {
-        grid-template-columns: 1fr;
     }
 
     .quick-actions {
@@ -1480,10 +1824,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .profile-grid {
-        grid-template-columns: 1fr;
-    }
-
     .results-table {
         font-size: 12px;
     }
@@ -1492,11 +1832,12 @@ body {
     .results-table td {
         padding: 8px;
     }
+    
     .charts-section {
         grid-template-columns: 1fr;
     }
     
-    .hero-section h1 {
-        font-size: 1.8em;
+    .chart-wrapper {
+        height: 200px;
     }
 }
