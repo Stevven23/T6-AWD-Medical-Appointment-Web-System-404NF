@@ -19,32 +19,6 @@ document.getElementById('clearFilters').addEventListener('click', function() {
     alert('Filtros limpiados - Recargando todos los doctores');
 });
 
-function openAddDoctorModal() {
-    console.log('Abrir modal para agregar doctor');
-    alert('Aquí se abrirá un modal para agregar un nuevo doctor');
-    // todo modal logic
-}
-
-function viewDoctor(id) {
-    console.log('Ver detalles del doctor:', id);
-    alert(`Ver detalles del doctor ID: ${id}`);
-    // details logic
-}
-
-function editDoctor(id) {
-    console.log('Editar doctor:', id);
-    alert(`Editar doctor ID: ${id}`);
-    // todo edition logic
-}
-
-function deleteDoctor(id) {
-    if (confirm('¿Está seguro de que desea eliminar este doctor?')) {
-        console.log('Eliminar doctor:', id);
-        alert(`Doctor ID: ${id} eliminado`);
-        // TODO delete doctor from database
-    }
-}
-
 document.getElementById('searchDoctor').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();
     console.log('Buscando:', searchTerm);
