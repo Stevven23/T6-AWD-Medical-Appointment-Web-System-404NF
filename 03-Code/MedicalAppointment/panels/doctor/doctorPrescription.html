@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Receta - Doctor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/doctorStyle.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo1">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="./doctorHome.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="./doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a></li>
+                    <li><a href="./doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
+                    <li class="active"><a href="./doctorPrescription.html"><i class="fas fa-file-medical"></i> Generar
+                            Receta</a></li>
+                    <li><a href="./doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
+                    <li><a href="./doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="./doctorPerfil.html"><i class="fas fa-user-cog"></i> Perfil</a></li>
+                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
+                            Sesion</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>Generar Receta Médica</h1>
+            </header>
+
+            <div class="stats-grid-prescription">
+                <div class="stat-card">
+                    <h3>Total Pacientes</h3>
+                    <p id="total-pacientes">124</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Especialidades</h3>
+                    <p id="total-especialidades">8</p>
+                </div>
+            </div>
+
+            <div class="card prescription-wizard">
+
+                <div id="step-1-specialty">
+                    <h2>Paso 1: Seleccione la Especialidad</h2>
+                    <select id="specialty-select" class="form-select">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+
+                <div id="step-2-patient" style="display: none;">
+                    <button id="back-to-specialty" class="submit-button">Cambiar Especialidad</button>
+                    <h2 id="patient-list-title">Paso 2: Seleccione un Paciente</h2>
+                    <div id="patient-list" class="patient-list-container">
+                    </div>
+                </div>
+
+                <div id="step-3-prescription" style="display: none;">
+                    <button id="back-to-patients" class="submit-button">Cambiar Paciente</button>
+                    <h2 id="patient-name-header">Recetas para: [Nombre Paciente]</h2>
+
+                    <div id="prescription-history-container">
+                        <h3>Historial de Recetas</h3>
+                        <div id="prescription-list">
+                        </div>
+                        <button id="btn-show-form" class="submit-button">
+                            <i class="fas fa-plus"></i> Generar Nueva Receta
+                        </button>
+                    </div>
+
+                    <div id="prescription-form-container" style="display: none;">
+                        <h3>Nueva Receta Médica</h3>
+                        <form id="prescription-form">
+                            <div class="form-group">
+                                <label for="diag">Diagnóstico:</label>
+                                <textarea id="diag" class="form-input" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="meds">Medicamento/s:</label>
+                                <textarea id="meds" class="form-input" rows="4" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="indic">Indicaciones:</label>
+                                <textarea id="indic" class="form-input" rows="4" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="duration">Duración del tratamiento:</label>
+                                <input type="text" id="duration" class="form-input" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" id="btn-cancel-form" class="submit-button">Cancelar</button>
+                                <button type="submit" class="submit-button">Guardar Receta</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="prescription-view-container" style="display: none;">
+                    <button id="btn-back-to-history" class="submit-button">Volver al Historial</button>
+                    <button id="btn-download-pdf" class="submit-button"><i class="fas fa-file-pdf"></i>
+                        Descargar PDF</button>
+
+                    <h3>Detalle de la Receta</h3>
+                    <div class="prescription-paper" id="prescription-content-view">
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="../../js/doctorPrescription.js"></script>
+</body>
+
+</html>
