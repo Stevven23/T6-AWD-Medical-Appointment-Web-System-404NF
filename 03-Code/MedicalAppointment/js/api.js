@@ -1,7 +1,9 @@
+const API_URL = 'https://medical-appointment-backend-2xx0.onrender.com';
+
 // Función para probar la conexión con el backend
 async function testBackendConnection() {
     try {
-        const response = await fetch('http://localhost:3000/api/test');
+        const response = await fetch(`${API_URL}/api/test`);
         const data = await response.json();
         console.log('Respuesta del backend:', data.message);
     } catch (error) {
@@ -12,7 +14,7 @@ async function testBackendConnection() {
 // Función para obtener doctores
 async function getDoctors() {
     try {
-        const response = await fetch('http://localhost:3000/api/doctors');
+        const response = await fetch(`${API_URL}/api/doctors`);
         const doctors = await response.json();
         return doctors;
     } catch (error) {
@@ -24,7 +26,7 @@ async function getDoctors() {
 // Función para crear una cita
 async function createAppointment(appointmentData) {
     try {
-        const response = await fetch('http://localhost:3000/api/appointments', {
+        const response = await fetch(`${API_URL}/api/appointments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -41,14 +43,9 @@ async function createAppointment(appointmentData) {
 
 // Ejemplo de uso:
 document.addEventListener('DOMContentLoaded', async () => {
-    // Probar conexión
     await testBackendConnection();
-    
-    // Si tienes una lista de doctores en tu HTML:
     const doctors = await getDoctors();
     console.log('Doctores obtenidos:', doctors);
-    
-    // Ejemplo de crear una cita (ajusta según tu formulario):
     const appointmentForm = document.getElementById('appointmentForm');
     if (appointmentForm) {
         appointmentForm.addEventListener('submit', async (e) => {
@@ -58,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 doctor_id: document.getElementById('doctorId').value,
                 date: document.getElementById('appointmentDate').value
             };
-            
             try {
                 const result = await createAppointment(formData);
                 alert('Cita creada con éxito!');
