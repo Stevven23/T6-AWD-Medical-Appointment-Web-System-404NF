@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+  <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clìnica San Miguel </title>
+  <title>Clínica San Miguel</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../css/loginStyle.css">
+  <style>
+    .loading {
+      display: none;
+      margin-left: 10px;
+    }
+    .spinner-border {
+      width: 1rem;
+      height: 1rem;
+    }
+  </style>
 </head>
 <body>
   <div class="login-container">
@@ -22,45 +32,122 @@
       <div class="login-header">
         <h1>Accede a tu cuenta</h1>
       </div>
-      <form id="loginForm" class="login-form" action="config/login.php" method="POST">
+  <form id="loginForm" class="login-form">
         <div class="group-field">
-          <input type="text" name="email" id="email" placeholder="Correo Electrónico" class="form-control" required>
+          <input type="email" id="email" placeholder="Correo Electrónico" class="form-control" required>
         </div>
         <div class="group-field">
-          <input type="password" name="clave" id="contrasena" placeholder="Contraseña" class="form-control" required>
+          <input type="password" id="contrasena" placeholder="Contraseña" class="form-control" required>
         </div>
-        <div class="group-field">
-          <label for="role" class="form-label">Entrar como</label>
-          <select id="role" class="form-control">
-            <option value="patient">Paciente</option>
-            <option value="doctor">Doctor</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </div>
+        <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
         <div class="register-option text-center mb-3">
-            <p class="mb-0">¿No tienes una cuenta? <a href="registro.php" class="register-link">Regístrate aquí</a></p>
+          <p class="mb-0">¿No tienes una cuenta? <a href="#" id="registerLink" class="register-link">Regístrate aquí</a></p>
         </div>
-        <button type="submit" class="enter-button">Ingresar</button>
+        <button type="submit" class="enter-button d-flex align-items-center justify-content-center">
+          <span>Ingresar</span>
+          <div class="loading">
+            <div class="spinner-border text-light" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        </button>
       </form>
     </div>
   </div>
   <script>
-    // Prototipo: interceptar submit y redirigir según rol seleccionado
-    document.getElementById('loginForm').addEventListener('submit', function(e){
-      e.preventDefault(); // evitar envío real
-      var role = document.getElementById('role').value;
-      // redirecciones locales para prototipo
-      if(role === 'patient'){
-        window.location.href = 'patient/patientDashboard.html';
-      } else if(role === 'doctor'){
-        window.location.href = 'doctor/doctorHome.html';
-      } else if(role === 'admin'){
-        window.location.href = 'admin/DashboardAdmin.html';
-      } else {
-        // fallback
-        window.location.href = '../index.html';
-      }
+    const loginForm = document.getElementById('loginForm');
+    const errorDiv = document.getElementById('errorMessage');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const loadingSpinner = document.querySelector('.loading');
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('contrasena').value;
+
+        try {
+            errorDiv.className = 'alert alert-danger d-none mt-3';
+            console.log('Intentando conectar al backend...');
+            
+            const response = await fetch('http://localhost:3000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    email: email,
+                    password: password 
+                })
+            }).catch(error => {
+                console.error('Error de conexión:', error);
+                throw new Error('No se puede conectar al servidor. ¿Está corriendo el backend?');
+            });
+
+            console.log('Respuesta recibida:', response.status);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error en el inicio de sesión');
+            }
+
+            // Guardar datos de sesión
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            // Redirigir según el rol que viene del servidor
+            const userRole = data.user.role;
+            switch(userRole) {
+                case 'patient':
+                    window.location.href = 'patient/patientDashboard.html';
+                    break;
+                case 'doctor':
+                    window.location.href = 'doctor/doctorHome.html';
+                    break;
+                case 'admin':
+                    window.location.href = 'Admin/DashboardAdmin.html';
+                    break;
+                default:
+                    throw new Error('Rol no válido');
+            }
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.className = 'alert alert-danger mt-3';
+        }
     });
+
+    // Función global para cerrar sesión
+    window.logout = function() {
+        // Limpiar localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirigir al login
+        // Obtener la ruta base del proyecto
+        const baseUrl = window.location.pathname.split('/panels')[0];
+        window.location.href = baseUrl + '/panels/login.html';
+    }
+
+    // Verificar si ya hay sesión activa
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    
+    if (token && user) {
+        // Redirigir si ya está autenticado
+        switch(user.role) {
+            case 'patient':
+                window.location.href = 'patient/patientDashboard.html';
+                break;
+            case 'doctor':
+                window.location.href = 'doctor/doctorHome.html';
+                break;
+            case 'admin':
+                window.location.href = 'Admin/DashboardAdmin.html';
+                break;
+        }
+    }
   </script>
 </body>
 </html>
