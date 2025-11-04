@@ -5,14 +5,16 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const supabase = require('./database');
 const app = express();
-const PORT = 3000;
+// Use environment port when deployed (Render, Heroku, etc.)
+const PORT = process.env.PORT || 3000;
 
 // Configuración de CORS
 app.use(cors({
     origin: [
         'http://127.0.0.1:5500',
         'http://localhost:5500',
-        'https://medical-appointment-frontend-ten.vercel.app/' 
+        // NOTE: no trailing slash — origin must match exactly
+        'https://medical-appointment-frontend-ten.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
