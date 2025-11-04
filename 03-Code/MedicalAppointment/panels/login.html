@@ -69,11 +69,14 @@
         try {
             errorDiv.className = 'alert alert-danger d-none mt-3';
             console.log('Intentando conectar al backend...');
+            console.log('Hostname actual:', window.location.hostname); // Debug
             
-            // Usar la misma URL base que api.js
-            const API_URL = window.location.hostname === 'medical-appointment-frontend-ten.vercel.app'
-                ? 'https://medical-appointment-backend-2xx0.onrender.com'
-                : 'http://localhost:3000';
+            // Usar la URL de Render siempre que no estemos en localhost
+            const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:3000'
+                : 'https://medical-appointment-backend-2xx0.onrender.com';
+            
+            console.log('URL del backend seleccionada:', API_URL); // Debug
             
             const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
