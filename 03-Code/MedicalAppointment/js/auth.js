@@ -1,6 +1,16 @@
 // auth.js - Manejo de autenticación
 
-const API_URL = 'http://localhost:3000/api'; // Ajusta según tu configuración
+// API_URL dinámico: usa el backend desplegado cuando el frontend está en Vercel,
+// y localhost en desarrollo. Ajusta el dominio si cambias el deploy.
+const API_URL = (function(){
+    const host = window.location.hostname;
+    // Frontend en Vercel (dominio de producción)
+    if (host === 'medical-appointment-frontend-ten.vercel.app') {
+        return 'https://medical-appointment-backend-2xx0.onrender.com/api';
+    }
+    // Por defecto usar localhost para desarrollo local
+    return 'http://localhost:3000/api';
+})();
 
 // Función global de logout
 window.logout = function() {
