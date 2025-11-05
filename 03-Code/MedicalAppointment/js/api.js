@@ -1,9 +1,22 @@
-const API_URL = 'https://medical-appointment-backend-2xx0.onrender.com';
+const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://medical-appointment-backend-2xx0.onrender.com';
+
+// Configuración por defecto para todas las peticiones fetch
+const defaultFetchOptions = {
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': window.location.origin
+    },
+    credentials: 'include',
+    mode: 'cors'
+};
 
 // Función para probar la conexión con el backend
 async function testBackendConnection() {
     try {
-        const response = await fetch(`${API_URL}/api/test`);
+        const response = await fetch(`${API_URL}/api/test`, defaultFetchOptions);
         const data = await response.json();
         console.log('Respuesta del backend:', data.message);
     } catch (error) {

@@ -13,13 +13,14 @@ app.use(cors({
     origin: [
         'http://127.0.0.1:5500',
         'http://localhost:5500',
-        // NOTE: no trailing slash — origin must match exactly
         'https://medical-appointment-frontend-ten.vercel.app',
         'https://t6-awd-medical-appointment-web-syst.vercel.app'
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Requested-With'],
+    optionsSuccessStatus: 204
 }));
 
 
