@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showStep2() {
-        patientListTitle.textContent = `Paso 1: Seleccione un Paciente`;
+        patientListTitle.textContent = `Seleccione un Paciente`;
         loadPatients();
 
         if (step1) step1.style.display = 'none';
