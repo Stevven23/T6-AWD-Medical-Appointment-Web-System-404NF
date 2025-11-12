@@ -1,4 +1,4 @@
-// Actualizar correo electrónico
+
 document.getElementById('emailForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -20,14 +20,12 @@ document.getElementById('emailForm').addEventListener('submit', function (e) {
         return;
     }
 
-    // Aquí iría la llamada a la API
     alert('Correo electrónico actualizado exitosamente.');
     document.getElementById('currentEmail').value = newEmail;
     document.getElementById('newEmail').value = '';
     document.getElementById('confirmEmail').value = '';
 });
 
-// Cambiar contraseña
 document.getElementById('passwordForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -55,14 +53,12 @@ document.getElementById('passwordForm').addEventListener('submit', function (e) 
         return;
     }
 
-    // Aquí iría la llamada a la API
     alert('Contraseña cambiada exitosamente.');
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
     document.getElementById('confirmPassword').value = '';
 });
 
-// Validaciones
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
