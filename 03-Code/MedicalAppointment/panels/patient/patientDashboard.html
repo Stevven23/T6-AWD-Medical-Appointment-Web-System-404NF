@@ -21,42 +21,41 @@
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <li class="active"><a href="#"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="active"><a href="patientDashboard.html"><i class="fas fa-home"></i> Inicio</a></li>
                     <li><a href="patientAppointments.html"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
                     <li><a href="patientHistory.html"><i class="fas fa-file-medical"></i> Historial Médico</a></li>
                     <li><a href="patientPrescriptions.html"><i class="fas fa-pills"></i> Recetas</a></li>
-                    <li><a href="patientLabResults.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
+                    <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
-                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
-                            Sesión</a>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                 </ul>
             </nav>
         </aside>
 
         <main class="main-content">
             <header class="header">
-                <h1>Bienvenido, Carlos</h1>
+                <h1>Bienvenido, <span id="userName">Carlos</span></h1>
                 <div class="user-profile">
-                    <span>Carlos Mendoza</span>
+                    <span id="userNameHeader">Carlos Mendoza</span>
                     <i class="fas fa-user-circle"></i>
                 </div>
             </header>
 
             <section class="dashboard-grid">
-                <div class="card next-appointment">
+                <div class="card next-appointment" id="nextAppointmentCard">
                     <h3>Próxima Cita</h3>
                     <div class="appointment-card">
-                        <div class="date">25 Oct</div>
-                        <div class="time">10:30 AM</div>
-                        <div class="doctor">Dr. Sofia Pérez - Cardiología</div>
+                        <div class="date" id="nextAppointmentDate">25 Oct</div>
+                        <div class="time" id="nextAppointmentTime">10:30 AM</div>
+                        <div class="doctor"><span id="nextAppointmentDoctor">Dr. Sofia Pérez</span> - <span id="nextAppointmentSpecialty">Cardiología</span></div>
                     </div>
                     <button class="btn-reschedule">Reprogramar Cita</button>
                 </div>
 
                 <div class="card quick-actions">
                     <h3 style="grid-column: 1 / -1;">Acciones Rápidas</h3>
-                    <a href="#" class="action-btn">
+                    <a href="newAppointment.html" class="action-btn">
                         <i class="fas fa-calendar-plus"></i>
                         <span>Agendar Cita</span>
                     </a>
@@ -105,7 +104,7 @@
                     </div>
                     <div class="summary-item">
                         <span class="label">Última Consulta</span>
-                        <span class="value">15 Oct 2025</span>
+                        <span class="value" id="lastConsultationDate">15 Oct 2025</span>
                     </div>
                     <div class="summary-item">
                         <span class="label">Próximo Chequeo</span>
@@ -115,27 +114,53 @@
                         <span class="label">Medicamentos Activos</span>
                         <span class="value">2</span>
                     </div>
+                    <div class="summary-item" style="display:none;">
+                        <span class="label">Completadas</span>
+                        <span class="value" id="totalCompleted">0</span>
+                    </div>
+                    <div class="summary-item" style="display:none;">
+                        <span class="label">Próximas</span>
+                        <span class="value" id="upcomingCount">0</span>
+                    </div>
+                    <div class="summary-item" style="display:none;">
+                        <span class="label">Canceladas</span>
+                        <span class="value" id="cancelledCount">0</span>
+                    </div>
+                    <div style="display:none;">
+                        <span id="lastConsultationDoctor">Dr. Juan Martínez</span>
+                    </div>
                 </div>
 
                 <div class="card notifications" style="grid-column: 1 / -1;">
                     <h3>Notificaciones</h3>
                     <div class="notification-item">
                         <div class="title">Recordatorio de Cita</div>
-                        <div class="text">Tienes una cita programada para el 25 de octubre a las 10:30 AM con Dr. Sofia
-                            Pérez</div>
+                        <div class="text">Tienes una cita programada para el 25 de octubre a las 10:30 AM con Dr. Sofia Pérez</div>
                     </div>
                     <div class="notification-item info">
                         <div class="title">Resultados Disponibles</div>
-                        <div class="text">Los resultados de tu análisis de sangre del 15 de octubre ya están disponibles
-                        </div>
+                        <div class="text">Los resultados de tu análisis de sangre del 15 de octubre ya están disponibles</div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
-        <script src="../../js/appointmentManager.js"></script>
+    
+    <script src="../../js/appointmentManager.js"></script>
     <script src="../../js/notificationManager.js"></script>
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientDashboard.js"></script>
+    
     <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+        
         // Actualizar próxima cita en el dashboard
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
@@ -146,9 +171,9 @@
                         if (appointmentCard) {
                             const date = new Date(nextAppointment.date);
                             appointmentCard.innerHTML = `
-                                <div class="date">${date.getDate()} ${['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][date.getMonth()]}</div>
-                                <div class="time">${appointmentManager.formatTime(nextAppointment.time)}</div>
-                                <div class="doctor">${nextAppointment.doctorName} - ${nextAppointment.specialty}</div>
+                                <div class="date" id="nextAppointmentDate">${date.getDate()} ${['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][date.getMonth()]}</div>
+                                <div class="time" id="nextAppointmentTime">${appointmentManager.formatTime(nextAppointment.time)}</div>
+                                <div class="doctor"><span id="nextAppointmentDoctor">${nextAppointment.doctorName}</span> - <span id="nextAppointmentSpecialty">${nextAppointment.specialty}</span></div>
                             `;
                         }
                     }
@@ -156,9 +181,6 @@
             }, 100);
         });
     </script>
-</body>
-</html>
-
 </body>
 
 </html>

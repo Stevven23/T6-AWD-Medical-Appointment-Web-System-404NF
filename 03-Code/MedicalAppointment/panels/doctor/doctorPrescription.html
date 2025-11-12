@@ -28,7 +28,7 @@
                     <li><a href="./doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
                     <li><a href="./doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
                     <li><a href="./doctorPerfil.html"><i class="fas fa-user-cog"></i> Perfil</a></li>
-                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
+                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
                             Sesion</a></li>
                 </ul>
             </nav>
@@ -42,26 +42,14 @@
             <div class="stats-grid-prescription">
                 <div class="stat-card">
                     <h3>Total Pacientes</h3>
-                    <p id="total-pacientes">124</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Especialidades</h3>
-                    <p id="total-especialidades">8</p>
+                    <p id="total-pacientes">0</p>
                 </div>
             </div>
 
             <div class="card prescription-wizard">
 
-                <div id="step-1-specialty">
-                    <h2>Paso 1: Seleccione la Especialidad</h2>
-                    <select id="specialty-select" class="form-select">
-                        <option value="">Seleccionar...</option>
-                    </select>
-                </div>
-
-                <div id="step-2-patient" style="display: none;">
-                    <button id="back-to-specialty" class="submit-button">Cambiar Especialidad</button>
-                    <h2 id="patient-list-title">Paso 2: Seleccione un Paciente</h2>
+                <div id="step-2-patient">
+                    <h2 id="patient-list-title">Seleccione un Paciente</h2>
                     <div id="patient-list" class="patient-list-container">
                     </div>
                 </div>

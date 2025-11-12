@@ -2,9 +2,9 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-RTL">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles de la Cita y Expediente - Doctor's Dashboard</title>
+    <title>Pacientes - Doctor's Dashboard</title>
     <link rel="stylesheet" href="../../css/doctorStyle.css">
     <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -12,6 +12,7 @@
 
 <body>
     <div class="dashboard-container">
+
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -20,27 +21,58 @@
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="./doctorHome.html"><i class="fas fa-home"></i>
-                            Inicio</a></li>
-                    <li><a href="./doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a>
-                    </li>
+                    <li><a href="./doctorHome.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="./doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a></li>
                     <li class="active"><a href="./doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
-                    <li><a href="./doctorPrescription.html"><i class="fas fa-file-medical"></i> Generar
-                            Receta</a></li>
+                    <li><a href="./doctorPrescription.html"><i class="fas fa-file-medical"></i> Generar Receta</a></li>
                     <li><a href="./doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
                     <li><a href="./doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
                     <li><a href="./doctorPerfil.html"><i class="fas fa-user-cog"></i>Perfil</a></li>
-                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar
-                            Sesion</a>
+                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
+                            Sesion</a></li>
                 </ul>
             </nav>
         </aside>
 
-        <main class="main-content" id="appointment-details-page">
+        <main class="main-content" id="patient-list-page">
+            <header class="main-header">
+                <h1>Mis Pacientes</h1>
+                <div class="header-actions">
+                    <input type="search" placeholder="Buscar paciente por nombre o cédula..." class="search-bar">
+                    <button class="btn-primary"><i class="fas fa-plus"></i> Nuevo Paciente</button>
+                </div>
+            </header>
+
+            <section class="patient-list-container card">
+                <div class="filter-tabs">
+                    <button class="active">Todos</button>
+                    <button>Crónicos</button>
+                    <button>Nuevos</button>
+                </div>
+
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Cédula</th>
+                            <th>Última Visita</th>
+                            <th>Condición Principal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patient-table-body">
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <main class="main-content" id="appointment-details-page" style="display: none;">
             <header class="appointment-header">
                 <div class="header-left">
-                    <h1>Detalles de la Cita</h1>
-                    <p>Paciente: María Rodríguez - Revisión General</p>
+                    <button class="btn-back" id="btn-back-to-list"><i class="fas fa-arrow-left"></i> Volver a la
+                        lista</button>
+                    <h1>Detalles del Paciente</h1>
+                    <p id="detail-header-info">Paciente: Nombre - Motivo</p>
                 </div>
             </header>
 
@@ -48,15 +80,16 @@
                 <div class="card patient-info-card">
                     <h2>Información del Paciente</h2>
                     <div class="patient-profile">
-                        <img src="../../sources/img/patient.jpg" alt="Patient Avatar" class="patient-avatar">
+                        <img src="../../sources/img/patient.jpg" alt="Patient Avatar" class="patient-avatar"
+                            id="detail-patient-avatar">
                         <div class="patient-details">
-                            <h3>María Rodríguez</h3>
-                            <p><strong>Edad:</strong> 35 años</p>
-                            <p><strong>Contacto:</strong> 0987564883 | maria.r@gmail.com</p>
-                            <p><strong>Cédula:</strong> 1726456754</p>
-                            <p><strong>Alergias:</strong> Penicilina</p>
-                            <p><strong>Condiciones Previas:</strong> Asma leve</p>
-                            <p><strong>Última Cita:</strong> 10 de Julio de 2025</p>
+                            <h3 id="detail-patient-name">Nombre del Paciente</h3>
+                            <p><strong>Edad:</strong> <span id="detail-patient-age">0</span> años</p>
+                            <p><strong>Contacto:</strong> <span id="detail-patient-contact"></span></p>
+                            <p><strong>Cédula:</strong> <span id="detail-patient-id"></span></p>
+                            <p><strong>Alergias:</strong> <span id="detail-patient-allergies"></span></p>
+                            <p><strong>Condiciones Previas:</strong> <span id="detail-patient-conditions"></span></p>
+                            <p><strong>Última Cita:</strong> <span id="detail-patient-last-visit"></span></p>
                         </div>
                     </div>
                 </div>
@@ -66,7 +99,6 @@
                     <p><strong>Fecha:</strong> Martes, 18 de Julio de 2024</p>
                     <p><strong>Hora:</strong> 09:00 AM - 09:45 AM</p>
                     <p><strong>Tipo de Consulta:</strong> Revisión General</p>
-                    <p><strong>Sala:</strong> Sala #12</p>
                     <p><strong>Estado:</strong> Concluida</p>
                 </div>
             </section>
@@ -74,65 +106,74 @@
             <section class="patient-record-details">
                 <div class="card previous-consultations-card">
                     <h2>Consultas Anteriores</h2>
-                    <div class="consultation-entry">
-                        <strong>10 Enero 2024 - Revisión Anual</strong>
-                        <p>Diagnóstico: Control rutinario, todo normal. <a href="#">Ver detalles</a></p>
-                    </div>
-                    <div class="consultation-entry">
-                        <strong>15 Mayo 2023 - Control de Asma</strong>
-                        <p>Diagnóstico: Ajuste de medicación inhalatoria. <a href="#">Ver detalles</a></p>
+                    <div id="detail-consultations">
                     </div>
                 </div>
-
                 <div class="card test-results-card">
                     <h2>Resultados de Exámenes</h2>
-                    <div class="test-result">
-                        <strong>25 Febrero 2024 - Hemograma Completo</strong>
-                        <p>Resultados normales en glóbulos rojos y blancos</p>
-                        <p><a href="#"><i class="fas fa-file-pdf"></i> Ver PDF</a></p>
-                    </div>
-                    <div class="test-result">
-                        <strong>05 Junio 2023 - Radiografía de Tórax</strong>
-                        <p>Sin hallazgos significativos</p>
-                        <p><a href="#"><i class="fas fa-image"></i> Ver Imagen</a></p>
-                    </div>
-                    <div class="test-result">
-                        <strong>15 Enero 2023 - Análisis de Sangre</strong>
-                        <p>Niveles de colesterol ligeramente elevados</p>
-                        <p><a href="#"><i class="fas fa-file-pdf"></i> Ver PDF</a></p>
+                    <div id="detail-tests">
                     </div>
                 </div>
-
                 <div class="card prescriptions-card">
                     <h2>Prescripciones</h2>
-                    <div class="prescription-entry">
-                        <strong>Salbutamol - 1 puff c/8h</strong>
-                        <p>Duración: 30 días</p>
-                        <p>Notas: Usar en caso de crisis asmática</p>
+                    <div id="detail-prescriptions">
                     </div>
-                    <div class="prescription-entry">
-                        <strong>Loratadina - 10mg diario</strong>
-                        <p>Duración: 15 días</p>
-                        <p>Notas: Tomar en ayunas por la mañana</p>
-                    </div>
-                    <div class="prescription-entry">
-                        <strong>Paracetamol - 500mg</strong>
-                        <p>Duración: 5 días</p>
-                        <p>Notas: Tomar cada 8 horas si hay dolor o fiebre</p>
-                    </div>
-                </div>
-
-                <div class="card notes-card full-width-card">
-                    <h2>Notas de la Cita</h2>
-                    <textarea class="consultation-notes"
-                        placeholder="Escriba aquí las observaciones, diagnóstico, tratamiento y prescripciones..."></textarea>
-                </div>
-                <div class="form-actions full-width-card">
-                    <button class="submit-button">Enviar</button>
                 </div>
             </section>
         </main>
+
+        <main class="main-content" id="new-patient-form-page" style="display: none;">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="btn-back" id="btn-back-to-list-from-form"><i class="fas fa-arrow-left"></i> Volver a
+                        la lista</button>
+                    <h1>Registrar Nuevo Paciente</h1>
+                </div>
+            </header>
+
+            <section class="card form-container-card">
+                <form id="new-patient-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="new-patient-name">Nombre Completo</label>
+                            <input type="text" id="new-patient-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-patient-cedula">Cédula</label>
+                            <input type="text" id="new-patient-cedula" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-patient-age">Edad</label>
+                            <input type="number" id="new-patient-age">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-patient-contact">Contacto</label>
+                            <input type="text" id="new-patient-contact">
+                        </div>
+                        <div class="form-group large-field">
+                            <label for="new-patient-allergies">Alergias Conocidas</label>
+                            <input type="text" id="new-patient-allergies" placeholder="Ej: Penicilina, Mariscos...">
+                        </div>
+                        <div class="form-group large-field">
+                            <label for="new-patient-conditions">Condición Principal / Motivo</label>
+                            <input type="text" id="new-patient-conditions"
+                                placeholder="Ej: Hipertensión, Control Pediátrico...">
+                        </div>
+                        <div class="form-group large-field">
+                            <label for="new-patient-avatar">Foto del Paciente (Opcional, .png o .jpg)</label>
+                            <input type="file" id="new-patient-avatar" accept="image/png, image/jpeg">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Guardar Paciente</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
     </div>
+    <script src="../../js/doctorPatients.js"></script>
 </body>
 
 </html>

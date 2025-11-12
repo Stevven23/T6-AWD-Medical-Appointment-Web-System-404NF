@@ -27,7 +27,7 @@
                     <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
-                    <li><a href="../../../MedicalAppointment/index.html"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</a></li>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</a></li>
                 </ul>
             </nav>
         </aside>
@@ -36,86 +36,29 @@
             <header class="header">
                 <h1>Mis Citas</h1>
                 <div class="user-profile">
-                    <span>Carlos Mendoza</span>
+                    <span id="userName">Carlos Mendoza</span>
                     <i class="fas fa-user-circle"></i>
                 </div>
             </header>
 
             <section class="appointments-section">
-                <button class="btn-primary"><i class="fas fa-plus"></i> Nueva Cita</button>
+                <button class="btn-primary" onclick="window.location.href='newAppointment.html'"><i class="fas fa-plus"></i> Nueva Cita</button>
                 
                 <div class="tabs">
-                    <button class="tab-btn active">Próximas</button>
-                    <button class="tab-btn">Pasadas</button>
-                    <button class="tab-btn">Canceladas</button>
+                    <button class="tab-btn active" data-filter="">Todas</button>
+                    <button class="tab-btn" data-filter="scheduled,confirmed">Próximas</button>
+                    <button class="tab-btn" data-filter="completed">Pasadas</button>
+                    <button class="tab-btn" data-filter="cancelled">Canceladas</button>
                 </div>
 
-                <div class="appointments-list" id="appointmentsListContainer">
+                <div class="appointments-list" id="appointmentsList">
                     <!-- Las citas se renderizan dinámicamente aquí -->
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modal para agregar/editar cita -->
-    <div id="appointmentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle"><i class="fas fa-plus"></i> Nueva Cita</h2>
-                <span class="close" onclick="closeAppointmentModal()">&times;</span>
-            </div>
-            <form id="appointmentForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="appointmentDoctor">Doctor *</label>
-                        <select id="appointmentDoctor" required>
-                            <option value="">Seleccione un doctor</option>
-                            <option value="Dr. Sofia Pérez">Dr. Sofia Pérez</option>
-                            <option value="Dr. Juan Martínez">Dr. Juan Martínez</option>
-                            <option value="Dra. Ana López">Dra. Ana López</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentSpecialty">Especialidad *</label>
-                        <select id="appointmentSpecialty" required>
-                            <option value="">Seleccione especialidad</option>
-                            <option value="Cardiología">Cardiología</option>
-                            <option value="Medicina General">Medicina General</option>
-                            <option value="Oftalmología">Oftalmología</option>
-                            <option value="Pediatría">Pediatría</option>
-                            <option value="Dermatología">Dermatología</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentDate">Fecha *</label>
-                        <input type="date" id="appointmentDate" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentTime">Hora *</label>
-                        <input type="time" id="appointmentTime" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentReason">Motivo de la consulta *</label>
-                        <textarea id="appointmentReason" rows="3" required placeholder="Describa el motivo de su consulta"></textarea>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeAppointmentModal()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-check"></i> Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+ 
     <!-- Modal de confirmación -->
     <div id="confirmModal" class="modal">
         <div class="modal-content confirm-modal">
@@ -139,6 +82,19 @@
 
     <script src="../../js/appointmentManager.js"></script>
     <script src="../../js/notificationManager.js"></script>
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientAppointments.js"></script>
+    
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

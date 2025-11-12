@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const doctorController = require('../controllers/doctorController');
+<<<<<<< HEAD
 // const authMiddleware = require('../middleware/auth'); // Descomenta si usas autenticación
 
 // Rutas públicas (o protegidas con middleware de autenticación)
@@ -48,3 +49,15 @@ router.delete('/:id',
 );
 
 module.exports = router;
+=======
+const { authMiddleware } = require('../middleware/auth');
+
+// Requiere autenticación
+router.use(authMiddleware);
+
+router.get('/specialties', doctorController.getSpecialties);
+router.get('/', doctorController.getDoctors);
+router.get('/:id', doctorController.getDoctorById);
+
+module.exports = router;
+>>>>>>> c3d4174d18b6f5e0ee3daef1c98cce4a82711889

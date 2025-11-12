@@ -2,21 +2,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const initialMockData = {
         stats: {
-            totalPacientes: 124,
-            totalEspecialidades: 8
+            totalPacientes: 7
         },
-        specialties: [
-            "Cardiología",
-            "Dermatología",
-            "Medicina General",
-            "Pediatría"
+        patients: [
+            { id: 'p1', name: 'Ana García' },
+            { id: 'p2', name: 'Luis Torres' },
+            { id: 'p3', name: 'Maria López' },
+            { id: 'p4', name: 'Carlos Sanz' },
+            { id: 'p5', name: 'Elena Fernández' },
+            { id: 'p6', name: 'Javier Gómez' },
+            { id: 'p7', name: 'Sofía Niño' }
         ],
-        patients: {
-            "Cardiología": [{ id: 'p1', name: 'Ana García' }, { id: 'p2', name: 'Luis Torres' }],
-            "Dermatología": [{ id: 'p3', name: 'Maria López' }, { id: 'p4', name: 'Carlos Sanz' }],
-            "Medicina General": [{ id: 'p5', name: 'Elena Fernández' }, { id: 'p6', name: 'Javier Gómez' }],
-            "Pediatría": [{ id: 'p7', name: 'Sofía Niño' }]
-        },
         prescriptions: {
             'p3': [
                 {
@@ -44,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const step2 = document.getElementById('step-2-patient');
     const step3 = document.getElementById('step-3-prescription');
     const prescriptionView = document.getElementById('prescription-view-container');
-    const specialtySelect = document.getElementById('specialty-select');
+
     const patientList = document.getElementById('patient-list');
     const patientListTitle = document.getElementById('patient-list-title');
     const historyContainer = document.getElementById('prescription-history-container');
@@ -53,13 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const patientNameHeader = document.getElementById('patient-name-header');
     const form = document.getElementById('prescription-form');
     const btnDownloadPdf = document.getElementById('btn-download-pdf');
-
+    const btnShowForm = document.getElementById('btn-show-form');
+    const formSaveButton = form.querySelector('button[type="submit"]');
 
     let appData = {};
 
-    let currentSpecialty = null;
     let currentPatient = null;
     let currentPrescription = null;
+    let editingPrescriptionId = null;
 
     function loadDataFromLocalStorage() {
         const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -82,18 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showStep1() {
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-        step3.style.display = 'none';
-        prescriptionView.style.display = 'none';
-    }
+    function showStep2() {
+        patientListTitle.textContent = `Seleccione un Paciente`;
+        loadPatients();
 
-    function showStep2(specialty) {
-        currentSpecialty = specialty;
-        patientListTitle.textContent = `Paso 2: Pacientes de ${specialty}`;
-        loadPatients(specialty);
-        step1.style.display = 'none';
+        if (step1) step1.style.display = 'none';
         step2.style.display = 'block';
         step3.style.display = 'none';
         prescriptionView.style.display = 'none';
@@ -103,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPatient = patient;
         patientNameHeader.textContent = `Recetas para: ${patient.name}`;
         loadPrescriptionHistory(patient.id);
-        step1.style.display = 'none';
+
+        if (step1) step1.style.display = 'none';
         step2.style.display = 'none';
         step3.style.display = 'block';
         prescriptionView.style.display = 'none';
@@ -114,13 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
         historyContainer.style.display = 'block';
         formContainer.style.display = 'none';
         prescriptionView.style.display = 'none';
+        editingPrescriptionId = null;
+        btnShowForm.innerHTML = '<i class="fas fa-plus"></i> Generar Nueva Receta';
+        formSaveButton.textContent = 'Guardar Receta';
     }
 
     function showFormView() {
         historyContainer.style.display = 'none';
         formContainer.style.display = 'block';
         prescriptionView.style.display = 'none';
-        form.reset();
+
+        if (!editingPrescriptionId) {
+            form.reset();
+            btnShowForm.innerHTML = '<i class="fas fa-plus"></i> Generar Nueva Receta';
+            formSaveButton.textContent = 'Guardar Receta';
+        }
     }
 
     function showPrescriptionView(prescription) {
@@ -133,26 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadStats() {
-        document.getElementById('total-pacientes').textContent = appData.stats.totalPacientes;
-        document.getElementById('total-especialidades').textContent = appData.stats.totalEspecialidades;
+        document.getElementById('total-pacientes').textContent = appData.patients.length;
     }
 
-    function loadSpecialties() {
-        specialtySelect.innerHTML = '<option value="">Seleccionar...</option>';
-        appData.specialties.forEach(specialty => {
-            const option = document.createElement('option');
-            option.value = specialty;
-            option.textContent = specialty;
-            specialtySelect.appendChild(option);
-        });
-    }
-
-    function loadPatients(specialty) {
+    function loadPatients() {
         patientList.innerHTML = '';
-        const patients = appData.patients[specialty] || [];
+        const patients = appData.patients || [];
 
         if (patients.length === 0) {
-            patientList.innerHTML = '<p>No hay pacientes para esta especialidad.</p>';
+            patientList.innerHTML = '<p>No hay pacientes registrados.</p>';
             return;
         }
 
@@ -181,16 +169,18 @@ document.addEventListener('DOMContentLoaded', () => {
         prescriptions.forEach(rx => {
             const item = document.createElement('div');
             item.className = 'prescription-item';
+
             item.innerHTML = `
                 <div class="prescription-item-info">
                     <strong>Receta: ${rx.date}</strong>
                     <p>${rx.diagnostico}</p>
                 </div>
-                <i class="fas fa-eye"></i>
+                <div class="prescription-item-actions">
+                    <i class="fas fa-eye view-prescription-btn" data-prescription-id="${rx.id}" title="Ver Receta"></i>
+                    <i class="fas fa-edit edit-prescription-btn" data-prescription-id="${rx.id}" title="Editar Receta"></i>
+                    <i class="fas fa-trash delete-prescription-btn" data-prescription-id="${rx.id}" title="Eliminar Receta"></i>
+                </div>
             `;
-            item.addEventListener('click', () => {
-                showPrescriptionView(rx);
-            });
             prescriptionList.appendChild(item);
         });
     }
@@ -198,35 +188,101 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSavePrescription(event) {
         event.preventDefault();
 
-        const newPrescription = {
-            id: `r${Date.now()}`,
-            date: new Date().toLocaleDateString('es-ES'),
-            diagnostico: document.getElementById('diag').value,
-            medicamentos: document.getElementById('meds').value,
-            indicaciones: document.getElementById('indic').value,
-            duracion: document.getElementById('duration').value
-        };
+        const diagnostico = document.getElementById('diag').value;
+        const medicamentos = document.getElementById('meds').value;
+        const indicaciones = document.getElementById('indic').value;
+        const duracion = document.getElementById('duration').value;
 
-        if (!appData.prescriptions[currentPatient.id]) {
-            appData.prescriptions[currentPatient.id] = [];
+        if (editingPrescriptionId) {
+            const prescriptions = appData.prescriptions[currentPatient.id];
+            const rxIndex = prescriptions.findIndex(rx => rx.id === editingPrescriptionId);
+
+            if (rxIndex !== -1) {
+                prescriptions[rxIndex] = {
+                    ...prescriptions[rxIndex],
+                    diagnostico,
+                    medicamentos,
+                    indicaciones,
+                    duracion
+                };
+                alert('Receta actualizada con éxito.');
+            }
+        } else {
+            const newPrescription = {
+                id: `r${Date.now()}`,
+                date: new Date().toLocaleDateString('es-ES'),
+                diagnostico,
+                medicamentos,
+                indicaciones,
+                duracion
+            };
+
+            if (!appData.prescriptions[currentPatient.id]) {
+                appData.prescriptions[currentPatient.id] = [];
+            }
+            appData.prescriptions[currentPatient.id].push(newPrescription);
+            alert('Nueva receta guardada con éxito.');
         }
-        appData.prescriptions[currentPatient.id].push(newPrescription);
 
         saveDataToLocalStorage();
-
         loadPrescriptionHistory(currentPatient.id);
         showHistoryView();
+        editingPrescriptionId = null;
     }
+
+    function deletePrescription(patientId, prescriptionId) {
+        if (!patientId || !prescriptionId) return;
+
+        const prescription = appData.prescriptions[patientId].find(rx => rx.id === prescriptionId);
+        if (!prescription) return;
+
+        if (confirm(`¿Estás seguro de que quieres eliminar la receta del ${prescription.date} para ${currentPatient.name}?`)) {
+            appData.prescriptions[patientId] = appData.prescriptions[patientId].filter(
+                rx => rx.id !== prescriptionId
+            );
+
+            saveDataToLocalStorage();
+            loadPrescriptionHistory(patientId);
+
+            alert('Receta eliminada.');
+        }
+    }
+
+    function editPrescription(patientId, prescriptionId) {
+        if (!patientId || !prescriptionId) return;
+
+        const prescription = appData.prescriptions[patientId].find(rx => rx.id === prescriptionId);
+        if (!prescription) {
+            alert('Receta no encontrada para editar.');
+            return;
+        }
+
+        editingPrescriptionId = prescriptionId;
+
+        document.getElementById('diag').value = prescription.diagnostico;
+        document.getElementById('meds').value = prescription.medicamentos;
+        document.getElementById('indic').value = prescription.indicaciones;
+        document.getElementById('duration').value = prescription.duracion;
+
+        btnShowForm.textContent = `Editando Receta (${prescription.date})`;
+        formSaveButton.textContent = 'Actualizar Receta';
+
+        showFormView();
+    }
+
 
     function renderPrescription(prescription) {
         const view = document.getElementById('prescription-content-view');
+        const medsHtml = prescription.medicamentos.replace(/\n/g, '<br>');
+        const indicHtml = prescription.indicaciones.replace(/\n/g, '<br>');
+
         view.innerHTML = `
             <div class="header"><h4>${DOCTOR_NAME}</h4><p>Médico</p></div>
             <div class="detail-group"><strong>Paciente:</strong><p>${currentPatient.name}</p></div>
             <div class="detail-group"><strong>Fecha:</strong><p>${prescription.date}</p></div>
             <div class="detail-group"><strong>Diagnóstico:</strong><p>${prescription.diagnostico}</p></div>
-            <div class="detail-group"><strong>Medicamento/s (Rp/):</strong><p>${prescription.medicamentos}</p></div>
-            <div class="detail-group"><strong>Indicaciones:</strong><p>${prescription.indicaciones}</p></div>
+            <div class="detail-group"><strong>Medicamento/s (Rp/):</strong><p>${medsHtml}</p></div>
+            <div class="detail-group"><strong>Indicaciones:</strong><p>${indicHtml}</p></div>
             <div class="detail-group"><strong>Duración del Tratamiento:</strong><p>${prescription.duracion}</p></div>
             <div class="footer"><p>_________________________</p><p>Firma y Sello</p><p>${DOCTOR_NAME}</p></div>
         `;
@@ -276,26 +332,41 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error al generar el PDF:", error);
             alert("Hubo un error al generar el PDF. Intente de nuevo.");
-        } finally {
         }
     }
-
 
     appData = loadDataFromLocalStorage();
 
     loadStats();
-    loadSpecialties();
-    showStep1();
+    showStep2();
 
-    specialtySelect.addEventListener('change', (e) => { if (e.target.value) { showStep2(e.target.value); } });
-    document.getElementById('back-to-specialty').addEventListener('click', showStep1);
-    document.getElementById('back-to-patients').addEventListener('click', () => showStep2(currentSpecialty));
+    document.getElementById('back-to-patients').addEventListener('click', showStep2);
     document.getElementById('btn-back-to-history').addEventListener('click', showHistoryView);
-
     document.getElementById('btn-show-form').addEventListener('click', showFormView);
     document.getElementById('btn-cancel-form').addEventListener('click', showHistoryView);
     form.addEventListener('submit', handleSavePrescription);
-
     btnDownloadPdf.addEventListener('click', downloadPrescriptionPdf);
+
+    prescriptionList.addEventListener('click', (event) => {
+        const target = event.target;
+        const prescriptionId = target.dataset.prescriptionId;
+
+        if (!prescriptionId) return;
+
+        if (target.classList.contains('view-prescription-btn')) {
+            const prescription = appData.prescriptions[currentPatient.id].find(rx => rx.id === prescriptionId);
+            if (prescription) {
+                showPrescriptionView(prescription);
+            }
+        }
+
+        if (target.classList.contains('edit-prescription-btn')) {
+            editPrescription(currentPatient.id, prescriptionId);
+        }
+
+        if (target.classList.contains('delete-prescription-btn')) {
+            deletePrescription(currentPatient.id, prescriptionId);
+        }
+    });
 
 });
