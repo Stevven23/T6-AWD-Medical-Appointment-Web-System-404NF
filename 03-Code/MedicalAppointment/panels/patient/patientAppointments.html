@@ -27,7 +27,7 @@
                     <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
-                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</a></li>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</a></li>
                 </ul>
             </nav>
         </aside>
@@ -36,21 +36,22 @@
             <header class="header">
                 <h1>Mis Citas</h1>
                 <div class="user-profile">
-                    <span>Carlos Mendoza</span>
+                    <span id="userName">Carlos Mendoza</span>
                     <i class="fas fa-user-circle"></i>
                 </div>
             </header>
 
             <section class="appointments-section">
-                <button class="btn-primary"><i class="fas fa-plus"></i> Nueva Cita</button>
+                <button class="btn-primary" onclick="window.location.href='newAppointment.html'"><i class="fas fa-plus"></i> Nueva Cita</button>
                 
                 <div class="tabs">
-                    <button class="tab-btn active">Próximas</button>
-                    <button class="tab-btn">Pasadas</button>
-                    <button class="tab-btn">Canceladas</button>
+                    <button class="tab-btn active" data-filter="">Todas</button>
+                    <button class="tab-btn" data-filter="scheduled,confirmed">Próximas</button>
+                    <button class="tab-btn" data-filter="completed">Pasadas</button>
+                    <button class="tab-btn" data-filter="cancelled">Canceladas</button>
                 </div>
 
-                <div class="appointments-list" id="appointmentsListContainer">
+                <div class="appointments-list" id="appointmentsList">
                     <!-- Las citas se renderizan dinámicamente aquí -->
                 </div>
             </section>
@@ -139,6 +140,19 @@
 
     <script src="../../js/appointmentManager.js"></script>
     <script src="../../js/notificationManager.js"></script>
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientAppointments.js"></script>
+    
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

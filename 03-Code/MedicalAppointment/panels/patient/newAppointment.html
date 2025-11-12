@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Nueva Cita - Clínica San Miguel</title>
+    <link rel="stylesheet" href="../../css/mainStyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .btn-slot {
+            margin: 5px;
+            padding: 10px 15px;
+            min-width: 90px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .btn-slot:hover {
+            border-color: #4285f4;
+            background: #f0f7ff;
+        }
+        .btn-slot.active {
+            background-color: #4285f4 !important;
+            color: white !important;
+            border-color: #4285f4 !important;
+        }
+        .btn-slot:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .doctor-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        .slots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../../sources/img/logo.png" alt="Clínica San Miguel Logo">
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="patientDashboard.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="active"><a href="patientAppointments.html"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
+                    <li><a href="patientHistory.html"><i class="fas fa-file-medical"></i> Historial Médico</a></li>
+                    <li><a href="patientPrescriptions.html"><i class="fas fa-pills"></i> Recetas</a></li>
+                    <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
+                    <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
+                    <li><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>Agendar Nueva Cita</h1>
+                <div class="user-profile">
+                    <span id="userName">Carlos Mendoza</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <section class="profile-section">
+                <form id="newAppointmentForm">
+                    <div class="profile-grid">
+                        <!-- Especialidad y Doctor -->
+                        <div class="profile-card">
+                            <h3><i class="fas fa-stethoscope"></i> Especialidad y Doctor</h3>
+                            
+                            <div class="form-group">
+                                <label for="specialty">Especialidad *</label>
+                                <select id="specialty" class="form-input" required>
+                                    <option value="">Cargando especialidades...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="doctor">Doctor *</label>
+                                <select id="doctor" class="form-input" disabled required>
+                                    <option value="">Seleccione primero una especialidad</option>
+                                </select>
+                            </div>
+
+                            <div id="doctorInfo"></div>
+                        </div>
+
+                        <!-- Fecha y Hora -->
+                        <div class="profile-card">
+                            <h3><i class="fas fa-calendar"></i> Fecha y Hora</h3>
+                            
+                            <div class="form-group">
+                                <label for="appointmentDate">Fecha de la cita *</label>
+                                <input type="date" id="appointmentDate" class="form-input" disabled required>
+                                <small class="text-muted">Seleccione primero un doctor</small>
+                            </div>
+
+                            <div id="availableSlots">
+                                <label>Horarios disponibles</label>
+                                <p class="text-muted">Seleccione una fecha para ver los horarios disponibles</p>
+                            </div>
+                        </div>
+
+                        <!-- Motivo de consulta -->
+                        <div class="profile-card" style="grid-column: 1 / -1;">
+                            <h3><i class="fas fa-notes-medical"></i> Detalles de la Consulta</h3>
+                            
+                            <div class="form-group">
+                                <label for="reason">Motivo de la consulta (opcional)</label>
+                                <textarea id="reason" class="form-input" rows="4" placeholder="Describa brevemente el motivo de su consulta"></textarea>
+                            </div>
+
+                            <div class="form-row" style="gap: 10px; margin-top: 20px;">
+                                <button type="button" class="btn-secondary" onclick="window.location.href='patientAppointments.html'">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-check"></i> Agendar Cita
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/newAppointment.js"></script>
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
+</body>
+
+</html>
