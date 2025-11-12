@@ -58,65 +58,7 @@
         </main>
     </div>
 
-    <!-- Modal para agregar/editar cita -->
-    <div id="appointmentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle"><i class="fas fa-plus"></i> Nueva Cita</h2>
-                <span class="close" onclick="closeAppointmentModal()">&times;</span>
-            </div>
-            <form id="appointmentForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="appointmentDoctor">Doctor *</label>
-                        <select id="appointmentDoctor" required>
-                            <option value="">Seleccione un doctor</option>
-                            <option value="Dr. Sofia Pérez">Dr. Sofia Pérez</option>
-                            <option value="Dr. Juan Martínez">Dr. Juan Martínez</option>
-                            <option value="Dra. Ana López">Dra. Ana López</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentSpecialty">Especialidad *</label>
-                        <select id="appointmentSpecialty" required>
-                            <option value="">Seleccione especialidad</option>
-                            <option value="Cardiología">Cardiología</option>
-                            <option value="Medicina General">Medicina General</option>
-                            <option value="Oftalmología">Oftalmología</option>
-                            <option value="Pediatría">Pediatría</option>
-                            <option value="Dermatología">Dermatología</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentDate">Fecha *</label>
-                        <input type="date" id="appointmentDate" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentTime">Hora *</label>
-                        <input type="time" id="appointmentTime" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="appointmentReason">Motivo de la consulta *</label>
-                        <textarea id="appointmentReason" rows="3" required placeholder="Describa el motivo de su consulta"></textarea>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeAppointmentModal()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-check"></i> Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+ 
     <!-- Modal de confirmación -->
     <div id="confirmModal" class="modal">
         <div class="modal-content confirm-modal">

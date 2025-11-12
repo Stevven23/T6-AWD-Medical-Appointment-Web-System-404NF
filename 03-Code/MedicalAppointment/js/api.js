@@ -1,35 +1,27 @@
 // Configuración de API
 const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000/api'
-  : 'https://medical-appointment-backend-2xx0.onrender.com/api';
-
-
-  
-// Helper para obtener el token
-const getAuthToken = () => {
-  return localStorage.getItem('token');
-};
+    ? 'http://localhost:3000/api'
+    : 'https://medical-appointment-backend-2xx0.onrender.com/api';
 
 // Helper para headers con autenticación
 const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : ''
-  };
+    const token = Helpers.getAuthToken();
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
 };
 
 // Helper para hacer peticiones autenticadas
 const fetchWithAuth = async (url, options = {}) => {
-  const headers = getAuthHeaders();
-  
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...headers,
-      ...(options.headers || {})
-    }
-  });
+    const headers = getAuthHeaders();
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...headers,
+            ...(options.headers || {})
+        }
+    });
 
   // Si el token expiró, redirigir al login
   if (response.status === 401) {
