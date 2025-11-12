@@ -2,21 +2,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const initialMockData = {
         stats: {
-            totalPacientes: 124,
-            totalEspecialidades: 8
+            totalPacientes: 7 // Actualizado al número de pacientes
         },
-        specialties: [
-            "Cardiología",
-            "Dermatología",
-            "Medicina General",
-            "Pediatría"
+        // 'specialties' ha sido eliminado
+        patients: [ // CAMBIO: Esto ahora es un array, no un objeto
+            { id: 'p1', name: 'Ana García' },
+            { id: 'p2', name: 'Luis Torres' },
+            { id: 'p3', name: 'Maria López' },
+            { id: 'p4', name: 'Carlos Sanz' },
+            { id: 'p5', name: 'Elena Fernández' },
+            { id: 'p6', name: 'Javier Gómez' },
+            { id: 'p7', name: 'Sofía Niño' }
         ],
-        patients: {
-            "Cardiología": [{ id: 'p1', name: 'Ana García' }, { id: 'p2', name: 'Luis Torres' }],
-            "Dermatología": [{ id: 'p3', name: 'Maria López' }, { id: 'p4', name: 'Carlos Sanz' }],
-            "Medicina General": [{ id: 'p5', name: 'Elena Fernández' }, { id: 'p6', name: 'Javier Gómez' }],
-            "Pediatría": [{ id: 'p7', name: 'Sofía Niño' }]
-        },
         prescriptions: {
             'p3': [
                 {
@@ -40,11 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const DOCTOR_NAME = "Dr. Juan Perez";
     const LOCAL_STORAGE_KEY = 'doctorPrescriptionsData';
 
+    // 'step1' ya no es necesario, pero lo mantenemos por si acaso
     const step1 = document.getElementById('step-1-specialty');
     const step2 = document.getElementById('step-2-patient');
     const step3 = document.getElementById('step-3-prescription');
     const prescriptionView = document.getElementById('prescription-view-container');
-    const specialtySelect = document.getElementById('specialty-select');
+
+    // 'specialtySelect' ya no se usa
+    // const specialtySelect = document.getElementById('specialty-select'); 
+
     const patientList = document.getElementById('patient-list');
     const patientListTitle = document.getElementById('patient-list-title');
     const historyContainer = document.getElementById('prescription-history-container');
@@ -57,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let appData = {};
 
-    let currentSpecialty = null;
+    // 'currentSpecialty' ya no se usa
+    // let currentSpecialty = null; 
     let currentPatient = null;
     let currentPrescription = null;
 
@@ -82,18 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showStep1() {
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-        step3.style.display = 'none';
-        prescriptionView.style.display = 'none';
-    }
+    // 'showStep1' ya no es necesaria
 
-    function showStep2(specialty) {
-        currentSpecialty = specialty;
-        patientListTitle.textContent = `Paso 2: Pacientes de ${specialty}`;
-        loadPatients(specialty);
-        step1.style.display = 'none';
+    // Esta es ahora la función de inicio
+    function showStep2() {
+        // 'currentSpecialty' eliminado
+        patientListTitle.textContent = `Paso 1: Seleccione un Paciente`;
+        loadPatients(); // Ya no necesita 'specialty'
+
+        if (step1) step1.style.display = 'none'; // Oculta el paso de especialidad
         step2.style.display = 'block';
         step3.style.display = 'none';
         prescriptionView.style.display = 'none';
@@ -103,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPatient = patient;
         patientNameHeader.textContent = `Recetas para: ${patient.name}`;
         loadPrescriptionHistory(patient.id);
-        step1.style.display = 'none';
+
+        if (step1) step1.style.display = 'none';
         step2.style.display = 'none';
         step3.style.display = 'block';
         prescriptionView.style.display = 'none';
@@ -133,26 +133,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadStats() {
-        document.getElementById('total-pacientes').textContent = appData.stats.totalPacientes;
-        document.getElementById('total-especialidades').textContent = appData.stats.totalEspecialidades;
+        // Actualizado para contar directamente del array de pacientes
+        document.getElementById('total-pacientes').textContent = appData.patients.length;
+
+        // Línea de 'total-especialidades' eliminada
     }
 
-    function loadSpecialties() {
-        specialtySelect.innerHTML = '<option value="">Seleccionar...</option>';
-        appData.specialties.forEach(specialty => {
-            const option = document.createElement('option');
-            option.value = specialty;
-            option.textContent = specialty;
-            specialtySelect.appendChild(option);
-        });
-    }
+    // 'loadSpecialties' ya no es necesaria
 
-    function loadPatients(specialty) {
+    // 'loadPatients' ha sido modificada
+    function loadPatients() {
         patientList.innerHTML = '';
-        const patients = appData.patients[specialty] || [];
+        // Carga el array de pacientes directamente
+        const patients = appData.patients || [];
 
         if (patients.length === 0) {
-            patientList.innerHTML = '<p>No hay pacientes para esta especialidad.</p>';
+            patientList.innerHTML = '<p>No hay pacientes registrados.</p>';
             return;
         }
 
@@ -220,13 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPrescription(prescription) {
         const view = document.getElementById('prescription-content-view');
+        // Pre-formatea el texto para que respete los saltos de línea en HTML
+        const medsHtml = prescription.medicamentos.replace(/\n/g, '<br>');
+        const indicHtml = prescription.indicaciones.replace(/\n/g, '<br>');
+
         view.innerHTML = `
             <div class="header"><h4>${DOCTOR_NAME}</h4><p>Médico</p></div>
             <div class="detail-group"><strong>Paciente:</strong><p>${currentPatient.name}</p></div>
             <div class="detail-group"><strong>Fecha:</strong><p>${prescription.date}</p></div>
             <div class="detail-group"><strong>Diagnóstico:</strong><p>${prescription.diagnostico}</p></div>
-            <div class="detail-group"><strong>Medicamento/s (Rp/):</strong><p>${prescription.medicamentos}</p></div>
-            <div class="detail-group"><strong>Indicaciones:</strong><p>${prescription.indicaciones}</p></div>
+            <div class="detail-group"><strong>Medicamento/s (Rp/):</strong><p>${medsHtml}</p></div>
+            <div class="detail-group"><strong>Indicaciones:</strong><p>${indicHtml}</p></div>
             <div class="detail-group"><strong>Duración del Tratamiento:</strong><p>${prescription.duracion}</p></div>
             <div class="footer"><p>_________________________</p><p>Firma y Sello</p><p>${DOCTOR_NAME}</p></div>
         `;
@@ -276,26 +276,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error al generar el PDF:", error);
             alert("Hubo un error al generar el PDF. Intente de nuevo.");
-        } finally {
         }
     }
 
 
+    // --- INICIALIZACIÓN ---
+
     appData = loadDataFromLocalStorage();
 
     loadStats();
-    loadSpecialties();
-    showStep1();
+    // 'loadSpecialties()' eliminado
 
-    specialtySelect.addEventListener('change', (e) => { if (e.target.value) { showStep2(e.target.value); } });
-    document.getElementById('back-to-specialty').addEventListener('click', showStep1);
-    document.getElementById('back-to-patients').addEventListener('click', () => showStep2(currentSpecialty));
+    showStep2(); // CAMBIO: Inicia en el paso 2 (lista de pacientes)
+
+    // Event listener de 'specialtySelect' eliminado
+    // Event listener de 'back-to-specialty' eliminado
+
+    // Event listener de 'back-to-patients' actualizado
+    document.getElementById('back-to-patients').addEventListener('click', showStep2);
+
     document.getElementById('btn-back-to-history').addEventListener('click', showHistoryView);
-
     document.getElementById('btn-show-form').addEventListener('click', showFormView);
     document.getElementById('btn-cancel-form').addEventListener('click', showHistoryView);
     form.addEventListener('submit', handleSavePrescription);
-
     btnDownloadPdf.addEventListener('click', downloadPrescriptionPdf);
 
 });
