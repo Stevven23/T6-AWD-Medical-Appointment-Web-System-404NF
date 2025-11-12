@@ -2260,3 +2260,242 @@ textarea.form-input {
 .form-group input[type="file"]:not(:placeholder-shown) {
     color: #333;
 }
+
+/* doctorStyle.css o mainStyle.css */
+
+/* Estilo base para los botones de acción en la tabla */
+.patient-table td .btn-secondary,
+.patient-table td .btn-delete {
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: inline-flex;
+    /* Para alinear el icono si lo tiene */
+    align-items: center;
+    /* Centrar verticalmente el contenido */
+    justify-content: center;
+    /* Centrar horizontalmente el contenido */
+    margin-right: 5px;
+    /* Espacio entre el botón de ver y el de eliminar */
+}
+
+/* Estilo para el botón "Ver Expediente" */
+.patient-table td .btn-secondary {
+    background-color: #007bff;
+    /* Azul primario */
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.patient-table td .btn-secondary:hover {
+    background-color: #0056b3;
+    /* Azul más oscuro al pasar el ratón */
+    border-color: #0056b3;
+}
+
+/* Estilo para el nuevo botón "Eliminar" */
+.patient-table td .btn-delete {
+    background-color: #dc3545;
+    /* Rojo para acciones peligrosas */
+    color: white;
+    border: 1px solid #dc3545;
+    padding: 8px 10px;
+    /* Un poco menos de padding si es solo un icono */
+}
+
+.patient-table td .btn-delete:hover {
+    background-color: #c82333;
+    /* Rojo más oscuro al pasar el ratón */
+    border-color: #c82333;
+}
+
+/* Estilo para el icono dentro del botón de eliminar */
+.patient-table td .btn-delete .fas {
+    margin: 0;
+    /* Asegurarse de que no haya margen extra */
+}
+
+/* --- Estilos para la Lista de Historial de Recetas --- */
+
+/* * Convierte el ítem de receta en un contenedor flex
+ * para alinear la información a la izquierda y las acciones a la derecha.
+ */
+.prescription-item {
+    display: flex;
+    justify-content: space-between;
+    /* Clave para separar info y acciones */
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    /* La sombra y transición ya estaban, los mantenemos */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.prescription-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prescription-item-info {
+    flex-grow: 1;
+    /* Ocupa el espacio disponible */
+}
+
+.prescription-item-info strong {
+    font-size: 1.1em;
+    color: #333;
+}
+
+.prescription-item-info p {
+    font-size: 0.95em;
+    color: #555;
+    margin: 5px 0 0 0;
+}
+
+/* * Contenedor para los íconos de acción (Ver y Eliminar)
+ */
+.prescription-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    /* Espacio entre los íconos */
+    padding-left: 15px;
+    /* Espacio para que no se pegue al texto */
+}
+
+.prescription-item-actions i {
+    font-size: 1.2em;
+    /* Tamaño de los íconos */
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.prescription-item-actions i:hover {
+    transform: scale(1.1);
+    /* Efecto de zoom al pasar el ratón */
+}
+
+/* Color para el ícono de VER */
+.prescription-item-actions .view-prescription-btn {
+    color: #007bff;
+    /* Azul */
+}
+
+.prescription-item-actions .view-prescription-btn:hover {
+    color: #0056b3;
+}
+
+/* Color para el ícono de ELIMINAR */
+.prescription-item-actions .delete-prescription-btn {
+    color: #dc3545;
+    /* Rojo */
+}
+
+.prescription-item-actions .delete-prescription-btn:hover {
+    color: #c82333;
+}
+
+/* --- Estilos para la Lista de Historial de Recetas --- */
+
+/* Convierte el ítem de receta en un contenedor flex
+ * para alinear la información a la izquierda y las acciones a la derecha.
+ */
+.prescription-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.prescription-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prescription-item-info {
+    flex-grow: 1;
+}
+
+.prescription-item-info strong {
+    font-size: 1.1em;
+    color: #333;
+}
+
+.prescription-item-info p {
+    font-size: 0.95em;
+    color: #555;
+    margin: 5px 0 0 0;
+}
+
+/* Contenedor para los íconos de acción (Ver, Editar y Eliminar) */
+.prescription-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* Ajusta el espacio entre los íconos si lo deseas */
+    padding-left: 15px;
+}
+
+.prescription-item-actions i {
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.prescription-item-actions i:hover {
+    transform: scale(1.1);
+}
+
+/* Color para el ícono de VER */
+.prescription-item-actions .view-prescription-btn {
+    color: #007bff;
+    /* Azul */
+}
+
+.prescription-item-actions .view-prescription-btn:hover {
+    color: #0056b3;
+}
+
+/* --- NUEVO: Color para el ícono de EDITAR --- */
+.prescription-item-actions .edit-prescription-btn {
+    color: #ffc107;
+    /* Amarillo/Naranja para editar */
+}
+
+.prescription-item-actions .edit-prescription-btn:hover {
+    color: #e0a800;
+}
+
+/* Color para el ícono de ELIMINAR */
+.prescription-item-actions .delete-prescription-btn {
+    color: #dc3545;
+    /* Rojo */
+}
+
+.prescription-item-actions .delete-prescription-btn:hover {
+    color: #c82333;
+}
+
+/* Estilos para el botón de "Generar Nueva Receta" cuando es "Editando Receta" */
+#btn-show-form[data-editing="true"] {
+    background-color: #ffc107;
+    /* Color de edición */
+    border-color: #ffc107;
+}
+
+#btn-show-form[data-editing="true"]:hover {
+    background-color: #e0a800;
+    border-color: #e0a800;
+}

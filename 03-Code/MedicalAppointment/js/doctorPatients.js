@@ -113,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${paciente.ultimaVisita}</td>
                 <td>${paciente.condiciones}</td>
                 <td>
-                    <a href="#" class="btn-secondary" data-patient-id="${paciente.id}">Ver Expediente</a>
+                    <a href="#" class="btn-secondary view-patient-btn" data-patient-id="${paciente.id}">Ver Expediente</a>
+                    <button class="btn-delete delete-patient-btn" data-patient-id="${paciente.id}"><i class="fas fa-trash"></i></button>
                 </td>
             `;
             tablaPacientesBody.appendChild(tr);
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vistaDetalle.style.display = 'none';
         vistaNuevoPaciente.style.display = 'none';
         vistaLista.style.display = 'block';
+        renderPatientTable(); // Volvemos a renderizar la tabla para asegurar que esté actualizada
     }
 
     function mostrarDetallePaciente(pacienteId) {
@@ -171,15 +173,35 @@ document.addEventListener('DOMContentLoaded', () => {
         vistaNuevoPaciente.style.display = 'block';
     }
 
+    // --- Función para Eliminar Paciente ---
+    function deletePatient(patientId) {
+        if (confirm(`¿Estás seguro de que quieres eliminar a este paciente? Esta acción no se puede deshacer.`)) {
+            delete pacientesData[patientId]; // Eliminar el paciente del objeto
+            renderPatientTable(); // Volver a dibujar la tabla para reflejar el cambio
+            alert('Paciente eliminado con éxito.');
+        }
+    }
+
 
     // --- 4. MANEJO DE EVENTOS ---
 
-    // Evento para los botones "Ver Expediente" (Delegación)
+    // Evento para los botones "Ver Expediente" y "Eliminar" (Delegación)
     tablaPacientesBody.addEventListener('click', (event) => {
         const target = event.target;
-        if (target.classList.contains('btn-secondary') && target.dataset.patientId) {
+        // Para "Ver Expediente"
+        if (target.classList.contains('view-patient-btn') && target.dataset.patientId) {
             event.preventDefault();
             mostrarDetallePaciente(target.dataset.patientId);
+        }
+        // Para "Eliminar"
+        if (target.classList.contains('delete-patient-btn') && target.dataset.patientId) {
+            event.preventDefault();
+            deletePatient(target.dataset.patientId);
+        }
+        // Si el click es en el icono dentro del botón de eliminar
+        if (target.parentElement.classList.contains('delete-patient-btn') && target.parentElement.dataset.patientId) {
+            event.preventDefault();
+            deletePatient(target.parentElement.dataset.patientId);
         }
     });
 
@@ -272,4 +294,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dibujar la tabla por primera vez al cargar la página
     renderPatientTable();
 });
-
