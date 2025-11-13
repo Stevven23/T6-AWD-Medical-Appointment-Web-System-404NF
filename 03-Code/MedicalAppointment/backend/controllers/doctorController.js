@@ -421,6 +421,25 @@ const doctorController = {
         }
     },
 
+    // Obtener todas las especialidades únicas
+getSpecialties: async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('doctors')
+            .select('specialty');
+
+        if (error) throw error;
+
+        // Obtener especialidades únicas
+        const uniqueSpecialties = [...new Set(data.map(d => d.specialty))];
+
+        res.json(uniqueSpecialties);
+    } catch (error) {
+        console.error('Error fetching specialties:', error);
+        res.status(400).json({ error: error.message });
+    }
+},
+
     // Obtener horarios de un doctor
     getDoctorSchedules: async (req, res) => {
         try {
