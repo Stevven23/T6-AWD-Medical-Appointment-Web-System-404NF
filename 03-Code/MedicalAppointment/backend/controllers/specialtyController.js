@@ -117,7 +117,6 @@ const specialtyController = {
                 .single();
 
             if (specialtyError) throw specialtyError;
-
             if (!specialty) {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
@@ -141,7 +140,8 @@ const specialtyController = {
 
             res.json({
                 ...specialty,
-                doctors: doctors || []
+                doctors: doctors || [],
+                doctorCount: doctors?.length || 0  // ← AGREGAR ESTO
             });
         } catch (error) {
             console.error('Error fetching specialty with doctors:', error);
@@ -289,7 +289,10 @@ const specialtyController = {
                 .from('specialties')
                 .select('id, name, status, created_at');
 
-            if (specialtiesError) throw specialtiesError;
+            if (specialtiesError) {
+                console.error('Error fetching specialties:', specialtiesError);
+                throw specialtiesError;
+            }
 
             // Obtener conteo de doctores por especialidad
             const { data: doctors, error: doctorsError } = await supabase
@@ -334,7 +337,7 @@ const specialtyController = {
             res.json(stats);
         } catch (error) {
             console.error('Error fetching specialty stats:', error);
-            res.status(400).json({ error: error.message });
+            res.status(500).json({ error: 'Error al obtener estadísticas: ' + error.message });
         }
     },
 
