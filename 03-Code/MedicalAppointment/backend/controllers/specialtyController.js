@@ -4,35 +4,27 @@ const specialtyController = {
     // Crear una nueva especialidad
     createSpecialty: async (req, res) => {
         try {
-            const { 
-                name, 
-                description, 
-                status 
-            } = req.body;
+            const { name, description } = req.body;
 
-            // Validar que el nombre no esté vacío
             if (!name || name.trim() === '') {
                 return res.status(400).json({ error: 'El nombre de la especialidad es requerido' });
             }
 
-            // Verificar si la especialidad ya existe (ignorando mayúsculas/minúsculas)
             const { data: existingSpecialty } = await supabase
                 .from('specialties')
                 .select('id')
                 .ilike('name', name.trim())
-                .single();
+                .maybeSingle();
 
             if (existingSpecialty) {
                 return res.status(400).json({ error: 'La especialidad ya está registrada' });
             }
 
-            // Insertar especialidad
             const { data: specialty, error: specialtyError } = await supabase
                 .from('specialties')
                 .insert([{
                     name: name.trim(),
-                    description: description || null,
-                    status: status || 'active'
+                    description: description || null
                 }])
                 .select()
                 .single();
@@ -63,13 +55,12 @@ const specialtyController = {
         }
     },
 
-    // Obtener especialidades activas
+    // Obtener especialidades activas (todas, ya que no hay campo status)
     getActiveSpecialties: async (req, res) => {
         try {
             const { data, error } = await supabase
                 .from('specialties')
                 .select('*')
-                .eq('status', 'active')
                 .order('name', { ascending: true });
 
             if (error) throw error;
@@ -121,27 +112,18 @@ const specialtyController = {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
 
-            // Obtener doctores de esta especialidad
             const { data: doctors, error: doctorsError } = await supabase
                 .from('doctors')
-                .select(`
-                    id,
-                    cedula,
-                    name,
-                    phone,
-                    email,
-                    contract_type,
-                    status
-                `)
+                .select('id, user_id, professional_id, bio, active')
                 .eq('specialty_id', id)
-                .order('name', { ascending: true });
+                .order('created_at', { ascending: false });
 
             if (doctorsError) throw doctorsError;
 
             res.json({
                 ...specialty,
                 doctors: doctors || [],
-                doctorCount: doctors?.length || 0  // ← AGREGAR ESTO
+                doctorCount: doctors?.length || 0
             });
         } catch (error) {
             console.error('Error fetching specialty with doctors:', error);
@@ -153,13 +135,8 @@ const specialtyController = {
     updateSpecialty: async (req, res) => {
         try {
             const { id } = req.params;
-            const { 
-                name, 
-                description, 
-                status 
-            } = req.body;
+            const { name, description } = req.body;
 
-            // Verificar si la especialidad existe
             const { data: existingSpecialty } = await supabase
                 .from('specialties')
                 .select('id')
@@ -170,27 +147,23 @@ const specialtyController = {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
 
-            // Si se está actualizando el nombre, verificar que no exista otra con ese nombre
             if (name && name.trim() !== '') {
                 const { data: duplicateSpecialty } = await supabase
                     .from('specialties')
                     .select('id')
                     .ilike('name', name.trim())
                     .neq('id', id)
-                    .single();
+                    .maybeSingle();
 
                 if (duplicateSpecialty) {
                     return res.status(400).json({ error: 'Ya existe otra especialidad con ese nombre' });
                 }
             }
 
-            // Preparar datos para actualizar
             const updateData = {};
             if (name !== undefined) updateData.name = name.trim();
             if (description !== undefined) updateData.description = description || null;
-            if (status !== undefined) updateData.status = status;
 
-            // Actualizar especialidad
             const { data: specialty, error: specialtyError } = await supabase
                 .from('specialties')
                 .update(updateData)
@@ -212,7 +185,6 @@ const specialtyController = {
         try {
             const { id } = req.params;
 
-            // Verificar si la especialidad existe
             const { data: existingSpecialty } = await supabase
                 .from('specialties')
                 .select('id, name')
@@ -223,7 +195,6 @@ const specialtyController = {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
 
-            // Verificar si hay doctores asociados a esta especialidad
             const { data: doctors } = await supabase
                 .from('doctors')
                 .select('id')
@@ -236,7 +207,6 @@ const specialtyController = {
                 });
             }
 
-            // Eliminar la especialidad
             const { error: specialtyError } = await supabase
                 .from('specialties')
                 .delete()
@@ -257,16 +227,12 @@ const specialtyController = {
     // Filtrar especialidades
     filterSpecialties: async (req, res) => {
         try {
-            const { status, search } = req.query;
+            const { search } = req.query;
 
             let query = supabase
                 .from('specialties')
                 .select('*');
 
-            // Aplicar filtros
-            if (status) {
-                query = query.eq('status', status);
-            }
             if (search) {
                 query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
             }
@@ -285,81 +251,93 @@ const specialtyController = {
     // Obtener estadísticas de especialidades
     getSpecialtyStats: async (req, res) => {
         try {
+            console.log('Iniciando getSpecialtyStats...');
+            
+            // Obtener especialidades (sin created_at porque no existe en el schema)
             const { data: specialties, error: specialtiesError } = await supabase
                 .from('specialties')
-                .select('id, name, status, created_at');
+                .select('id, name, description');
 
             if (specialtiesError) {
                 console.error('Error fetching specialties:', specialtiesError);
-                throw specialtiesError;
+                return res.status(500).json({ 
+                    error: 'Error al obtener especialidades', 
+                    details: specialtiesError.message 
+                });
             }
 
-            // Obtener conteo de doctores por especialidad
-            const { data: doctors, error: doctorsError } = await supabase
-                .from('doctors')
-                .select('specialty_id, status');
+            console.log('Especialidades obtenidas:', specialties?.length);
 
-            if (doctorsError) throw doctorsError;
+            // Obtener doctores - intentar con manejo de error
+            let doctors = [];
+            try {
+                const { data: doctorsData, error: doctorsError } = await supabase
+                    .from('doctors')
+                    .select('specialty_id, active');
 
-            const doctorsBySpecialty = doctors.reduce((acc, doctor) => {
-                if (!acc[doctor.specialty_id]) {
-                    acc[doctor.specialty_id] = { total: 0, active: 0 };
+                if (doctorsError) {
+                    console.warn('Error fetching doctors:', doctorsError);
+                    // Continuar sin doctores si la tabla no existe o está vacía
+                } else {
+                    doctors = doctorsData || [];
                 }
-                acc[doctor.specialty_id].total++;
-                if (doctor.status === 'active') {
-                    acc[doctor.specialty_id].active++;
+            } catch (docError) {
+                console.warn('Error al consultar doctors:', docError);
+                // Continuar con array vacío
+            }
+
+            console.log('Doctores obtenidos:', doctors.length);
+
+            // Agrupar doctores por especialidad
+            const doctorsBySpecialty = doctors.reduce((acc, doctor) => {
+                if (doctor.specialty_id) {
+                    if (!acc[doctor.specialty_id]) {
+                        acc[doctor.specialty_id] = { total: 0, active: 0 };
+                    }
+                    acc[doctor.specialty_id].total++;
+                    if (doctor.active === true) {
+                        acc[doctor.specialty_id].active++;
+                    }
                 }
                 return acc;
             }, {});
 
-            const now = new Date();
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
+            // Calcular estadísticas (sin newThisMonth ya que no hay created_at)
             const stats = {
-                total: specialties.length,
-                active: specialties.filter(s => s.status === 'active').length,
-                inactive: specialties.filter(s => s.status === 'inactive').length,
-                newThisMonth: specialties.filter(s => {
-                    const created = new Date(s.created_at);
-                    return created >= firstDayOfMonth;
-                }).length,
+                total: specialties?.length || 0,
+                active: specialties?.length || 0, // Todas son activas
+                newThisMonth: 0, // No podemos calcularlo sin created_at
                 withDoctors: Object.keys(doctorsBySpecialty).length,
-                withoutDoctors: specialties.length - Object.keys(doctorsBySpecialty).length,
-                specialtyDetails: specialties.map(specialty => ({
+                withoutDoctors: (specialties?.length || 0) - Object.keys(doctorsBySpecialty).length,
+                specialtyDetails: (specialties || []).map(specialty => ({
                     id: specialty.id,
                     name: specialty.name,
-                    status: specialty.status,
                     totalDoctors: doctorsBySpecialty[specialty.id]?.total || 0,
                     activeDoctors: doctorsBySpecialty[specialty.id]?.active || 0
                 })).sort((a, b) => b.totalDoctors - a.totalDoctors)
             };
 
+            console.log('Stats calculadas:', stats);
             res.json(stats);
         } catch (error) {
-            console.error('Error fetching specialty stats:', error);
-            res.status(500).json({ error: 'Error al obtener estadísticas: ' + error.message });
+            console.error('Error general en getSpecialtyStats:', error);
+            res.status(500).json({ 
+                error: 'Error al obtener estadísticas', 
+                details: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            });
         }
     },
 
-    // Actualizar estado de una especialidad
+    // Actualizar estado (dummy function ya que no hay campo status)
     updateSpecialtyStatus: async (req, res) => {
         try {
             const { id } = req.params;
-            const { status } = req.body;
-
-            // Validar estado
-            const validStatuses = ['active', 'inactive'];
-            if (!validStatuses.includes(status)) {
-                return res.status(400).json({ 
-                    error: 'Estado inválido. Debe ser: active o inactive' 
-                });
-            }
-
+            
             const { data, error } = await supabase
                 .from('specialties')
-                .update({ status })
+                .select('*')
                 .eq('id', id)
-                .select()
                 .single();
 
             if (error) throw error;

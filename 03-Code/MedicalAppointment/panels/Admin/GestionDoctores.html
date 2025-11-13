@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario - Clínica San Miguel</title>
+    <title>Gestión de Doctores - Clínica San Miguel</title>
     <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="../../css/table.css">
     <link rel="stylesheet" href="../../css/dashboard.css">
@@ -12,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-
 <body>
     <div class="container">
         <aside class="sidebar">
@@ -25,14 +23,12 @@
                 <ul>
                     <li><a href="DashboardAdmin.html"><i class="fas fa-home"></i> Inicio</a></li>
                     <li><a href="Calendario.html"><i class="fas fa-calendar-check"></i> Calendario</a></li>
-                    <li class="active"><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión
-                            Doctores</a></li>
+                    <li class="active"><a href="GestionDoctores.html"><i class="fas fa-user-md"></i> Gestión Doctores</a></li>
                     <li><a href="GestionHorarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
                     <li><a href="GestionEspecialidad.html"><i class="fas fa-stethoscope"></i> Especialidades</a></li>
                     <li><a href="AdminProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li><a href="AdminLogs.html"><i class="fas fa-file-alt"></i> Logs</a></li>
-                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
-                            Sesion</a>
+                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                 </ul>
             </nav>
         </aside>
@@ -52,12 +48,12 @@
                     <div class="summary-label">Doctores Activos</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-number" id="specialtiesCount">8</div>
+                    <div class="summary-number" id="specialtiesCount">0</div>
                     <div class="summary-label">Especialidades</div>
                 </div>
                 <div class="summary-card warning">
-                    <div class="summary-number" id="newDoctorsCount">0</div>
-                    <div class="summary-label">Nuevos Este Mes</div>
+                    <div class="summary-number" id="totalDoctorsCount">0</div>
+                    <div class="summary-label">Total Doctores</div>
                 </div>
                 <div class="summary-card danger">
                     <div class="summary-number" id="inactiveDoctorsCount">0</div>
@@ -67,48 +63,27 @@
 
             <div class="filters-section">
                 <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
-
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label for="specialtyFilter">Especialidad</label>
                         <select id="specialtyFilter" class="filter-select">
                             <option value="">Todas las Especialidades</option>
-                            <option value="cardiologia">Cardiología</option>
-                            <option value="pediatria">Pediatría</option>
-                            <option value="traumatologia">Traumatología</option>
-                            <option value="dermatologia">Dermatología</option>
-                            <option value="neurologia">Neurología</option>
-                            <option value="general">Medicina General</option>
-                            <option value="ginecologia">Ginecología</option>
                         </select>
                     </div>
-
                     <div class="filter-group">
                         <label for="statusFilter">Estado</label>
                         <select id="statusFilter" class="filter-select">
-                            <option value="">Todos los Estados</option>
+                            <option value="">Todos</option>
                             <option value="active">Activo</option>
                             <option value="inactive">Inactivo</option>
-                            <option value="vacation">De Vacaciones</option>
+                            <option value="vacation">Vacaciones</option>
                         </select>
                     </div>
-
-                    <div class="filter-group">
-                        <label for="contractFilter">Tipo de Contrato</label>
-                        <select id="contractFilter" class="filter-select">
-                            <option value="">Todos los Contratos</option>
-                            <option value="full-time">Tiempo Completo</option>
-                            <option value="part-time">Medio Tiempo</option>
-                            <option value="telemedicine">Telemedicina</option>
-                        </select>
-                    </div>
-
                     <div class="filter-group">
                         <label for="searchDoctor">Buscar Doctor</label>
-                        <input type="text" id="searchDoctor" class="filter-search" placeholder="Nombre, cédula, ID...">
+                        <input type="text" id="searchDoctor" class="filter-search" placeholder="Nombre o cédula...">
                     </div>
                 </div>
-
                 <div class="filter-buttons">
                     <button class="btn-primary" id="applyFilters">
                         <i class="fas fa-check"></i> Aplicar Filtros
@@ -126,30 +101,28 @@
                         <i class="fas fa-plus"></i> Agregar Doctor
                     </button>
                 </div>
-
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Nombre Completo</th>
-                                <th>Especialidad</th>
                                 <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Especialidad</th>
+                                <th>Email</th>
                                 <th>Teléfono</th>
-                                <th>Tipo de Contrato</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="doctorsTableBody">
-                            <!-- Doctors will be loaded here dynamically -->
-                        </tbody>
+                        <tbody id="doctorsTableBody"></tbody>
                     </table>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Modal Agregar/Editar Doctor -->
     <div id="doctorModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -160,67 +133,42 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="doctorCedula">Cédula <span class="required">*</span></label>
-                        <input type="text" id="doctorCedula" required maxlength="10" placeholder="Ej: 1234567890">
-                        <small class="error-message" id="cedulaError"></small>
+                        <input type="text" id="doctorCedula" required placeholder="0123456789" maxlength="10">
                     </div>
-
                     <div class="form-group">
                         <label for="doctorName">Nombre Completo <span class="required">*</span></label>
-                        <input type="text" id="doctorName" required placeholder="Ej: Dr. Juan Pérez">
+                        <input type="text" id="doctorName" required placeholder="Dr. Juan Pérez">
                     </div>
-
-                    <div class="form-group">
-                        <label for="doctorPhone">Teléfono <span class="required">*</span></label>
-                        <input type="tel" id="doctorPhone" required placeholder="Ej: 0991234567">
-                    </div>
-
                     <div class="form-group">
                         <label for="doctorEmail">Email <span class="required">*</span></label>
-                        <input type="email" id="doctorEmail" required placeholder="Ej: doctor@clinica.com">
+                        <input type="email" id="doctorEmail" required placeholder="doctor@clinica.com">
                     </div>
-
+                    <div class="form-group">
+                        <label for="doctorPhone">Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="doctorPhone" required placeholder="0987654321">
+                    </div>
                     <div class="form-group">
                         <label for="doctorSpecialty">Especialidad <span class="required">*</span></label>
-                        <select id="doctorSpecialty" required>
-                            <option value="">Seleccione una especialidad</option>
-                            <option value="cardiologia">Cardiología</option>
-                            <option value="pediatria">Pediatría</option>
-                            <option value="traumatologia">Traumatología</option>
-                            <option value="dermatologia">Dermatología</option>
-                            <option value="neurologia">Neurología</option>
-                            <option value="general">Medicina General</option>
-                            <option value="ginecologia">Ginecología</option>
-                        </select>
+                        <input type="text" id="doctorSpecialty" required placeholder="Cardiología">
                     </div>
-
                     <div class="form-group">
-                        <label for="doctorContract">Tipo de Contrato <span class="required">*</span></label>
-                        <select id="doctorContract" required onchange="updateScheduleOptions()">
-                            <option value="">Seleccione tipo de contrato</option>
+                        <label for="doctorContractType">Tipo de Contrato <span class="required">*</span></label>
+                        <select id="doctorContractType" required>
+                            <option value="">Seleccione tipo</option>
                             <option value="full-time">Tiempo Completo</option>
                             <option value="part-time">Medio Tiempo</option>
-                            <option value="telemedicine">Telemedicina</option>
+                            <option value="freelance">Por Horas</option>
                         </select>
                     </div>
-
-                    <div class="form-group full-width">
-                        <label for="doctorSchedule">Horario <span class="required">*</span></label>
-                        <select id="doctorSchedule" required disabled>
-                            <option value="">Primero seleccione tipo de contrato</option>
-                        </select>
-                        <small class="info-message" id="scheduleInfo"></small>
-                    </div>
-
                     <div class="form-group">
                         <label for="doctorStatus">Estado <span class="required">*</span></label>
                         <select id="doctorStatus" required>
                             <option value="active">Activo</option>
                             <option value="inactive">Inactivo</option>
-                            <option value="vacation">De Vacaciones</option>
+                            <option value="vacation">Vacaciones</option>
                         </select>
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="closeDoctorModal()">
                         <i class="fas fa-times"></i> Cancelar
@@ -233,6 +181,7 @@
         </div>
     </div>
 
+    <!-- Modal Confirmación -->
     <div id="confirmModal" class="modal">
         <div class="modal-content confirm-modal">
             <div class="modal-header">
@@ -253,8 +202,336 @@
         </div>
     </div>
 
-    <script src="../../js/tables.js"></script>
-    <script src="../../js/doctorManagement.js"></script>
-</body>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentDoctorId = null;
+        let allSpecialties = [];
 
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDoctors();
+            loadStats();
+            loadSpecialties();
+            
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+            document.getElementById('searchDoctor').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('doctorForm').addEventListener('submit', handleDoctorSubmit);
+        });
+
+        async function loadDoctors() {
+            try {
+                showLoading();
+                const response = await fetch(`${API_URL}/doctors`);
+                if (!response.ok) throw new Error('Error al cargar doctores');
+                const doctors = await response.json();
+                displayDoctors(doctors);
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al cargar doctores: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        function displayDoctors(doctors) {
+            const tbody = document.getElementById('doctorsTableBody');
+            if (!tbody) return;
+
+            if (doctors.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-inbox" style="font-size: 48px; color: #ccc;"></i>
+                    <p style="color: #666;">No se encontraron doctores</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = doctors.map(d => {
+                const statusLabel = {
+                    'active': 'Activo',
+                    'inactive': 'Inactivo',
+                    'vacation': 'Vacaciones'
+                }[d.status] || d.status;
+
+                const statusClass = {
+                    'active': 'badge-success',
+                    'inactive': 'badge-danger',
+                    'vacation': 'badge-warning'
+                }[d.status] || 'badge-secondary';
+
+                return `
+                <tr>
+                    <td>${d.id}</td>
+                    <td>${d.cedula || 'N/A'}</td>
+                    <td>${d.name || 'Sin nombre'}</td>
+                    <td>${d.specialty || 'Sin especialidad'}</td>
+                    <td>${d.email || 'N/A'}</td>
+                    <td>${d.phone || 'N/A'}</td>
+                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-edit" onclick="openEditDoctorModal(${d.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="confirmDeleteDoctor(${d.id}, '${d.name}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        async function loadSpecialties() {
+            try {
+                const response = await fetch(`${API_URL}/doctors`);
+                if (!response.ok) return;
+                const doctors = await response.json();
+                
+                // Extraer especialidades únicas
+                allSpecialties = [...new Set(doctors.map(d => d.specialty).filter(Boolean))];
+                
+                const filterSelect = document.getElementById('specialtyFilter');
+                filterSelect.innerHTML = '<option value="">Todas las Especialidades</option>';
+                
+                allSpecialties.forEach(s => {
+                    filterSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading specialties:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/doctors/stats`);
+                if (!response.ok) return;
+                const stats = await response.json();
+                
+                document.getElementById('activeDoctorsCount').textContent = stats.active || 0;
+                document.getElementById('inactiveDoctorsCount').textContent = stats.inactive || 0;
+                document.getElementById('totalDoctorsCount').textContent = stats.total || 0;
+                document.getElementById('specialtiesCount').textContent = Object.keys(stats.bySpecialty || {}).length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function applyFilters() {
+            const specialty = document.getElementById('specialtyFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchDoctor').value.trim();
+
+            try {
+                showLoading();
+                
+                // Construir URL con query params
+                const params = new URLSearchParams();
+                if (specialty) params.append('specialty', specialty);
+                if (status) params.append('status', status);
+                if (search) params.append('search', search);
+                
+                const url = params.toString() 
+                    ? `${API_URL}/doctors/filter?${params.toString()}`
+                    : `${API_URL}/doctors`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al filtrar');
+                
+                const doctors = await response.json();
+                displayDoctors(doctors);
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al filtrar: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('specialtyFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchDoctor').value = '';
+            loadDoctors();
+        }
+
+        function openAddDoctorModal() {
+            currentDoctorId = null;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Agregar Doctor';
+            document.getElementById('doctorForm').reset();
+            document.getElementById('doctorStatus').value = 'active';
+            document.getElementById('doctorModal').style.display = 'block';
+        }
+
+        async function openEditDoctorModal(id) {
+            currentDoctorId = id;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Doctor';
+            
+            try {
+                const response = await fetch(`${API_URL}/doctors/${id}`);
+                if (!response.ok) throw new Error('Error al cargar doctor');
+                const doctor = await response.json();
+                
+                document.getElementById('doctorCedula').value = doctor.cedula || '';
+                document.getElementById('doctorName').value = doctor.name || '';
+                document.getElementById('doctorEmail').value = doctor.email || '';
+                document.getElementById('doctorPhone').value = doctor.phone || '';
+                document.getElementById('doctorSpecialty').value = doctor.specialty || '';
+                document.getElementById('doctorContractType').value = doctor.contract_type || '';
+                document.getElementById('doctorStatus').value = doctor.status || 'active';
+                
+                document.getElementById('doctorModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al cargar datos del doctor', 'error');
+            }
+        }
+
+        function closeDoctorModal() {
+            document.getElementById('doctorModal').style.display = 'none';
+            document.getElementById('doctorForm').reset();
+            currentDoctorId = null;
+        }
+
+        async function handleDoctorSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                cedula: document.getElementById('doctorCedula').value.trim(),
+                name: document.getElementById('doctorName').value.trim(),
+                email: document.getElementById('doctorEmail').value.trim(),
+                phone: document.getElementById('doctorPhone').value.trim(),
+                specialty: document.getElementById('doctorSpecialty').value.trim(),
+                contract_type: document.getElementById('doctorContractType').value,
+                status: document.getElementById('doctorStatus').value
+            };
+
+            try {
+                showLoading();
+                const url = currentDoctorId 
+                    ? `${API_URL}/doctors/${currentDoctorId}` 
+                    : `${API_URL}/doctors`;
+                const method = currentDoctorId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al guardar');
+                
+                showNotification(
+                    currentDoctorId ? 'Doctor actualizado exitosamente' : 'Doctor creado exitosamente', 
+                    'success'
+                );
+                closeDoctorModal();
+                loadDoctors();
+                loadStats();
+                loadSpecialties();
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        function confirmDeleteDoctor(id, name) {
+            document.getElementById('confirmMessage').textContent = 
+                `¿Está seguro que desea eliminar al doctor ${name}?`;
+            document.getElementById('confirmButton').onclick = () => deleteDoctor(id);
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+
+        async function deleteDoctor(id) {
+            try {
+                showLoading();
+                const response = await fetch(`${API_URL}/doctors/${id}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al eliminar');
+                
+                showNotification('Doctor eliminado exitosamente', 'success');
+                closeConfirmModal();
+                loadDoctors();
+                loadStats();
+                loadSpecialties();
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function showLoading() {
+            const tbody = document.getElementById('doctorsTableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #4A90E2;"></i>
+                    <p style="color: #666; margin-top: 10px;">Cargando...</p></td></tr>`;
+            }
+        }
+
+        function hideLoading() {}
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `<i class="fas ${getNotificationIcon(type)}"></i><span>${message}</span>`;
+            
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; display: flex; align-items: center;
+                        gap: 10px; animation: slideIn 0.3s ease-out; max-width: 400px; }
+                    .notification-success { background: #10b981; color: white; }
+                    .notification-error { background: #ef4444; color: white; }
+                    .notification-info { background: #3b82f6; color: white; }
+                    .notification-warning { background: #f59e0b; color: white; }
+                    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; } }
+                    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+                    .badge-success { background: #10b981; color: white; }
+                    .badge-danger { background: #ef4444; color: white; }
+                    .badge-warning { background: #f59e0b; color: white; }
+                    .badge-secondary { background: #6b7280; color: white; }`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function getNotificationIcon(type) {
+            const icons = { 
+                'success': 'fa-check-circle', 
+                'error': 'fa-exclamation-circle', 
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle'
+            };
+            return icons[type] || 'fa-info-circle';
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('doctorModal')) closeDoctorModal();
+            if (event.target === document.getElementById('confirmModal')) closeConfirmModal();
+        }
+    </script>
+</body>
 </html>

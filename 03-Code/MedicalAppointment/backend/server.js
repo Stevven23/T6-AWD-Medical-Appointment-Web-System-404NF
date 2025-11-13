@@ -8,7 +8,6 @@ const supabase = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de CORS (MANTENER TU CONFIGURACIÓN EXISTENTE)
 app.use(cors({
   origin: [
     'http://127.0.0.1:5500',
@@ -30,6 +29,8 @@ const patientRoutes = require('./routes/patient');
 const doctorRoutes = require('./routes/doctor');
 const appointmentRoutes = require('./routes/appointments');
 const medicalRecordRoutes = require('./routes/medicalRecord');
+const specialtyRoutes = require('./routes/specialty');
+
 
 // ========== MANTENER TU RUTA DE LOGIN EXISTENTE ==========
 app.post('/api/auth/login', async (req, res) => {
@@ -101,14 +102,13 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
+app.use('/api/specialties', specialtyRoutes); 
 
 // ========== MANTENER TUS RUTAS EXISTENTES ==========
 app.get('/api/test', (req, res) => {
   res.json({ mensaje: '¡El servidor funciona correctamente!' });
 });
 
-// Mantener todas tus rutas existentes de /api/pacientes, /api/doctores, /api/citas
-// ... (tu código existente) ...
 
 // Iniciar el servidor
 app.listen(PORT, () => {
