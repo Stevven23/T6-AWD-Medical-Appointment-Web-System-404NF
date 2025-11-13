@@ -373,6 +373,271 @@
         </main>
     </div>
     <script src="../../js/tables.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentSpecialtyId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadSpecialties();
+            loadSpecialtyStats();
+            
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+            document.getElementById('searchSpecialty').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('specialtyForm').addEventListener('submit', handleSpecialtySubmit);
+        });
+
+        async function loadSpecialties() {
+            try {
+                showLoading();
+                const response = await fetch(`${API_URL}/specialties`);
+                if (!response.ok) throw new Error('Error al cargar especialidades');
+                const specialties = await response.json();
+                displaySpecialties(specialties);
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al cargar las especialidades', 'error');
+                hideLoading();
+            }
+        }
+
+        function displaySpecialties(specialties) {
+            const tbody = document.getElementById('specialtiesTableBody');
+            if (!tbody) return;
+
+            if (specialties.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-inbox" style="font-size: 48px; color: #ccc;"></i>
+                    <p style="color: #666;">No se encontraron especialidades</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = specialties.map(s => `
+                <tr>
+                    <td>${s.id.substring(0, 8)}...</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.description || 'Sin descripción'}</td>
+                    <td>${formatDate(s.created_at)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-edit" onclick="openEditSpecialtyModal('${s.id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="confirmDeleteSpecialty('${s.id}', '${s.name}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Cargar estadísticas
+        async function loadSpecialtyStats() {
+            try {
+                const response = await fetch(`${API_URL}/specialties/stats`);
+                if (!response.ok) throw new Error('Error al cargar estadísticas');
+                const stats = await response.json();
+                document.getElementById('totalSpecialtiesCount').textContent = stats.total || 0;
+                document.getElementById('activeSpecialtiesCount').textContent = stats.active || 0;
+                document.getElementById('specialtiesWithDoctorsCount').textContent = stats.withDoctors || 0;
+                document.getElementById('newSpecialtiesCount').textContent = stats.newThisMonth || 0;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Aplicar filtros
+        async function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchSpecialty').value;
+            try {
+                showLoading();
+                const params = new URLSearchParams();
+                if (status) params.append('status', status);
+                if (search) params.append('search', search);
+                const response = await fetch(`${API_URL}/specialties/filter?${params.toString()}`);
+                if (!response.ok) throw new Error('Error al filtrar');
+                const filtered = await response.json();
+                displaySpecialties(filtered);
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al aplicar filtros', 'error');
+                hideLoading();
+            }
+        }
+
+        // Limpiar filtros
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchSpecialty').value = '';
+            loadSpecialties();
+        }
+
+        // Abrir modal agregar
+        function openAddSpecialtyModal() {
+            currentSpecialtyId = null;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Agregar Especialidad';
+            document.getElementById('specialtyForm').reset();
+            document.getElementById('specialtyModal').style.display = 'block';
+        }
+
+        // Abrir modal editar
+        async function openEditSpecialtyModal(id) {
+            currentSpecialtyId = id;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Especialidad';
+            try {
+                const response = await fetch(`${API_URL}/specialties/${id}`);
+                if (!response.ok) throw new Error('Error al cargar especialidad');
+                const specialty = await response.json();
+                document.getElementById('specialtyName').value = specialty.name;
+                document.getElementById('specialtyDescription').value = specialty.description || '';
+                document.getElementById('specialtyModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error al cargar los datos', 'error');
+            }
+        }
+
+        // Cerrar modal
+        function closeSpecialtyModal() {
+            document.getElementById('specialtyModal').style.display = 'none';
+            document.getElementById('specialtyForm').reset();
+            currentSpecialtyId = null;
+        }
+
+        // Submit formulario
+        async function handleSpecialtySubmit(e) {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('specialtyName').value.trim(),
+                description: document.getElementById('specialtyDescription').value.trim()
+            };
+
+            if (!formData.name) {
+                showNotification('El nombre es requerido', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                const url = currentSpecialtyId ? `${API_URL}/specialties/${currentSpecialtyId}` : `${API_URL}/specialties`;
+                const method = currentSpecialtyId ? 'PUT' : 'POST';
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al guardar');
+                showNotification(currentSpecialtyId ? 'Especialidad actualizada' : 'Especialidad creada', 'success');
+                closeSpecialtyModal();
+                loadSpecialties();
+                loadSpecialtyStats();
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Confirmar eliminación
+        function confirmDeleteSpecialty(id, name) {
+            document.getElementById('confirmMessage').textContent = 
+                `¿Está seguro que desea eliminar la especialidad "${name}"?`;
+            document.getElementById('confirmButton').onclick = () => deleteSpecialty(id);
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+
+        // Eliminar especialidad
+        async function deleteSpecialty(id) {
+            try {
+                showLoading();
+                const response = await fetch(`${API_URL}/specialties/${id}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al eliminar');
+                showNotification('Especialidad eliminada', 'success');
+                closeConfirmModal();
+                loadSpecialties();
+                loadSpecialtyStats();
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Cerrar modal confirmación
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        // Utilidades
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-EC', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function showLoading() {
+            const tbody = document.getElementById('specialtiesTableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #4A90E2;"></i>
+                    <p style="color: #666; margin-top: 10px;">Cargando...</p></td></tr>`;
+            }
+        }
+
+        function hideLoading() {}
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `<i class="fas ${getNotificationIcon(type)}"></i><span>${message}</span>`;
+            
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; display: flex; align-items: center;
+                        gap: 10px; animation: slideIn 0.3s ease-out; max-width: 400px; }
+                    .notification-success { background: #10b981; color: white; }
+                    .notification-error { background: #ef4444; color: white; }
+                    .notification-info { background: #3b82f6; color: white; }
+                    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; } }`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function getNotificationIcon(type) {
+            const icons = { 'success': 'fa-check-circle', 'error': 'fa-exclamation-circle', 'info': 'fa-info-circle' };
+            return icons[type] || 'fa-info-circle';
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('specialtyModal')) closeSpecialtyModal();
+            if (event.target === document.getElementById('confirmModal')) closeConfirmModal();
+        }
+    </script>
 </body>
 
 </html>
