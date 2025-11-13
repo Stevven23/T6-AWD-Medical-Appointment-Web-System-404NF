@@ -51,7 +51,7 @@ const doctorController = {
             // Si hay un schedule_id, crear la relación
             if (schedule_id) {
                 const { error: scheduleError } = await supabase
-                    .from('doctors_schedule')
+                    .from('doctor_schedules')
                     .insert([{
                         doctor_id: doctor.id,
                         schedule_id: schedule_id
@@ -63,13 +63,14 @@ const doctorController = {
             // Obtener el doctor completo con sus horarios
             const { data: fullDoctor, error: fetchError } = await supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `)
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .eq('id', doctor.id)
                 .single();
 
@@ -87,13 +88,14 @@ const doctorController = {
         try {
             const { data, error } = await supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `)
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .order('id', { ascending: true });
 
             if (error) throw error;
@@ -112,13 +114,14 @@ const doctorController = {
 
             const { data, error } = await supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `)
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .eq('id', id)
                 .single();
 
@@ -188,13 +191,13 @@ const doctorController = {
             if (schedule_id) {
                 // Eliminar horarios antiguos
                 await supabase
-                    .from('doctors_schedule')
+                    .from('doctor_schedules')
                     .delete()
                     .eq('doctor_id', id);
 
                 // Insertar nuevo horario
                 const { error: scheduleError } = await supabase
-                    .from('doctors_schedule')
+                    .from('doctor_schedules')
                     .insert([{
                         doctor_id: id,
                         schedule_id: schedule_id
@@ -206,13 +209,14 @@ const doctorController = {
             // Obtener el doctor actualizado con sus horarios
             const { data: fullDoctor, error: fetchError } = await supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `)
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .eq('id', id)
                 .single();
 
@@ -256,7 +260,7 @@ const doctorController = {
 
             // Eliminar relaciones en doctors_schedule
             const { error: scheduleError } = await supabase
-                .from('doctors_schedule')
+                .from('doctor_schedules')
                 .delete()
                 .eq('doctor_id', id);
 
@@ -287,13 +291,14 @@ const doctorController = {
 
             let query = supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `);
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `);
 
             // Aplicar filtros
             if (specialty) {
@@ -333,13 +338,14 @@ const doctorController = {
 
             const { data, error } = await supabase
                 .from('doctors')
-                .select(`
-                    *,
-                    doctors_schedule (
-                        schedule_id,
-                        schedules (*)
-                    )
-                `)
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .eq('specialty', specialty)
                 .eq('status', 'active')
                 .order('name', { ascending: true });
@@ -425,20 +431,15 @@ const doctorController = {
 getSpecialties: async (req, res) => {
     try {
         const { data, error } = await supabase
-            .from('doctors')
-            .select('specialty');
-
+            .from('specialties')
+            .select('id, name, description');
         if (error) throw error;
-
-        // Obtener especialidades únicas
-        const uniqueSpecialties = [...new Set(data.map(d => d.specialty))];
-
-        res.json(uniqueSpecialties);
+        res.json(data);
     } catch (error) {
-        console.error('Error fetching specialties:', error);
         res.status(400).json({ error: error.message });
     }
 },
+
 
     // Obtener horarios de un doctor
     getDoctorSchedules: async (req, res) => {
@@ -446,11 +447,15 @@ getSpecialties: async (req, res) => {
             const { id } = req.params;
 
             const { data, error } = await supabase
-                .from('doctors_schedule')
-                .select(`
-                    *,
-                    schedules (*)
-                `)
+                .from('doctors')
+            .select(`
+                *,
+                doctor_schedules (*),
+                user:users (
+                    first_name,
+                    last_name
+                )
+            `)
                 .eq('doctor_id', id);
 
             if (error) throw error;
