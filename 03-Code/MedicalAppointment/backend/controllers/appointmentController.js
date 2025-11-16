@@ -119,7 +119,7 @@ const appointmentController = {
             code,
             label
           ),
-          doctors!inner (
+          doctors!appointments_doctor_id_fkey!inner (
             id,
             users!inner (
               first_name,
@@ -187,7 +187,7 @@ const appointmentController = {
         .select(`
           *,
           appointment_status (code, label),
-          doctors!inner (
+          doctors!appointments_doctor_id_fkey!inner (
             id,
             professional_id,
             bio,

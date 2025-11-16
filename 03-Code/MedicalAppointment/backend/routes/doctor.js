@@ -5,6 +5,9 @@ const { authMiddleware } = require('../middleware/auth');
 
 // ========== RUTAS ESPECÍFICAS PRIMERO (para evitar conflictos con :id) ==========
 
+// GET /api/doctors/specialties - Obtener todas las especialidades
+router.get('/specialties', doctorController.getSpecialties);
+
 // GET /api/doctors/stats - Obtener estadísticas de doctores
 router.get('/stats', doctorController.getDoctorStats);
 

@@ -4,7 +4,7 @@ const scheduleController = {
     getAllSchedules: async (req, res) => {
         try {
             const { data, error } = await supabase
-                .from('schedules')
+                .from('doctor_schedules')
                 .select('*')
                 .order('id', { ascending: true });
 
@@ -22,7 +22,7 @@ const scheduleController = {
             const { id } = req.params;
 
             const { data, error } = await supabase
-                .from('schedules')
+                .from('doctor_schedules')
                 .select('*')
                 .eq('id', id)
                 .single();
@@ -52,14 +52,15 @@ const scheduleController = {
             } = req.body;
 
             const { data, error } = await supabase
-                .from('schedules')
+                .from('doctor_schedules')
                 .insert([{
-                    name,
+                    doctor_id: req.body.doctor_id,
+                    day_of_week: req.body.day_of_week,
                     start_time,
                     end_time,
-                    days_of_week,
-                    hours_per_week: hours_per_week || 0,
-                    is_telemedicine: is_telemedicine || false
+                    is_working_day: req.body.is_working_day !== false,
+                    break_start_time: req.body.break_start_time || null,
+                    break_end_time: req.body.break_end_time || null
                 }])
                 .select()
                 .single();
@@ -86,14 +87,14 @@ const scheduleController = {
             } = req.body;
 
             const { data, error } = await supabase
-                .from('schedules')
+                .from('doctor_schedules')
                 .update({
-                    name,
+                    day_of_week: req.body.day_of_week,
                     start_time,
                     end_time,
-                    days_of_week,
-                    hours_per_week,
-                    is_telemedicine
+                    is_working_day: req.body.is_working_day,
+                    break_start_time: req.body.break_start_time,
+                    break_end_time: req.body.break_end_time
                 })
                 .eq('id', id)
                 .select()
@@ -128,7 +129,7 @@ const scheduleController = {
             }
 
             const { error } = await supabase
-                .from('schedules')
+                .from('doctor_schedules')
                 .delete()
                 .eq('id', id);
 
@@ -145,7 +146,7 @@ const scheduleController = {
         try {
             const { contractType } = req.params;
 
-            let query = supabase.from('schedules').select('*');
+            let query = supabase.from('doctor_schedules').select('*');
 
             // Filtrar según tipo de contrato
             if (contractType === 'full-time') {

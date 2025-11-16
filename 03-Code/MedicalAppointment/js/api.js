@@ -196,8 +196,15 @@ document.addEventListener('DOMContentLoaded', () => {
   testBackendConnection();
 });
 
-// ========== EXPORTAR HELPERS ==========
-window.Helpers = {
+// ========== EXTENDER HELPERS (NO SOBRESCRIBIR) ==========
+// helpers.js ya define window.Helpers con todas las funciones base
+// Solo agregamos funciones adicionales si es necesario
+if (!window.Helpers) {
+  window.Helpers = {};
+}
+
+// Asegurarnos de que estas funciones estén disponibles
+Object.assign(window.Helpers, {
   checkAuth,
   showAlert,
   formatDate,
@@ -208,4 +215,5 @@ window.Helpers = {
   hideLoading,
   getAuthToken,
   getCurrentUser
-};
+});
+

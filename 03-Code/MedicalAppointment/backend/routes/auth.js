@@ -40,13 +40,17 @@ router.post('/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // 5. Enviar respuesta
+        // 5. Enviar respuesta con todos los datos del usuario
         res.json({
             token,
             user: {
                 id: user.id,
                 email: user.email,
-                role: user.roles.name
+                role: user.roles.name,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                phone_number: user.phone_number,
+                cedula: user.cedula
             }
         });
 

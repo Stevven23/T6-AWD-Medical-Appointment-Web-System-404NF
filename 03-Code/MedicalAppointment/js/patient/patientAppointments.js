@@ -71,6 +71,12 @@ document.addEventListener('DOMContentLoaded', async () => {
    * Crear tarjeta HTML de cita
    */
   function createAppointmentCard(appointment) {
+    // Verificar que Helpers esté disponible
+    if (!window.Helpers || typeof window.Helpers.getAppointmentStatusColor !== 'function') {
+      console.error('Helpers no está disponible o no tiene las funciones necesarias', window.Helpers);
+      return `<div class="col-12"><div class="alert alert-danger">Error: Funciones auxiliares no disponibles</div></div>`;
+    }
+
     const statusColor = Helpers.getAppointmentStatusColor(appointment.status_code);
     const statusLabel = Helpers.getAppointmentStatusLabel(appointment.status_code);
     const appointmentDate = Helpers.formatDate(appointment.scheduled_start);

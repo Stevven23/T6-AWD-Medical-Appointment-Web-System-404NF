@@ -82,6 +82,29 @@ const hideLoading = (element, message = '') => {
     }
 };
 
+// ====== ESTADOS DE CITAS ======
+const getAppointmentStatusColor = (statusCode) => {
+    const colors = {
+        'scheduled': 'primary',
+        'confirmed': 'success',
+        'completed': 'secondary',
+        'cancelled': 'danger',
+        'no_show': 'warning'
+    };
+    return colors[statusCode] || 'secondary';
+};
+
+const getAppointmentStatusLabel = (statusCode) => {
+    const labels = {
+        'scheduled': 'Programada',
+        'confirmed': 'Confirmada',
+        'completed': 'Completada',
+        'cancelled': 'Cancelada',
+        'no_show': 'No Asistió'
+    };
+    return labels[statusCode] || statusCode;
+};
+
 // ====== LOGOUT GLOBAL ======
 window.logout = function() {
     localStorage.removeItem('token');
@@ -92,14 +115,22 @@ window.logout = function() {
 
 // ====== EXPORTAR HELPERS ======
 window.Helpers = {
-    checkAuth,
-    showAlert,
-    formatDate,
-    formatTime,
-    calculateAge,
-    isValidEmail,
-    showLoading,
-    hideLoading,
-    getAuthToken,
-    getCurrentUser
+    checkAuth: checkAuth,
+    showAlert: showAlert,
+    formatDate: formatDate,
+    formatTime: formatTime,
+    calculateAge: calculateAge,
+    isValidEmail: isValidEmail,
+    showLoading: showLoading,
+    hideLoading: hideLoading,
+    getAuthToken: getAuthToken,
+    getCurrentUser: getCurrentUser,
+    getAppointmentStatusColor: getAppointmentStatusColor,
+    getAppointmentStatusLabel: getAppointmentStatusLabel
 };
+
+// También exportar en window para acceso directo (por compatibilidad)
+window.getAppointmentStatusColor = getAppointmentStatusColor;
+window.getAppointmentStatusLabel = getAppointmentStatusLabel;
+
+console.log('Helpers cargado:', window.Helpers);

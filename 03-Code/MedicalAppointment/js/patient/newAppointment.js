@@ -70,7 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       doctors.forEach(doctor => {
         const option = document.createElement('option');
         option.value = doctor.id;
-        option.textContent = `Dr. ${doctor.first_name} ${doctor.last_name}`;
+        // Los datos del doctor vienen en doctor.users
+        const firstName = doctor.users?.first_name || doctor.first_name || '';
+        const lastName = doctor.users?.last_name || doctor.last_name || '';
+        option.textContent = `Dr. ${firstName} ${lastName}`;
         doctorSelect.appendChild(option);
       });
 
@@ -100,14 +103,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const doctor = await DoctorAPI.getDoctorById(doctorId);
       
+      // Los datos del doctor vienen en doctor.users
+      const firstName = doctor.users?.first_name || doctor.first_name || '';
+      const lastName = doctor.users?.last_name || doctor.last_name || '';
+      const specialtyName = doctor.specialties?.name || doctor.specialty_name || 'No especificada';
+      const phoneNumber = doctor.users?.phone_number || doctor.phone_number || '';
+      
       doctorInfoDiv.innerHTML = `
         <div class="card mt-3">
           <div class="card-body">
-            <h5 class="card-title">Dr. ${doctor.first_name} ${doctor.last_name}</h5>
+            <h5 class="card-title">Dr. ${firstName} ${lastName}</h5>
             <p class="card-text">
-              <strong>Especialidad:</strong> ${doctor.specialty_name}<br>
+              <strong>Especialidad:</strong> ${specialtyName}<br>
               ${doctor.bio ? `<strong>Biografía:</strong> ${doctor.bio}<br>` : ''}
-              ${doctor.phone_number ? `<strong>Teléfono:</strong> ${doctor.phone_number}` : ''}
+              ${phoneNumber ? `<strong>Teléfono:</strong> ${phoneNumber}` : ''}
             </p>
           </div>
         </div>

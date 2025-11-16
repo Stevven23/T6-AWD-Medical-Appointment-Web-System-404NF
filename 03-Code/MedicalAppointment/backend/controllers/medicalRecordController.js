@@ -205,7 +205,7 @@ const medicalRecordController = {
         .from('appointments')
         .select(`
           scheduled_start,
-          doctors (
+          doctors!appointments_doctor_id_fkey (
             users (
               first_name,
               last_name
@@ -221,13 +221,14 @@ const medicalRecordController = {
         .limit(1)
         .single();
 
-      // Próxima cita
+      // Próxima cita - buscar citas futuras independientemente del status
       const now = new Date().toISOString();
-      const { data: nextAppointment } = await supabase
+      const { data: nextAppointment, error: nextError } = await supabase
         .from('appointments')
         .select(`
           scheduled_start,
-          doctors (
+          status_id,
+          doctors!appointments_doctor_id_fkey (
             users (
               first_name,
               last_name
@@ -238,11 +239,12 @@ const medicalRecordController = {
           )
         `)
         .eq('patient_user_id', patientUserId)
-        .in('status_id', [1, 2])
         .gte('scheduled_start', now)
         .order('scheduled_start', { ascending: true })
         .limit(1)
         .single();
+
+      console.log('Próxima cita query:', { patientUserId, now, nextAppointment, nextError });
 
       res.json({
         summary,

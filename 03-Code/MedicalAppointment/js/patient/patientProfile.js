@@ -76,29 +76,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (!submitBtn) return;
+    
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
     try {
       const profileData = {
-        first_name: document.getElementById('firstName').value,
-        last_name: document.getElementById('lastName').value,
-        phone_number: document.getElementById('phone').value,
-        date_of_birth: document.getElementById('birthDate').value,
-        gender: document.getElementById('gender').value,
-        address: document.getElementById('address').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        postal_code: document.getElementById('postalCode').value,
-        country: document.getElementById('country').value,
-        allergies: document.getElementById('allergies').value,
-        medical_conditions: document.getElementById('conditions').value,
-        current_medications: document.getElementById('medications').value,
-        insurance_plan: document.getElementById('insurancePlan').value,
-        insurance_number: document.getElementById('insuranceNumber').value,
-        emergency_contact_name: document.getElementById('emergencyName').value,
-        emergency_contact_phone: document.getElementById('emergencyPhone').value
+        first_name: document.getElementById('firstName')?.value || '',
+        last_name: document.getElementById('lastName')?.value || '',
+        phone_number: document.getElementById('phone')?.value || '',
+        date_of_birth: document.getElementById('birthDate')?.value || null,
+        gender: document.getElementById('gender')?.value || null,
+        address: document.getElementById('address')?.value || '',
+        city: document.getElementById('city')?.value || '',
+        state: document.getElementById('state')?.value || '',
+        postal_code: document.getElementById('postalCode')?.value || '',
+        country: document.getElementById('country')?.value || 'Ecuador',
+        allergies: document.getElementById('allergies')?.value || '',
+        medical_conditions: document.getElementById('conditions')?.value || '',
+        current_medications: document.getElementById('medications')?.value || '',
+        insurance_plan: document.getElementById('insurancePlan')?.value || '',
+        insurance_number: document.getElementById('insuranceNumber')?.value || '',
+        emergency_contact_name: document.getElementById('emergencyName')?.value || '',
+        emergency_contact_phone: document.getElementById('emergencyPhone')?.value || ''
       };
 
       await PatientAPI.updateProfile(profileData);
