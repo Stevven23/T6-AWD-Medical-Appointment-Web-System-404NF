@@ -48,47 +48,92 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
-   * Mostrar registro médico
+   * Mostrar registro médico con diseño mejorado
    */
   function displayMedicalRecord(record) {
     if (!medicalRecordSection) return;
 
     medicalRecordSection.innerHTML = `
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="fas fa-file-medical"></i> Registro Médico General
-          </h5>
+      <div class="medical-record-card">
+        <div class="medical-record-header">
+          <div class="record-header-content">
+            <h2><i class="fas fa-file-medical-alt"></i> Registro Médico General</h2>
+            ${record.updated_at ? `
+              <span class="update-date">
+                <i class="fas fa-clock"></i> Última actualización: ${Helpers.formatDate(record.updated_at, true)}
+              </span>
+            ` : ''}
+          </div>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <h6 class="text-muted">Alergias</h6>
-              <p>${record.allergies || 'No registradas'}</p>
+        
+        <div class="medical-record-body">
+          <div class="medical-info-grid">
+            <!-- Alergias -->
+            <div class="info-card ${record.allergies ? 'has-content alert-warning' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-allergies"></i>
+              </div>
+              <div class="info-content">
+                <h3>Alergias</h3>
+                <p>${record.allergies || '<span class="text-muted">No registradas</span>'}</p>
+              </div>
             </div>
             
-            <div class="col-md-6 mb-3">
-              <h6 class="text-muted">Condiciones Médicas</h6>
-              <p>${record.medical_conditions || 'Ninguna registrada'}</p>
+            <!-- Condiciones Médicas -->
+            <div class="info-card ${record.medical_conditions ? 'has-content alert-info' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-heartbeat"></i>
+              </div>
+              <div class="info-content">
+                <h3>Condiciones Médicas</h3>
+                <p>${record.medical_conditions || '<span class="text-muted">Ninguna registrada</span>'}</p>
+              </div>
             </div>
             
-            <div class="col-md-6 mb-3">
-              <h6 class="text-muted">Medicamentos Actuales</h6>
-              <p>${record.current_medications || 'Ninguno'}</p>
+            <!-- Medicamentos Actuales -->
+            <div class="info-card ${record.current_medications ? 'has-content' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-pills"></i>
+              </div>
+              <div class="info-content">
+                <h3>Medicamentos Actuales</h3>
+                <p>${record.current_medications || '<span class="text-muted">Ninguno</span>'}</p>
+              </div>
             </div>
             
-            <div class="col-md-6 mb-3">
-              <h6 class="text-muted">Historial Médico</h6>
-              <p>${record.medical_history || 'Sin historial registrado'}</p>
+            <!-- Diagnósticos -->
+            <div class="info-card ${record.diagnoses ? 'has-content' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-stethoscope"></i>
+              </div>
+              <div class="info-content">
+                <h3>Diagnósticos</h3>
+                <p>${record.diagnoses || '<span class="text-muted">Sin diagnósticos registrados</span>'}</p>
+              </div>
+            </div>
+            
+            <!-- Tratamientos -->
+            <div class="info-card ${record.treatments ? 'has-content' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-syringe"></i>
+              </div>
+              <div class="info-content">
+                <h3>Tratamientos</h3>
+                <p>${record.treatments || '<span class="text-muted">Sin tratamientos activos</span>'}</p>
+              </div>
+            </div>
+            
+            <!-- Historial Médico -->
+            <div class="info-card full-width ${record.medical_history ? 'has-content' : ''}">
+              <div class="info-icon">
+                <i class="fas fa-history"></i>
+              </div>
+              <div class="info-content">
+                <h3>Historial Médico</h3>
+                <p>${record.medical_history || '<span class="text-muted">Sin historial registrado</span>'}</p>
+              </div>
             </div>
           </div>
-          
-          ${record.updated_at ? `
-            <div class="text-muted small mt-2">
-              <i class="fas fa-clock"></i> 
-              Última actualización: ${Helpers.formatDate(record.updated_at, true)}
-            </div>
-          ` : ''}
         </div>
       </div>
     `;
@@ -109,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    consultationNotesSection.innerHTML = '<h5 class="mb-3">Historial de Consultas</h5>';
+    consultationNotesSection.innerHTML = '';
 
     notes.forEach(note => {
       const noteCard = createConsultationNoteCard(note);
@@ -118,68 +163,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
-   * Crear tarjeta de nota
+   * Crear tarjeta de nota con estilo timeline
    */
   function createConsultationNoteCard(note) {
-    const appointmentDate = Helpers.formatDate(note.scheduled_start, true);
+    const appointmentDate = Helpers.formatDate(note.scheduled_start, false);
+    const doctorName = `Dr. ${note.doctor_first_name} ${note.doctor_last_name}`;
+    const specialty = note.specialty_name || 'Consulta General';
+
+    // Determinar el título de la consulta
+    let consultTitle = specialty;
+    if (note.diagnosis) {
+      consultTitle += ` - ${note.diagnosis.substring(0, 50)}${note.diagnosis.length > 50 ? '...' : ''}`;
+    }
 
     return `
-      <div class="card mb-3">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <i class="fas fa-calendar-day"></i> ${appointmentDate}
-            </h6>
-            <span class="badge bg-info">
-              Dr. ${note.doctor_first_name} ${note.doctor_last_name}
-              ${note.specialty_name ? `- ${note.specialty_name}` : ''}
-            </span>
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content">
+          <div class="timeline-date">${appointmentDate}</div>
+          <div class="history-card">
+            <div class="history-card-header">
+              <h3>${consultTitle}</h3>
+              <span class="badge-success">Completada</span>
+            </div>
+            <div class="history-card-body">
+              <p><strong>Doctor:</strong> ${doctorName}</p>
+              <p><strong>Especialidad:</strong> ${specialty}</p>
+              
+              ${note.diagnosis ? `
+                <p><strong>Diagnóstico:</strong> ${note.diagnosis}</p>
+              ` : ''}
+              
+              ${note.notes ? `
+                <p><strong>Notas:</strong> ${note.notes}</p>
+              ` : ''}
+              
+              ${note.treatment_plan ? `
+                <p><strong>Plan de Tratamiento:</strong> ${note.treatment_plan}</p>
+              ` : ''}
+              
+              ${note.prescriptions_given ? `
+                <p><strong>Prescripciones:</strong> ${note.prescriptions_given}</p>
+              ` : ''}
+              
+              ${note.follow_up_required && note.follow_up_date ? `
+                <p><strong>Próximo Seguimiento:</strong> ${Helpers.formatDate(note.follow_up_date)}</p>
+              ` : ''}
+            </div>
+            <div class="history-card-footer">
+              <button class="btn-link"><i class="fas fa-file-pdf"></i> Ver Informe</button>
+              ${note.prescriptions_given ? `
+                <button class="btn-link"><i class="fas fa-prescription"></i> Ver Receta</button>
+              ` : ''}
+            </div>
           </div>
-        </div>
-        <div class="card-body">
-          ${note.diagnosis ? `
-            <div class="mb-3">
-              <h6 class="text-primary">
-                <i class="fas fa-diagnoses"></i> Diagnóstico
-              </h6>
-              <p>${note.diagnosis}</p>
-            </div>
-          ` : ''}
-          
-          ${note.notes ? `
-            <div class="mb-3">
-              <h6 class="text-primary">
-                <i class="fas fa-notes-medical"></i> Notas de la Consulta
-              </h6>
-              <p>${note.notes}</p>
-            </div>
-          ` : ''}
-          
-          ${note.treatment_plan ? `
-            <div class="mb-3">
-              <h6 class="text-primary">
-                <i class="fas fa-procedures"></i> Plan de Tratamiento
-              </h6>
-              <p>${note.treatment_plan}</p>
-            </div>
-          ` : ''}
-          
-          ${note.prescriptions_given ? `
-            <div class="mb-3">
-              <h6 class="text-primary">
-                <i class="fas fa-prescription"></i> Prescripciones
-              </h6>
-              <p>${note.prescriptions_given}</p>
-            </div>
-          ` : ''}
-          
-          ${note.follow_up_required ? `
-            <div class="alert alert-warning mb-0">
-              <i class="fas fa-exclamation-triangle"></i>
-              <strong>Seguimiento Requerido</strong>
-              ${note.follow_up_date ? `- Fecha sugerida: ${Helpers.formatDate(note.follow_up_date)}` : ''}
-            </div>
-          ` : ''}
         </div>
       </div>
     `;

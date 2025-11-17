@@ -37,168 +37,29 @@
         <main class="main-content">
             <header class="header">
                 <h1>Resultados de Laboratorio</h1>
-                <button class="btn-primary"><i class="fas fa-download"></i> Descargar Todos</button>
+                <button class="btn-primary" onclick="downloadAllResults()"><i class="fas fa-download"></i> Descargar Todos</button>
             </header>
 
             <section class="lab-section">
                 <div class="lab-results-list">
-                    <div class="lab-result-card">
-                        <div class="lab-result-header">
-                            <div class="lab-icon">
-                                <i class="fas fa-vial"></i>
-                            </div>
-                            <div class="lab-info">
-                                <h3>Perfil Lipídico</h3>
-                                <p class="lab-date"><i class="fas fa-calendar"></i> 10 Septiembre 2025</p>
-                                <p class="lab-doctor">Ordenado por: Dra. Sofia Pérez</p>
-                            </div>
-                            <span class="badge-warning"><i class="fas fa-exclamation-triangle"></i> Revisar</span>
-                        </div>
-                        <div class="lab-result-body">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Parámetro</th>
-                                        <th>Resultado</th>
-                                        <th>Rango Normal</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Colesterol Total</td>
-                                        <td>215 mg/dL</td>
-                                        <td>&lt;200 mg/dL</td>
-                                        <td><span class="status-high">Alto</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>HDL (Bueno)</td>
-                                        <td>45 mg/dL</td>
-                                        <td>&gt;40 mg/dL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>LDL (Malo)</td>
-                                        <td>145 mg/dL</td>
-                                        <td>&lt;100 mg/dL</td>
-                                        <td><span class="status-high">Alto</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Triglicéridos</td>
-                                        <td>160 mg/dL</td>
-                                        <td>&lt;150 mg/dL</td>
-                                        <td><span class="status-high">Alto</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="lab-notes">
-                                <p><i class="fas fa-info-circle"></i> <strong>Nota del médico:</strong> Se recomienda
-                                    ajuste en la dieta y continuar con medicación. Control en 3 meses.</p>
-                            </div>
-                        </div>
-                        <div class="lab-result-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar PDF</button>
-                            <button class="btn-info"><i class="fas fa-share"></i> Compartir</button>
-                        </div>
-                    </div>
-
-                    <div class="lab-result-card">
-                        <div class="lab-result-header">
-                            <div class="lab-icon">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <div class="lab-info">
-                                <h3>Glucosa en Ayunas</h3>
-                                <p class="lab-date"><i class="fas fa-calendar"></i> 28 Agosto 2025</p>
-                                <p class="lab-doctor">Ordenado por: Dr. Juan Martínez</p>
-                            </div>
-                            <span class="badge-success"><i class="fas fa-check-circle"></i> Normal</span>
-                        </div>
-                        <div class="lab-result-body">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Parámetro</th>
-                                        <th>Resultado</th>
-                                        <th>Rango Normal</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Glucosa</td>
-                                        <td>92 mg/dL</td>
-                                        <td>70-100 mg/dL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="lab-result-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar PDF</button>
-                            <button class="btn-info"><i class="fas fa-share"></i> Compartir</button>
-                        </div>
-                    </div>
-
-                    <div class="lab-result-card">
-                        <div class="lab-result-header">
-                            <div class="lab-icon">
-                                <i class="fas fa-vials"></i>
-                            </div>
-                            <div class="lab-info">
-                                <h3>Hemograma Completo</h3>
-                                <p class="lab-date"><i class="fas fa-calendar"></i> 10 Septiembre 2025</p>
-                                <p class="lab-doctor">Ordenado por: Dr. Juan Martínez</p>
-                            </div>
-                            <span class="badge-success"><i class="fas fa-check-circle"></i> Normal</span>
-                        </div>
-                        <div class="lab-result-body">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Parámetro</th>
-                                        <th>Resultado</th>
-                                        <th>Rango Normal</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Glóbulos Rojos</td>
-                                        <td>4.8 M/µL</td>
-                                        <td>4.5-5.5 M/µL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Glóbulos Blancos</td>
-                                        <td>7.2 K/µL</td>
-                                        <td>4.5-11.0 K/µL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Hemoglobina</td>
-                                        <td>14.5 g/dL</td>
-                                        <td>13.5-17.5 g/dL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Plaquetas</td>
-                                        <td>250 K/µL</td>
-                                        <td>150-400 K/µL</td>
-                                        <td><span class="status-normal">Normal</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="lab-result-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar PDF</button>
-                            <button class="btn-info"><i class="fas fa-share"></i> Compartir</button>
-                        </div>
-                    </div>
+                    <!-- Los resultados se cargarán dinámicamente -->
                 </div>
             </section>
         </main>
     </div>
+
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientLab.js"></script>
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

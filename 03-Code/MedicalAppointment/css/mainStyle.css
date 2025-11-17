@@ -699,6 +699,75 @@ body {
     margin-bottom: 8px;
 }
 
+.appointment-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.time-badge,
+.room-badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.time-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.room-badge {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.status-badge {
+    color: white;
+}
+
+.status-badge.status-info {
+    background-color: #17a2b8;
+}
+
+.status-badge.status-success {
+    background-color: #28a745;
+}
+
+.status-badge.status-secondary {
+    background-color: #6c757d;
+}
+
+.status-badge.status-danger {
+    background-color: #dc3545;
+}
+
+.status-badge.status-warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.appointment-reason {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid var(--primary-color);
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.appointment-reason i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
 .appointment-info .time,
 .appointment-info .location {
     font-size: 13px;
@@ -710,6 +779,96 @@ body {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-reschedule-appointment,
+.btn-cancel-appointment {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-reschedule-appointment {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-reschedule-appointment:hover {
+    background-color: #5a7bc1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-cancel-appointment {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-cancel-appointment:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-reschedule-appointment:disabled,
+.btn-cancel-appointment:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Slots para reagendamiento */
+.slots-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-slot {
+    margin: 0;
+    padding: 10px 15px;
+    min-width: 90px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-slot:hover {
+    border-color: var(--primary-color);
+    background: #f0f7ff;
+}
+
+.btn-slot.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-slot:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.appointment-info .time,
+.appointment-info .location {
+    font-size: 13px;
+    color: var(--text-medium);
+    margin-bottom: 3px;
 }
 
 /* History Section */
@@ -815,6 +974,182 @@ body {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
+}
+
+/* Prescriptions Section */
+.prescriptions-section {
+    background-color: var(--background-card);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--shadow-light);
+}
+
+/* Medical Record Card - Diseño Mejorado */
+.medical-record-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 3rem;
+}
+
+.medical-record-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #357abd 100%);
+    color: white;
+    padding: 25px 30px;
+}
+
+.record-header-content h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.record-header-content h2 i {
+    font-size: 26px;
+}
+
+.update-date {
+    font-size: 13px;
+    opacity: 0.9;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.medical-record-body {
+    padding: 30px;
+}
+
+.medical-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.info-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 15px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.info-card.has-content::before {
+    opacity: 1;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.info-card.alert-warning {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+.info-card.alert-warning::before {
+    background: #ffc107;
+}
+
+.info-card.alert-info {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.info-card.alert-info::before {
+    background: #2196f3;
+}
+
+.info-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-icon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #357abd 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+}
+
+.info-card.alert-warning .info-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+.info-card.alert-info .info-icon {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-content p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #495057;
+    margin: 0;
+}
+
+.info-content .text-muted {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* Responsive para medical record */
+@media (max-width: 768px) {
+    .medical-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .medical-record-header {
+        padding: 20px;
+    }
+    
+    .record-header-content h2 {
+        font-size: 20px;
+    }
+    
+    .medical-record-body {
+        padding: 20px;
+    }
 }
 
 /* Prescriptions Section */

@@ -11,5 +11,6 @@ router.get('/', medicalRecordController.getMedicalRecord);
 router.get('/consultation-notes', medicalRecordController.getConsultationNotes);
 router.get('/consultation-notes/:appointmentId', medicalRecordController.getConsultationNoteByAppointment);
 router.get('/summary', medicalRecordController.getHistorySummary);
+router.get('/lab-reports', medicalRecordController.getPatientLabReports);
 
 module.exports = router;

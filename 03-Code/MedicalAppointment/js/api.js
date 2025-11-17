@@ -175,6 +175,12 @@ window.MedicalRecordAPI = {
   getHistorySummary: async () => {
     const response = await fetchWithAuth(`${API_URL}/medical-records/summary`);
     return response.json();
+  },
+
+  // Obtener reportes de laboratorio
+  getLabReports: async () => {
+    const response = await fetchWithAuth(`${API_URL}/medical-records/lab-reports`);
+    return response.json();
   }
 };
 

@@ -80,6 +80,46 @@
         </div>
     </div>
 
+    <!-- Modal de reagendamiento -->
+    <div id="rescheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-alt"></i> Reagendar Cita</h2>
+                <span class="close" onclick="closeRescheduleModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="currentAppointmentInfo" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--text-medium);">Cita actual:</h3>
+                    <div id="currentAppointmentDetails"></div>
+                </div>
+
+                <form id="rescheduleForm">
+                    <div class="form-group">
+                        <label for="rescheduleDate">Nueva fecha *</label>
+                        <input type="date" id="rescheduleDate" class="form-input" required>
+                    </div>
+
+                    <div id="rescheduleSlotsContainer">
+                        <label>Horarios disponibles</label>
+                        <p class="text-muted">Seleccione una fecha para ver los horarios disponibles</p>
+                    </div>
+
+                    <input type="hidden" id="rescheduleAppointmentId">
+                    <input type="hidden" id="rescheduleDoctorId">
+                    <input type="hidden" id="rescheduleSelectedSlot">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeRescheduleModal()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" id="confirmRescheduleBtn" class="btn-primary" disabled>
+                    <i class="fas fa-check"></i> Confirmar Reagendamiento
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="../../js/appointmentManager.js"></script>
     <script src="../../js/notificationManager.js"></script>
     <script src="../../js/utils/helpers.js"></script>

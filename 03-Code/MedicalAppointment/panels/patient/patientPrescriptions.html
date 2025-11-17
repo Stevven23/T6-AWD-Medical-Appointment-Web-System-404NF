@@ -46,150 +46,15 @@
                 </div>
 
                 <div class="prescriptions-grid">
-                    <div class="prescription-card active">
-                        <div class="prescription-header">
-                            <div class="medication-icon">
-                                <i class="fas fa-prescription-bottle-alt"></i>
-                            </div>
-                            <div class="prescription-title">
-                                <h3>Atorvastatina 20mg</h3>
-                                <p class="prescribed-by">Prescrito por Dr. Sofia Pérez</p>
-                            </div>
-                            <span class="badge-active">Activa</span>
-                        </div>
-                        <div class="prescription-body">
-                            <div class="prescription-detail">
-                                <i class="fas fa-calendar"></i>
-                                <div>
-                                    <strong>Fecha de emisión:</strong>
-                                    <p>15 Octubre 2025</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-clock"></i>
-                                <div>
-                                    <strong>Duración:</strong>
-                                    <p>3 meses (válida hasta 15 Ene 2026)</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-pills"></i>
-                                <div>
-                                    <strong>Dosis:</strong>
-                                    <p>1 tableta cada 24 horas</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-info-circle"></i>
-                                <div>
-                                    <strong>Indicaciones:</strong>
-                                    <p>Tomar después de la cena</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="prescription-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar</button>
-                            <button class="btn-info"><i class="fas fa-redo"></i> Renovar</button>
-                        </div>
-                    </div>
-
-                    <div class="prescription-card active">
-                        <div class="prescription-header">
-                            <div class="medication-icon">
-                                <i class="fas fa-prescription-bottle-alt"></i>
-                            </div>
-                            <div class="prescription-title">
-                                <h3>Losartán 50mg</h3>
-                                <p class="prescribed-by">Prescrito por Dr. Juan Martínez</p>
-                            </div>
-                            <span class="badge-active">Activa</span>
-                        </div>
-                        <div class="prescription-body">
-                            <div class="prescription-detail">
-                                <i class="fas fa-calendar"></i>
-                                <div>
-                                    <strong>Fecha de emisión:</strong>
-                                    <p>10 Septiembre 2025</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-clock"></i>
-                                <div>
-                                    <strong>Duración:</strong>
-                                    <p>6 meses (válida hasta 10 Mar 2026)</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-pills"></i>
-                                <div>
-                                    <strong>Dosis:</strong>
-                                    <p>1 tableta cada 12 horas</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-info-circle"></i>
-                                <div>
-                                    <strong>Indicaciones:</strong>
-                                    <p>Tomar con alimentos</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="prescription-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar</button>
-                            <button class="btn-info"><i class="fas fa-redo"></i> Renovar</button>
-                        </div>
-                    </div>
-
-                    <div class="prescription-card expiring">
-                        <div class="prescription-header">
-                            <div class="medication-icon">
-                                <i class="fas fa-prescription-bottle-alt"></i>
-                            </div>
-                            <div class="prescription-title">
-                                <h3>Omeprazol 20mg</h3>
-                                <p class="prescribed-by">Prescrito por Dra. Ana López</p>
-                            </div>
-                            <span class="badge-warning">Por Vencer</span>
-                        </div>
-                        <div class="prescription-body">
-                            <div class="prescription-detail">
-                                <i class="fas fa-calendar"></i>
-                                <div>
-                                    <strong>Fecha de emisión:</strong>
-                                    <p>25 Julio 2025</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-clock"></i>
-                                <div>
-                                    <strong>Duración:</strong>
-                                    <p>3 meses (vence el 25 Oct 2025)</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-pills"></i>
-                                <div>
-                                    <strong>Dosis:</strong>
-                                    <p>1 cápsula cada 24 horas</p>
-                                </div>
-                            </div>
-                            <div class="prescription-detail">
-                                <i class="fas fa-info-circle"></i>
-                                <div>
-                                    <strong>Indicaciones:</strong>
-                                    <p>Tomar en ayunas</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="prescription-footer">
-                            <button class="btn-secondary"><i class="fas fa-download"></i> Descargar</button>
-                            <button class="btn-info"><i class="fas fa-redo"></i> Renovar Ahora</button>
-                        </div>
-                    </div>
+                    <!-- Las recetas se cargarán dinámicamente -->
                 </div>
             </section>
         </main>
     </div>
+
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientPrescriptions.js"></script>
 </body>
 
 </html>

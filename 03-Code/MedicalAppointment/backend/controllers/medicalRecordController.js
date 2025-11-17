@@ -264,6 +264,45 @@ const medicalRecordController = {
       console.error('Error al obtener resumen:', error);
       res.status(500).json({ error: 'Error al obtener resumen' });
     }
+  },
+
+  // Obtener reportes de laboratorio del paciente
+  getPatientLabReports: async (req, res) => {
+    try {
+      const patientUserId = req.user.id;
+
+      const { data, error } = await supabase
+        .from('lab_reports')
+        .select(`
+          *,
+          lab_results (*),
+          doctors (
+            users (
+              first_name,
+              last_name
+            )
+          )
+        `)
+        .eq('patient_user_id', patientUserId)
+        .order('order_date', { ascending: false });
+
+      if (error) throw error;
+
+      // Procesar datos para el frontend
+      const processedData = data.map(report => ({
+        ...report,
+        doctor_full_name: (report.doctors && report.doctors.users)
+          ? `Dr. ${report.doctors.users.first_name} ${report.doctors.users.last_name}`
+          : 'Doctor no asignado',
+        doctors: undefined // Limpiar
+      }));
+
+      res.status(200).json(processedData);
+
+    } catch (error) {
+      console.error('Error al obtener reportes de laboratorio:', error);
+      res.status(500).json({ error: 'Error al obtener reportes de laboratorio' });
+    }
   }
 };
 
