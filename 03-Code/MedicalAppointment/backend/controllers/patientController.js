@@ -53,99 +53,86 @@ const patientController = {
 
   // Actualizar perfil del paciente
   updateProfile: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const {
-        first_name,
-        last_name,
-        phone_number,
-        date_of_birth,
-        gender,
-        address,
-        city,
-        state,
-        postal_code,
-        country,
-        insurance_plan,
-        insurance_number,
-        emergency_contact_name,
-        emergency_contact_phone,
-        allergies,
-        medical_conditions,
-        current_medications
-      } = req.body;
+      try {
+          const userId = req.user.id;
 
-      // Actualizar tabla users
-      const userUpdates = {};
-      if (first_name) userUpdates.first_name = first_name;
-      if (last_name) userUpdates.last_name = last_name;
-      if (phone_number) userUpdates.phone_number = phone_number;
+          // 1. Campos permitidos en la tabla 'users'
+          const userFields = ['first_name', 'last_name', 'phone_number'];
+          
+          // 2. Campos permitidos en la tabla 'patients' (TODOS los de tu formulario)
+          const patientFields = [
+              'date_of_birth', 'gender', 'address', 'city', 'state',
+              'postal_code', 'country', 'insurance_plan', 'insurance_number',
+              'emergency_contact_name', 'emergency_contact_phone',
+              'allergies', 'medical_conditions', 'current_medications',
+              'blood_type', 'height', 'weight', 'home_phone', 'emergency_contact_relation'
+          ];
 
-      if (Object.keys(userUpdates).length > 0) {
-        userUpdates.updated_at = new Date().toISOString();
-        
-        const { error: userError } = await supabase
-          .from('users')
-          .update(userUpdates)
-          .eq('id', userId);
+          // 3. Crear objetos de actualización limpios
+          const userUpdates = {};
+          const patientUpdates = {};
 
-        if (userError) throw userError;
+          // Llenar userUpdates
+          for (const field of userFields) {
+              if (req.body[field] !== undefined) {
+                  userUpdates[field] = req.body[field] === '' ? null : req.body[field];
+              }
+          }
+
+          // Llenar patientUpdates
+          for (const field of patientFields) {
+              if (req.body[field] !== undefined) {
+                  patientUpdates[field] = req.body[field] === '' ? null : req.body[field];
+              }
+          }
+
+          // 4. Ejecutar actualizaciones
+          if (Object.keys(userUpdates).length > 0) {
+              userUpdates.updated_at = new Date().toISOString();
+              const { error: userError } = await supabase
+                  .from('users')
+                  .update(userUpdates)
+                  .eq('id', userId);
+              if (userError) throw userError;
+          }
+
+          if (Object.keys(patientUpdates).length > 0) {
+              patientUpdates.updated_at = new Date().toISOString();
+              const { error: patientError } = await supabase
+                  .from('patients')
+                  .update(patientUpdates) // <-- Ahora SÍ incluye blood_type, etc.
+                  .eq('user_id', userId);
+              if (patientError) throw patientError;
+          }
+
+          // 5. Devolver respuesta (usando tu patrón original, que es más seguro)
+          const { data: updatedUser } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', userId)
+              .single();
+
+          const { data: updatedPatient } = await supabase
+              .from('patients')
+              .select('*')
+              .eq('user_id', userId)
+              .single();
+
+          res.json({
+              message: 'Perfil actualizado exitosamente',
+              // El frontend espera un objeto 'profile' combinado
+              profile: { 
+                  ...updatedUser,
+                  ...updatedPatient
+              }
+          });
+
+      } catch (error) {
+          console.error('Error al actualizar perfil:', error);
+          // Devolvemos el mensaje de error real
+          res.status(500).json({ error: error.message || 'Error al actualizar perfil' });
       }
-
-      // Actualizar tabla patients
-      const patientUpdates = {};
-      if (date_of_birth !== undefined) patientUpdates.date_of_birth = date_of_birth;
-      if (gender !== undefined) patientUpdates.gender = gender;
-      if (address !== undefined) patientUpdates.address = address;
-      if (city !== undefined) patientUpdates.city = city;
-      if (state !== undefined) patientUpdates.state = state;
-      if (postal_code !== undefined) patientUpdates.postal_code = postal_code;
-      if (country !== undefined) patientUpdates.country = country;
-      if (insurance_plan !== undefined) patientUpdates.insurance_plan = insurance_plan;
-      if (insurance_number !== undefined) patientUpdates.insurance_number = insurance_number;
-      if (emergency_contact_name !== undefined) patientUpdates.emergency_contact_name = emergency_contact_name;
-      if (emergency_contact_phone !== undefined) patientUpdates.emergency_contact_phone = emergency_contact_phone;
-      if (allergies !== undefined) patientUpdates.allergies = allergies;
-      if (medical_conditions !== undefined) patientUpdates.medical_conditions = medical_conditions;
-      if (current_medications !== undefined) patientUpdates.current_medications = current_medications;
-
-      if (Object.keys(patientUpdates).length > 0) {
-        patientUpdates.updated_at = new Date().toISOString();
-
-        const { error: patientError } = await supabase
-          .from('patients')
-          .update(patientUpdates)
-          .eq('user_id', userId);
-
-        if (patientError) throw patientError;
-      }
-
-      // Obtener perfil actualizado
-      const { data: updatedUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      const { data: updatedPatient } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      res.json({
-        message: 'Perfil actualizado exitosamente',
-        profile: {
-          ...updatedUser,
-          ...updatedPatient
-        }
-      });
-
-    } catch (error) {
-      console.error('Error al actualizar perfil:', error);
-      res.status(500).json({ error: 'Error al actualizar perfil' });
-    }
-  },
+    },
 
   // Cambiar contraseña
   changePassword: async (req, res) => {

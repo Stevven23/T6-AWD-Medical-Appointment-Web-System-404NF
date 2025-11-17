@@ -45,11 +45,11 @@
                 <div class="card next-appointment" id="nextAppointmentCard">
                     <h3>Próxima Cita</h3>
                     <div class="appointment-card">
-                        <div class="date" id="nextAppointmentDate">25 Oct</div>
-                        <div class="time" id="nextAppointmentTime">10:30 AM</div>
-                        <div class="doctor"><span id="nextAppointmentDoctor">Dr. Sofia Pérez</span> - <span id="nextAppointmentSpecialty">Cardiología</span></div>
+                        <div class="date" id="nextAppointmentDate">--</div>
+                        <div class="time" id="nextAppointmentTime">--:--</div>
+                        <div class="doctor"><span id="nextAppointmentDoctor">Cargando...</span> - <span id="nextAppointmentSpecialty">--</span></div>
                     </div>
-                    <button class="btn-reschedule">Reprogramar Cita</button>
+                    <button class="btn-reschedule" onclick="window.location.href='patientAppointments.html'" style="display:none;" id="rescheduleBtn">Reprogramar Cita</button>
                 </div>
 
                 <div class="card quick-actions">
@@ -58,98 +58,75 @@
                         <i class="fas fa-calendar-plus"></i>
                         <span>Agendar Cita</span>
                     </a>
-                    <a href="#" class="action-btn">
-                        <i class="fas fa-phone-alt"></i>
-                        <span>Telemedicina</span>
-                    </a>
-                    <a href="#" class="action-btn">
+                    <a href="patientPrescriptions.html" class="action-btn">
                         <i class="fas fa-prescription-bottle"></i>
-                        <span>Renovar Receta</span>
+                        <span>Ver Recetas</span>
                     </a>
-                    <a href="#" class="action-btn">
+                    <a href="patientLab.html" class="action-btn">
                         <i class="fas fa-file-download"></i>
-                        <span>Descargar Resultados</span>
+                        <span>Resultados Lab</span>
+                    </a>
+                    <a href="patientHistory.html" class="action-btn">
+                        <i class="fas fa-file-medical"></i>
+                        <span>Historial Médico</span>
                     </a>
                 </div>
 
-                <div class="card medical-history">
+                <div class="card medical-history" id="medicalHistoryCard">
                     <h3>Historial Reciente</h3>
-                    <div class="history-item">
-                        <span class="date">15 Oct 2025</span>
-                        <span class="description">Consulta General - Control de Rutina</span>
-                        <button class="btn-view">Ver</button>
-                    </div>
-                    <div class="history-item">
-                        <span class="date">10 Sep 2025</span>
-                        <span class="description">Análisis de Sangre - Laboratorio</span>
-                        <button class="btn-view">Ver</button>
-                    </div>
-                    <div class="history-item">
-                        <span class="date">28 Ago 2025</span>
-                        <span class="description">Cardiología - Seguimiento</span>
-                        <button class="btn-view">Ver</button>
+                    <div id="recentHistoryList">
+                        <p style="text-align: center; color: var(--text-light); padding: 2rem;">Cargando historial...</p>
                     </div>
                 </div>
 
-                <div class="card health-summary">
-                    <h3>Resumen de Salud</h3>
-                    <div class="summary-item">
-                        <span class="label">Tipo de Sangre</span>
-                        <span class="value">O+</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Alergias</span>
-                        <span class="value">Penicilina</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Última Consulta</span>
-                        <span class="value" id="lastConsultationDate">15 Oct 2025</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Próximo Chequeo</span>
-                        <span class="value">25 Oct 2025</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Medicamentos Activos</span>
-                        <span class="value">2</span>
-                    </div>
-                    <div class="summary-item" style="display:none;">
-                        <span class="label">Completadas</span>
-                        <span class="value" id="totalCompleted">0</span>
-                    </div>
-                    <div class="summary-item" style="display:none;">
-                        <span class="label">Próximas</span>
-                        <span class="value" id="upcomingCount">0</span>
-                    </div>
-                    <div class="summary-item" style="display:none;">
-                        <span class="label">Canceladas</span>
-                        <span class="value" id="cancelledCount">0</span>
-                    </div>
-                    <div style="display:none;">
-                        <span id="lastConsultationDoctor">Dr. Juan Martínez</span>
-                    </div>
+                <div class="card health-summary" id="healthSummaryCard">
+                <h3>Resumen de Salud</h3>
+                
+                <div class="summary-item">
+                    <span class="label">Tipo de Sangre</span>
+                    <span class="value" id="bloodTypeValue">--</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span class="label">Alergias</span>
+                    <span class="value" id="allergiesValue">--</span>
                 </div>
 
-                <div class="card notifications" style="grid-column: 1 / -1;">
+                <div class="summary-item">
+                    <span class="label">Condiciones</span>
+                    <span class="value" id="conditionsValue">--</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Medicamentos</span>
+                    <span class="value" id="medicationsValue">--</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Última Consulta</span>
+                    <span class="value" id="lastConsultationDate">--</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Citas Completadas</span>
+                    <span class="value" id="totalCompleted">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Citas Próximas</span>
+                    <span class="value" id="upcomingCount">0</span>
+                </div>
+            </div>
+
+                <div class="card notifications" style="grid-column: 1 / -1;" id="notificationsCard">
                     <h3>Notificaciones</h3>
-                    <div class="notification-item">
-                        <div class="title">Recordatorio de Cita</div>
-                        <div class="text">Tienes una cita programada para el 25 de octubre a las 10:30 AM con Dr. Sofia Pérez</div>
-                    </div>
-                    <div class="notification-item info">
-                        <div class="title">Resultados Disponibles</div>
-                        <div class="text">Los resultados de tu análisis de sangre del 15 de octubre ya están disponibles</div>
+                    <div id="notificationsList">
+                        <p style="text-align: center; color: var(--text-light); padding: 2rem;">Cargando notificaciones...</p>
                     </div>
                 </div>
             </section>
         </main>
     </div>
     
-    <script src="../../js/appointmentManager.js?v=3"></script>
-    <script src="../../js/notificationManager.js?v=3"></script>
-    <script src="../../js/utils/helpers.js?v=3"></script>
-    <script src="../../js/api.js?v=3"></script>
-    <script src="../../js/patient/patientDashboard.js?v=3"></script>
+    <script src="../../js/utils/helpers.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/patient/patientDashboard.js"></script>
     
     <script>
         function logout() {
@@ -159,26 +136,6 @@
                 window.location.href = '../../panels/login.html';
             }
         }
-        
-        // Actualizar próxima cita en el dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                if (window.appointmentManager) {
-                    const nextAppointment = appointmentManager.getNextAppointment();
-                    if (nextAppointment) {
-                        const appointmentCard = document.querySelector('.next-appointment .appointment-card');
-                        if (appointmentCard) {
-                            const date = new Date(nextAppointment.date);
-                            appointmentCard.innerHTML = `
-                                <div class="date" id="nextAppointmentDate">${date.getDate()} ${['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][date.getMonth()]}</div>
-                                <div class="time" id="nextAppointmentTime">${appointmentManager.formatTime(nextAppointment.time)}</div>
-                                <div class="doctor"><span id="nextAppointmentDoctor">${nextAppointment.doctorName}</span> - <span id="nextAppointmentSpecialty">${nextAppointment.specialty}</span></div>
-                            `;
-                        }
-                    }
-                }
-            }, 100);
-        });
     </script>
 </body>
 

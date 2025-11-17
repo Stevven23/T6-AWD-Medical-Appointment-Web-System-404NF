@@ -27,8 +27,7 @@
                     <li><a href="patientLab.html"><i class="fas fa-flask"></i> Resultados de Laboratorio</a></li>
                     <li><a href="patientProfile.html"><i class="fas fa-user-cog"></i> Mi Perfil</a></li>
                     <li class="active"><a href="patientMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
-                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
-                            Sesion</a>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                 </ul>
             </nav>
         </aside>
@@ -178,6 +177,16 @@
             </section>
         </main>
     </div>
+    
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

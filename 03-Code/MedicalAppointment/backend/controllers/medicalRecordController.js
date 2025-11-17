@@ -221,7 +221,7 @@ const medicalRecordController = {
         .limit(1)
         .single();
 
-      // Próxima cita - buscar citas futuras independientemente del status
+      // Próxima cita - buscar citas futuras con status confirmado o pendiente
       const now = new Date().toISOString();
       const { data: nextAppointment, error: nextError } = await supabase
         .from('appointments')
@@ -240,6 +240,7 @@ const medicalRecordController = {
         `)
         .eq('patient_user_id', patientUserId)
         .gte('scheduled_start', now)
+        .in('status_id', [1, 2]) // Solo pendientes (1) y confirmadas (2)
         .order('scheduled_start', { ascending: true })
         .limit(1)
         .single();

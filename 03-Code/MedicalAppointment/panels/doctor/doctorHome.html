@@ -153,6 +153,15 @@
 
 
     <script src="../../js/calendar.js"></script>
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

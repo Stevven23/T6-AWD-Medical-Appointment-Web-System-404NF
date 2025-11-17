@@ -33,7 +33,7 @@
                     <li><a href="./doctorReports.html"><i class="fas fa-chart-line"></i> Reportes</a></li>
                     <li><a href="./doctorMessages.html"><i class="fas fa-envelope"></i> Mensajes</a></li>
                     <li class="active"><a href="./doctorPerfil.html"><i class="fas fa-user-cog"></i> Perfil</a></li>
-                    <li><a href="../../panels/login.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar
                             Sesion</a>
                 </ul>
             </nav>
@@ -125,6 +125,15 @@
     </div>
 
     <script src="../../js/doctorPerfil.js"></script>
+    <script>
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../../panels/login.html';
+            }
+        }
+    </script>
 </body>
 
 </html>

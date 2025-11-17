@@ -105,6 +105,12 @@ const getAppointmentStatusLabel = (statusCode) => {
     return labels[statusCode] || statusCode;
 };
 
+const truncateText = (text, maxLength) => {
+    if (!text) return 'N/A';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
+
 // ====== LOGOUT GLOBAL ======
 window.logout = function() {
     localStorage.removeItem('token');
@@ -126,7 +132,8 @@ window.Helpers = {
     getAuthToken: getAuthToken,
     getCurrentUser: getCurrentUser,
     getAppointmentStatusColor: getAppointmentStatusColor,
-    getAppointmentStatusLabel: getAppointmentStatusLabel
+    getAppointmentStatusLabel: getAppointmentStatusLabel,
+    truncateText: truncateText
 };
 
 // También exportar en window para acceso directo (por compatibilidad)

@@ -35,23 +35,17 @@
         <main class="main-content">
             <header class="header">
                 <h1>Historial Médico</h1>
-                <button class="btn-primary"><i class="fas fa-download"></i> Descargar Historial</button>
+                <button class="btn-primary" id="downloadHistoryBtn"><i class="fas fa-download"></i> Descargar Historial</button>
             </header>
 
             <section class="history-section">
                 <div class="filter-bar">
-                    <input type="text" class="search-input" placeholder="Buscar en historial...">
-                    <select class="filter-select">
-                        <option>Todos los años</option>
-                        <option>2025</option>
-                        <option>2024</option>
-                        <option>2023</option>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar en historial...">
+                    <select class="filter-select" id="yearFilter">
+                        <option value="">Todos los años</option>
                     </select>
-                    <select class="filter-select">
-                        <option>Todas las especialidades</option>
-                        <option>Cardiología</option>
-                        <option>Medicina General</option>
-                        <option>Oftalmología</option>
+                    <select class="filter-select" id="specialtyFilter">
+                        <option value="">Todas las especialidades</option>
                     </select>
                 </div>
 
@@ -68,6 +62,8 @@
         </main>
     </div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="../../js/utils/helpers.js"></script>
     <script src="../../js/api.js"></script>
     <script src="../../js/patient/patientHistory.js"></script>

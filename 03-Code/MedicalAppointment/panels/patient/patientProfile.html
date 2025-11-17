@@ -36,7 +36,7 @@
             <header class="header">
                 <h1>Mi Perfil</h1>
                 <div class="user-profile">
-                    <span>Carlos Mendoza</span>
+                    <span id="headerUserName"></span>
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <button class="btn-primary" onclick="document.getElementById('profileForm').dispatchEvent(new Event('submit', {cancelable: true}))"><i class="fas fa-save"></i> Guardar Cambios</button>
@@ -55,25 +55,26 @@
                             </div>
                             <div class="form-group">
                                 <label>Nombre</label>
-                                <input type="text" id="firstName" value="Carlos" class="form-input">
+                                <input type="text" id="firstName" class="form-input" placeholder="Nombre">
                             </div>
                             <div class="form-group">
                                 <label>Apellido</label>
-                                <input type="text" id="lastName" value="Mendoza García" class="form-input">
+                                <input type="text" id="lastName" class="form-input" placeholder="Apellido">
                             </div>
                             <div class="form-group">
                                 <label>Cédula</label>
-                                <input type="text" value="1234567890" class="form-input" readonly>
+                                <input type="text" id="cedula" class="form-input" readonly>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Fecha de Nacimiento</label>
-                                    <input type="date" id="birthDate" value="1985-03-15" class="form-input">
+                                    <input type="date" id="birthDate" class="form-input">
                                     <small id="ageDisplay" class="text-muted"></small>
                                 </div>
                                 <div class="form-group">
                                     <label>Género</label>
                                     <select id="gender" class="form-input">
+                                        <option value="">Seleccione</option>
                                         <option value="masculino">Masculino</option>
                                         <option value="femenino">Femenino</option>
                                         <option value="otro">Otro</option>
@@ -86,35 +87,35 @@
                             <h3>Información de Contacto</h3>
                             <div class="form-group">
                                 <label>Correo Electrónico</label>
-                                <input type="email" id="email" value="carlos.mendoza@email.com" class="form-input" readonly>
+                                <input type="email" id="email" class="form-input" readonly>
                             </div>
                             <div class="form-group">
                                 <label>Teléfono Móvil</label>
-                                <input type="tel" id="phone" value="0998765432" class="form-input">
+                                <input type="tel" id="phone" class="form-input" placeholder="0998765432">
                             </div>
                             <div class="form-group">
                                 <label>Teléfono Fijo</label>
-                                <input type="tel" value="022345678" class="form-input">
+                                <input type="tel" id="homePhone" class="form-input" placeholder="022345678">
                             </div>
                             <div class="form-group">
                                 <label>Dirección</label>
-                                <textarea id="address" class="form-input" rows="3">Av. Principal 123 y Calle Secundaria, Quito, Ecuador</textarea>
+                                <textarea id="address" class="form-input" rows="3" placeholder="Dirección completa"></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Ciudad</label>
-                                <input type="text" id="city" value="Quito" class="form-input">
+                                <input type="text" id="city" class="form-input" placeholder="Ciudad">
                             </div>
                             <div class="form-group">
                                 <label>Provincia</label>
-                                <input type="text" id="state" value="Pichincha" class="form-input">
+                                <input type="text" id="state" class="form-input" placeholder="Provincia">
                             </div>
                             <div class="form-group">
                                 <label>Código Postal</label>
-                                <input type="text" id="postalCode" value="170150" class="form-input">
+                                <input type="text" id="postalCode" class="form-input" placeholder="Código Postal">
                             </div>
                             <div class="form-group">
                                 <label>País</label>
-                                <input type="text" id="country" value="Ecuador" class="form-input">
+                                <input type="text" id="country" class="form-input" placeholder="País">
                             </div>
                         </div>
 
@@ -122,7 +123,8 @@
                             <h3>Información Médica</h3>
                             <div class="form-group">
                                 <label>Tipo de Sangre</label>
-                                <select class="form-input">
+                                <select id="bloodType" class="form-input">
+                                    <option value="">Seleccione</option>
                                     <option>O+</option>
                                     <option>O-</option>
                                     <option>A+</option>
@@ -135,33 +137,33 @@
                             </div>
                             <div class="form-group">
                                 <label>Alergias</label>
-                                <textarea id="allergies" class="form-input" rows="2">Penicilina</textarea>
+                                <textarea id="allergies" class="form-input" rows="2" placeholder="Ej: Penicilina, Polen"></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Condiciones Crónicas</label>
-                                <textarea id="conditions" class="form-input" rows="2">Hipertensión</textarea>
+                                <textarea id="conditions" class="form-input" rows="2" placeholder="Ej: Hipertensión, Diabetes"></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Medicamentos Actuales</label>
-                                <textarea id="medications" class="form-input" rows="2"></textarea>
+                                <textarea id="medications" class="form-input" rows="2" placeholder="Medicamentos que toma actualmente"></textarea>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Altura (cm)</label>
-                                    <input type="number" value="175" class="form-input">
+                                    <input type="number" id="height" class="form-input" placeholder="175">
                                 </div>
                                 <div class="form-group">
                                     <label>Peso (kg)</label>
-                                    <input type="number" value="75" class="form-input">
+                                    <input type="number" id="weight" class="form-input" placeholder="75">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Plan de Seguro</label>
-                                <input type="text" id="insurancePlan" class="form-input">
+                                <input type="text" id="insurancePlan" class="form-input" placeholder="Nombre del plan">
                             </div>
                             <div class="form-group">
                                 <label>Número de Póliza</label>
-                                <input type="text" id="insuranceNumber" class="form-input">
+                                <input type="text" id="insuranceNumber" class="form-input" placeholder="Número de póliza">
                             </div>
                         </div>
 
@@ -169,15 +171,15 @@
                             <h3>Contacto de Emergencia</h3>
                             <div class="form-group">
                                 <label>Nombre Completo</label>
-                                <input type="text" id="emergencyName" value="María Mendoza" class="form-input">
+                                <input type="text" id="emergencyName" class="form-input" placeholder="Nombre del contacto">
                             </div>
                             <div class="form-group">
                                 <label>Relación</label>
-                                <input type="text" value="Esposa" class="form-input">
+                                <input type="text" id="emergencyRelation" class="form-input" placeholder="Ej: Esposa, Hermano">
                             </div>
                             <div class="form-group">
                                 <label>Teléfono</label>
-                                <input type="tel" id="emergencyPhone" value="0987654321" class="form-input">
+                                <input type="tel" id="emergencyPhone" class="form-input" placeholder="0987654321">
                             </div>
                         </div>
 
