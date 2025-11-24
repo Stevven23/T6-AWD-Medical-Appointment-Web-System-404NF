@@ -102,7 +102,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
-app.use('/api/specialties', specialtyRoutes); 
+app.use('/api/specialties', specialtyRoutes);
 
 // ========== MANTENER TUS RUTAS EXISTENTES ==========
 app.get('/api/test', (req, res) => {
@@ -115,3 +115,13 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
 });
+
+// En tu app.js o server.js
+const patientApiRoutes = require('./routes/patientRoutes'); // El NUEVO archivo de rutas
+
+// ... otra configuración ...
+
+// Asigna las rutas a un prefijo de API, por ejemplo /api/patients
+app.use('/api/patients', patientApiRoutes);
+
+// ...

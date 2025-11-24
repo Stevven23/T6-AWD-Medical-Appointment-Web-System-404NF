@@ -3,6 +3,14 @@ const router = express.Router();
 const doctorController = require('../controllers/doctorController');
 const { authMiddleware } = require('../middleware/auth');
 
+
+// routes/doctor.js (Fragmento clave)
+const patientManagementController = require('../controllers/patientManagementController'); 
+// ...
+router.get('/patients', patientManagementController.getPatientList);
+router.post('/patients', patientManagementController.createPatient); 
+router.get('/patients/:userId/record', patientManagementController.getPatientRecordDetails);
+
 // ========== RUTAS ESPECÍFICAS PRIMERO (para evitar conflictos con :id) ==========
 
 // GET /api/doctors/specialties - Obtener todas las especialidades

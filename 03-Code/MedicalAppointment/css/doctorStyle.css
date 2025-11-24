@@ -172,7 +172,7 @@ body::-webkit-scrollbar {
     background-color: var(--background-color);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
@@ -469,6 +469,7 @@ body::-webkit-scrollbar {
     display: flex;
     flex-direction: column;
     gap: 30px;
+    width: 100%;
 }
 
 .appointment-header {
@@ -490,18 +491,21 @@ body::-webkit-scrollbar {
     color: var(--light-text-color);
 }
 
-.patient-overview,
-.patient-record-details {
+.patient-overview {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 2fr 1fr;
     gap: 20px;
 }
 
+.patient-record-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
 .patient-info-card,
-.appointment-details-card,
-.previous-consultations-card,
-.test-results-card,
-.prescriptions-card {
+.appointment-details-card{
     background-color: var(--card-background);
     padding: 25px;
     border-radius: 12px;
@@ -509,6 +513,15 @@ body::-webkit-scrollbar {
     border: 1px solid #e0e0e0;
     position: relative;
     overflow: hidden;
+}
+
+.previous-consultations-card,
+.test-results-card,
+.prescriptions-card {
+    height: auto;
+    min-height: 350px;
+    max-height: 700px;
+    overflow-y: auto;
 }
 
 .patient-info-card h2,
@@ -1656,6 +1669,14 @@ table tbody tr:last-child td {
     .chart-container h3 {
         font-size: 1.1rem;
     }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.large-field {
+        grid-column: auto;
+    }
 }
 
 .stats-grid-prescription {
@@ -2106,7 +2127,7 @@ textarea.form-input {
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr; 
     gap: 20px;
     margin-bottom: 24px;
 }
@@ -2117,7 +2138,7 @@ textarea.form-input {
 }
 
 .form-group.large-field {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1; 
 }
 
 .form-group label {
