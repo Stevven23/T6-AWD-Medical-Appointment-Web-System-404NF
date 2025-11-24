@@ -119,7 +119,6 @@ app.listen(PORT, () => {
 // En tu app.js o server.js
 const patientApiRoutes = require('./routes/patientRoutes'); // El NUEVO archivo de rutas
 
-// ... otra configuración ...
 
 // Asigna las rutas a un prefijo de API, por ejemplo /api/patients
 app.use('/api/patients', patientApiRoutes);
