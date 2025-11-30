@@ -237,3 +237,65 @@ body {
         max-height: 70px;
     }
 }
+
+/* Register link styles */
+.register-option {
+    margin-top: 15px;
+}
+
+.register-option p {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.register-link {
+    color: var(--color-azul-oscuro);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.register-link:hover {
+    color: var(--color-azul-claro);
+    text-decoration: underline;
+}
+
+/* Back to home button */
+.back-to-home {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-azul-oscuro);
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.back-to-home:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    color: var(--color-azul-claro);
+}
+
+.back-to-home i {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .back-to-home {
+        top: 10px;
+        left: 10px;
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+}

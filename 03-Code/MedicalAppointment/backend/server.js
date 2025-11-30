@@ -25,6 +25,7 @@ app.use(cors({
 app.use(express.json());
 
 // ========== IMPORTAR RUTAS NUEVAS ==========
+const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patient');
 const doctorRoutes = require('./routes/doctor');
 const appointmentRoutes = require('./routes/appointments');
@@ -98,6 +99,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ========== NUEVAS RUTAS DE PACIENTES ==========
+app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);

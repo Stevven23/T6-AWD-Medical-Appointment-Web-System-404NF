@@ -63,9 +63,22 @@ router.post('/login', async (req, res) => {
 // Registro (ejemplo básico)
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { 
+            email, 
+            password, 
+            first_name, 
+            last_name,
+            cedula,
+            phone_number,
+            date_of_birth
+        } = req.body;
 
-        // 1. Verificar si el usuario ya existe
+        // 1. Validaciones básicas
+        if (!email || !password || !first_name || !last_name || !cedula || !date_of_birth) {
+            return res.status(400).json({ error: 'Los campos email, password, nombres, apellidos, cédula y fecha de nacimiento son obligatorios' });
+        }
+
+        // 2. Verificar si el email ya existe
         const { data: existingUser } = await supabase
             .from('users')
             .select('id')
@@ -73,52 +86,84 @@ router.post('/register', async (req, res) => {
             .single();
 
         if (existingUser) {
-            return res.status(400).json({ error: 'Email ya registrado' });
+            return res.status(400).json({ error: 'El correo electrónico ya está registrado' });
         }
 
-        // 2. Obtener role_id
+        // 3. Verificar si la cédula ya existe
+        const { data: existingCedula } = await supabase
+            .from('users')
+            .select('id')
+            .eq('cedula', cedula)
+            .single();
+
+        if (existingCedula) {
+            return res.status(400).json({ error: 'La cédula ya está registrada' });
+        }
+
+        // 4. Obtener role_id para 'patient'
         const { data: roleData } = await supabase
             .from('roles')
             .select('id')
-            .eq('name', role)
+            .eq('name', 'patient')
             .single();
 
         if (!roleData) {
-            return res.status(400).json({ error: 'Rol no válido' });
+            return res.status(500).json({ error: 'Error al obtener el rol de paciente' });
         }
 
-        // 3. Hashear contraseña
+        // 5. Hashear contraseña
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 4. Crear usuario
-        const { data: newUser, error } = await supabase
+        // 6. Crear usuario en la tabla users
+        const { data: newUser, error: userError } = await supabase
             .from('users')
             .insert([
                 {
                     email,
                     password_hash,
-                    role_id: roleData.id
+                    role_id: roleData.id,
+                    first_name,
+                    last_name,
+                    cedula,
+                    phone_number: phone_number || null
                 }
             ])
             .select()
             .single();
 
-        if (error) {
-            throw error;
+        if (userError) {
+            console.error('Error al crear usuario:', userError);
+            throw userError;
         }
 
-        // 5. Si es doctor o paciente, crear registro adicional
-        if (role === 'doctor') {
-            await supabase.from('doctors').insert([{
-                user_id: newUser.id
+        // 7. Crear registro en la tabla patients con datos básicos
+        const { error: patientError } = await supabase
+            .from('patients')
+            .insert([{
+                user_id: newUser.id,
+                date_of_birth
             }]);
+
+        if (patientError) {
+            // Si falla la creación del paciente, eliminar el usuario creado
+            await supabase.from('users').delete().eq('id', newUser.id);
+            console.error('Error al crear registro de paciente:', patientError);
+            throw patientError;
         }
 
-        res.status(201).json({ message: 'Usuario registrado correctamente' });
+        res.status(201).json({ 
+            message: 'Paciente registrado correctamente',
+            user: {
+                id: newUser.id,
+                email: newUser.email,
+                first_name: newUser.first_name,
+                last_name: newUser.last_name
+            }
+        });
 
     } catch (error) {
         console.error('Error en registro:', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+        res.status(500).json({ error: 'Error al registrar el paciente. Por favor intente nuevamente.' });
     }
 });
 
