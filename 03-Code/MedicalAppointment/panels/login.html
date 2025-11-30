@@ -43,9 +43,7 @@
           <input type="password" id="contrasena" placeholder="Contraseña" class="form-control" required>
         </div>
         <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
-        <div class="register-option text-center mb-3">
-          <p class="mb-0">¿No tienes una cuenta? <a href="register.html" class="register-link">Regístrate aquí</a></p>
-        </div>
+        
         <button type="submit" class="enter-button d-flex align-items-center justify-content-center">
           <span>Ingresar</span>
           <div class="loading">
@@ -54,6 +52,19 @@
             </div>
           </div>
         </button>
+
+        <div class="divider">
+          <span>O</span>
+        </div>
+
+        <button type="button" class="google-button" onclick="loginWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" height="20">
+          Continuar con Google
+        </button>
+
+        <div class="register-option text-center mt-3">
+          <p class="mb-0">¿No tienes una cuenta? <a href="register.html" class="register-link">Regístrate aquí</a></p>
+        </div>
       </form>
     </div>
   </div>
@@ -162,6 +173,34 @@
                 break;
         }
     }
+
+    // ========== FUNCIONES PARA GOOGLE OAUTH ==========
+    
+    function loginWithGoogle() {
+        const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : 'https://medical-appointment-backend-2xx0.onrender.com';
+        
+        // Redirigir al endpoint de Google OAuth
+        window.location.href = `${API_URL}/api/auth/google`;
+    }
+
+    // Manejar callback de Google (cuando vuelve con el token)
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+
+        if (error) {
+            const errorMessages = {
+                'google_auth_failed': 'Error al autenticar con Google. Intenta nuevamente.',
+                'callback_failed': 'Error en el proceso de autenticación.',
+                'authentication_failed': 'No se pudo completar la autenticación.'
+            };
+            
+            errorDiv.textContent = errorMessages[error] || 'Error desconocido';
+            errorDiv.className = 'alert alert-danger mt-3';
+        }
+    });
   </script>
 </body>
 </html>

@@ -186,6 +186,88 @@ const patientController = {
       console.error('Error al cambiar contraseña:', error);
       res.status(500).json({ error: 'Error al cambiar contraseña' });
     }
+  },
+
+  // Completar perfil para usuarios de Google OAuth
+  completeProfile: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { cedula, date_of_birth, phone_number, gender, address } = req.body;
+
+      // Validaciones
+      if (!cedula || !date_of_birth) {
+        return res.status(400).json({ 
+          error: 'Cédula y fecha de nacimiento son obligatorios' 
+        });
+      }
+
+      // Verificar si la cédula ya existe en otro usuario
+      const { data: existingCedula } = await supabase
+        .from('users')
+        .select('id')
+        .eq('cedula', cedula)
+        .neq('id', userId)
+        .single();
+
+      if (existingCedula) {
+        return res.status(400).json({ error: 'La cédula ya está registrada' });
+      }
+
+      // Actualizar tabla users (solo cedula y phone_number)
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          cedula,
+          phone_number: phone_number || null
+        })
+        .eq('id', userId);
+
+      if (userError) {
+        console.error('Error actualizando users:', userError);
+        throw userError;
+      }
+
+      // Actualizar tabla patients (date_of_birth, gender y address)
+      const { error: patientError } = await supabase
+        .from('patients')
+        .update({
+          date_of_birth,
+          gender: gender || null,
+          address: address || null
+        })
+        .eq('user_id', userId);
+
+      if (patientError) {
+        console.error('Error actualizando patients:', patientError);
+        throw patientError;
+      }
+
+      // Obtener datos actualizados
+      const { data: updatedUser } = await supabase
+        .from('users')
+        .select(`
+          *,
+          roles (name)
+        `)
+        .eq('id', userId)
+        .single();
+
+      res.json({
+        message: 'Perfil completado exitosamente',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
+          role: updatedUser.roles.name,
+          cedula: updatedUser.cedula
+        }
+      });
+
+    } catch (error) {
+      console.error('Error al completar perfil:', error);
+      res.status(500).json({ error: 'Error al completar perfil' });
+    }
   }
 };
 

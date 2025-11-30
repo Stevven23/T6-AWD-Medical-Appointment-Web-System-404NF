@@ -3,6 +3,89 @@ const router = express.Router();
 const supabase = require('../database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const passport = require('../config/passport');
+
+// ========== GOOGLE OAUTH ROUTES ==========
+
+// Iniciar autenticación con Google
+router.get('/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
+
+// Callback de Google OAuth
+router.get('/google/callback',
+    passport.authenticate('google', { 
+        session: false,
+        failureRedirect: '/panels/login.html?error=google_auth_failed'
+    }),
+    async (req, res) => {
+        try {
+            console.log('Google callback - Usuario autenticado:', req.user.id);
+
+            // Generar JWT
+            const token = jwt.sign(
+                {
+                    id: req.user.id,
+                    email: req.user.email,
+                    role_id: req.user.role_id
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            const roleName = req.user.roles.name;
+
+            // Preparar datos del usuario para el frontend
+            const userData = {
+                id: req.user.id,
+                email: req.user.email,
+                first_name: req.user.first_name,
+                last_name: req.user.last_name,
+                role: roleName,
+                cedula: req.user.cedula
+            };
+
+            // Verificar si es un nuevo usuario de Google (sin datos completos)
+            const { data: patientData } = await supabase
+                .from('patients')
+                .select('date_of_birth')
+                .eq('user_id', req.user.id)
+                .single();
+
+            const needsCompletion = !patientData?.date_of_birth || !req.user.cedula;
+
+            // Determinar redirección y codificar datos
+            const payload = {
+                token,
+                user: userData
+            };
+            const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64');
+
+            // Redirigir directamente según necesidad (con la ruta correcta de Live Server)
+            let redirectUrl;
+            if (needsCompletion) {
+                redirectUrl = `http://127.0.0.1:5500/MedicalAppointment/panels/completeProfile.html?oauth=${payloadEncoded}`;
+            } else {
+                const dashboardRoutes = {
+                    patient: 'patient/patientDashboard.html',
+                    doctor: 'doctor/doctorHome.html',
+                    admin: 'Admin/DashboardAdmin.html'
+                };
+                const dashboard = dashboardRoutes[roleName] || 'patient/patientDashboard.html';
+                redirectUrl = `http://127.0.0.1:5500/MedicalAppointment/panels/${dashboard}?oauth=${payloadEncoded}`;
+            }
+
+            console.log('Redirigiendo a:', redirectUrl);
+            res.redirect(redirectUrl);
+
+        } catch (error) {
+            console.error('Error en Google callback:', error);
+            res.redirect('http://127.0.0.1:5500/MedicalAppointment/panels/login.html?error=callback_failed');
+        }
+    }
+);
+
+// ========== TRADITIONAL AUTH ROUTES ==========
 
 // Login
 router.post('/login', async (req, res) => {

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Completar Perfil - Clínica San Miguel</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/loginStyle.css">
+  <style>
+    .welcome-message {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .welcome-message h2 {
+      color: var(--color-azul-oscuro);
+      margin-bottom: 10px;
+    }
+    .welcome-message p {
+      color: #7f8c8d;
+      font-size: 1rem;
+    }
+    .required-badge {
+      background: #e74c3c;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="left-side">
+      <div class="logo-container">
+        <img src="../sources/img/logo.png" alt="Logo Clínica San Miguel" class="logo-login">
+      </div>
+      <div class="welcome-text">
+        <h2>¡Ya casi está!</h2>
+        <p>Completa tu perfil para acceder a todos nuestros servicios</p>
+      </div>
+    </div>
+    
+    <div class="right-side">
+      <div class="welcome-message">
+        <h2>Bienvenido, <span id="userName"></span>! 👋</h2>
+        <p>Solo necesitamos algunos datos adicionales para completar tu registro</p>
+      </div>
+
+      <form id="completeProfileForm" class="login-form">
+        <div class="group-field">
+          <label>Cédula <span class="required-badge">Requerido</span></label>
+          <input type="text" id="cedula" placeholder="10 dígitos" maxlength="10" pattern="[0-9]{10}" required>
+        </div>
+
+        <div class="group-field">
+          <label>Fecha de Nacimiento <span class="required-badge">Requerido</span></label>
+          <input type="date" id="date_of_birth" required>
+        </div>
+
+        <div class="group-field">
+          <label>Teléfono</label>
+          <input type="tel" id="phone_number" placeholder="10 dígitos (opcional)" maxlength="10" pattern="[0-9]{10}">
+        </div>
+
+        <div class="group-field">
+          <label>Género</label>
+          <select id="gender" class="form-control">
+            <option value="">Seleccionar...</option>
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+            <option value="O">Otro</option>
+          </select>
+        </div>
+
+        <div class="group-field">
+          <label>Dirección</label>
+          <input type="text" id="address" placeholder="Calle, ciudad (opcional)">
+        </div>
+
+        <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
+        <div id="successMessage" class="alert alert-success mt-3 d-none"></div>
+        
+        <button type="submit" class="enter-button d-flex align-items-center justify-content-center">
+          <span>Completar y Continuar</span>
+          <div class="loading" style="display: none; margin-left: 10px;">
+            <div class="spinner-border text-light" role="status" style="width: 1rem; height: 1rem;">
+              <span class="visually-hidden">Guardando...</span>
+            </div>
+          </div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const completeProfileForm = document.getElementById('completeProfileForm');
+    const errorDiv = document.getElementById('errorMessage');
+    const successDiv = document.getElementById('successMessage');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const loadingSpinner = document.querySelector('.loading');
+    const userNameSpan = document.getElementById('userName');
+
+    // Validar fecha de nacimiento (mayor de edad)
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    document.getElementById('date_of_birth').max = maxDate.toISOString().split('T')[0];
+
+    // Verificar si viene de OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthParam = urlParams.get('oauth');
+    
+    if (oauthParam) {
+      try {
+        // Decodificar datos de OAuth
+        const payload = JSON.parse(atob(oauthParam));
+        localStorage.setItem('token', payload.token);
+        localStorage.setItem('user', JSON.stringify(payload.user));
+        
+        // Limpiar URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (error) {
+        console.error('Error procesando OAuth:', error);
+      }
+    }
+
+    // Obtener token y usuario desde localStorage
+    const token = localStorage.getItem('token');
+    const userJSON = localStorage.getItem('user');
+
+    if (!token) {
+      window.location.href = 'login.html';
+    } else {
+      // Mostrar nombre del usuario si está disponible
+      if (userJSON) {
+        try {
+          const userData = JSON.parse(userJSON);
+          userNameSpan.textContent = userData.first_name || 'Usuario';
+          
+          // Pre-llenar campos si existen
+          if (userData.phone_number) document.getElementById('phone_number').value = userData.phone_number;
+        } catch (e) {
+          console.error('Error procesando datos del usuario:', e);
+        }
+      }
+      
+      // Obtener datos adicionales del perfil
+      fetchUserData();
+    }
+
+    async function fetchUserData() {
+      try {
+        const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:3000'
+          : 'https://medical-appointment-backend-2xx0.onrender.com';
+
+        const response = await fetch(`${API_URL}/api/patients/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          userNameSpan.textContent = data.first_name || 'Usuario';
+          
+          // Pre-llenar campos si existen
+          if (data.phone_number) document.getElementById('phone_number').value = data.phone_number;
+          if (data.address) document.getElementById('address').value = data.address;
+        }
+      } catch (error) {
+        console.error('Error obteniendo datos:', error);
+      }
+    }
+
+    completeProfileForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      errorDiv.className = 'alert alert-danger d-none mt-3';
+      successDiv.className = 'alert alert-success d-none mt-3';
+      
+      submitBtn.disabled = true;
+      loadingSpinner.style.display = 'block';
+
+      const formData = {
+        cedula: document.getElementById('cedula').value.trim(),
+        date_of_birth: document.getElementById('date_of_birth').value,
+        phone_number: document.getElementById('phone_number').value.trim() || null,
+        gender: document.getElementById('gender').value || null,
+        address: document.getElementById('address').value.trim() || null
+      };
+
+      // Validaciones
+      if (formData.cedula.length !== 10 || !/^\d+$/.test(formData.cedula)) {
+        showError('La cédula debe tener 10 dígitos numéricos');
+        return;
+      }
+
+      if (formData.phone_number && (formData.phone_number.length !== 10 || !/^\d+$/.test(formData.phone_number))) {
+        showError('El teléfono debe tener 10 dígitos numéricos');
+        return;
+      }
+
+      try {
+        const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:3000'
+          : 'https://medical-appointment-backend-2xx0.onrender.com';
+        
+        const response = await fetch(`${API_URL}/api/patients/complete-profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al completar perfil');
+        }
+
+        // Actualizar usuario en localStorage
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+
+        successDiv.textContent = '¡Perfil completado! Redirigiendo...';
+        successDiv.className = 'alert alert-success mt-3';
+        
+        setTimeout(() => {
+          window.location.href = 'patient/patientDashboard.html';
+        }, 1500);
+
+      } catch (error) {
+        console.error('Error:', error);
+        showError(error.message || 'Error al completar el perfil');
+      } finally {
+        submitBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+      }
+    });
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.className = 'alert alert-danger mt-3';
+      submitBtn.disabled = false;
+      loadingSpinner.style.display = 'none';
+      errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  </script>
+</body>
+</html>

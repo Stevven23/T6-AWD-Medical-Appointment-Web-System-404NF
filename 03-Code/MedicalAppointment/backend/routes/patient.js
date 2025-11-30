@@ -9,6 +9,7 @@ router.use(requireRole('patient'));
 
 router.get('/profile', patientController.getProfile);
 router.put('/profile', patientController.updateProfile);
+router.put('/complete-profile', patientController.completeProfile);
 router.post('/change-password', patientController.changePassword);
 
 module.exports = router;

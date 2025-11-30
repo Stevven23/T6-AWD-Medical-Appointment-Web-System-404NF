@@ -13,7 +13,9 @@ const authMiddleware = async (req, res, next) => {
     // Verificar JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_secreto_temporal');
     
-    // Obtener usuario completo desde Supabase
+    // Obtener usuario completo desde Supabase (usar decoded.id o decoded.userId)
+    const userId = decoded.id || decoded.userId;
+    
     const { data: user, error } = await supabase
       .from('users')
       .select(`
@@ -27,7 +29,7 @@ const authMiddleware = async (req, res, next) => {
           code
         )
       `)
-      .eq('id', decoded.userId)
+      .eq('id', userId)
       .single();
 
     if (error || !user) {

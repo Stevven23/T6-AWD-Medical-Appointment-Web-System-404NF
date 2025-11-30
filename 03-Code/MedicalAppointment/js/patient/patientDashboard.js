@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Verificar si viene de OAuth callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const oauthParam = urlParams.get('oauth');
+  
+  if (oauthParam) {
+    try {
+      const payload = JSON.parse(atob(oauthParam));
+      localStorage.setItem('token', payload.token);
+      localStorage.setItem('user', JSON.stringify(payload.user));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (error) {
+      console.error('Error procesando OAuth:', error);
+    }
+  }
+
   if (!Helpers.checkAuth()) return;
 
   const user = Helpers.getCurrentUser();
