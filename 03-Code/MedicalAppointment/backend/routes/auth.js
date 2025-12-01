@@ -61,10 +61,15 @@ router.get('/google/callback',
             };
             const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64');
 
-            // Redirigir directamente según necesidad (con la ruta correcta de Live Server)
+            // Obtener URL del frontend desde variable de entorno
+            // Local: http://127.0.0.1:5500/MedicalAppointment
+            // Producción: https://t6-awd-medical-appointment-web-syst-vercel.app
+            const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/MedicalAppointment';
+
+            // Redirigir directamente según necesidad
             let redirectUrl;
             if (needsCompletion) {
-                redirectUrl = `http://127.0.0.1:5500/MedicalAppointment/panels/completeProfile.html?oauth=${payloadEncoded}`;
+                redirectUrl = `${frontendUrl}/panels/completeProfile.html?oauth=${payloadEncoded}`;
             } else {
                 const dashboardRoutes = {
                     patient: 'patient/patientDashboard.html',
@@ -72,7 +77,7 @@ router.get('/google/callback',
                     admin: 'Admin/DashboardAdmin.html'
                 };
                 const dashboard = dashboardRoutes[roleName] || 'patient/patientDashboard.html';
-                redirectUrl = `http://127.0.0.1:5500/MedicalAppointment/panels/${dashboard}?oauth=${payloadEncoded}`;
+                redirectUrl = `${frontendUrl}/panels/${dashboard}?oauth=${payloadEncoded}`;
             }
 
             console.log('Redirigiendo a:', redirectUrl);
@@ -80,7 +85,8 @@ router.get('/google/callback',
 
         } catch (error) {
             console.error('Error en Google callback:', error);
-            res.redirect('http://127.0.0.1:5500/MedicalAppointment/panels/login.html?error=callback_failed');
+            const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/MedicalAppointment';
+            res.redirect(`${frontendUrl}/panels/login.html?error=callback_failed`);
         }
     }
 );
