@@ -3,8 +3,9 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- 1. Configuración de API y Elementos del DOM ---
-    // ASEGÚRATE DE QUE ESTA URL COINCIDA CON LA CONFIGURACIÓN DE TU BACKEND
-    const API_BASE_URL = 'http://localhost:3000/api/doctors'; 
+    const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'
+        : 'https://medical-appointment-backend-2xx0.onrender.com/api';
 
     const pages = {
         list: document.getElementById('patient-list-page'),
@@ -20,6 +21,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const patientTableBody = document.getElementById('patient-table-body');
     const newPatientForm = document.getElementById('new-patient-form');
+
+    // Helper para obtener el token de autenticación
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        };
+    };
+
+    // Helper para hacer peticiones autenticadas
+    const fetchWithAuth = async (url, options = {}) => {
+        const headers = getAuthHeaders();
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...headers,
+                ...(options.headers || {})
+            }
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/panels/login.html';
+            throw new Error('Sesión expirada');
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error en la petición');
+        }
+
+        return response;
+    };
 
     // --- Cache para la lista (útil para la navegación rápida) ---
     let patientListCache = []; 
@@ -37,8 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return date.toLocaleDateString('es-ES', { 
             year: 'numeric', 
             month: 'long', 
-            day: 'numeric',
-            timeZone: 'UTC' // Importante si Supabase devuelve UTC
+            day: 'numeric'
         });
     }
 
@@ -61,14 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             patientTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando pacientes...</td></tr>';
             
-            // USAMOS LA RUTA CORRECTA: /api/doctors/patients
-            const response = await fetch(`${API_BASE_URL}/patients`);
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error HTTP: ${response.status}`);
-            }
-
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/patients`);
             const patients = await response.json();
             patientListCache = patients; // Actualizar caché
             
@@ -94,10 +122,27 @@ document.addEventListener("DOMContentLoaded", () => {
         patients.forEach(patient => {
             const tr = document.createElement('tr');
             
-            // USAMOS LOS NOMBRES DE CAMPOS DEL BACKEND (first_name, last_name, cedula, ultima_visita, principal_condition)
             const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`;
             const lastVisit = formatDate(patient.ultima_visita);
             const condition = patient.principal_condition || 'N/A';
+
+            tr.innerHTML = `
+                <td>${fullName}</td>
+                <td>${patient.cedula || 'N/A'}</td>
+                <td>${lastVisit}</td>
+                <td>${condition}</td>
+                <td>
+                    <button class="btn-primary btn-action btn-details" data-user-id="${patient.user_id}">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
+                    <button class="btn-primary btn-action btn-edit" data-user-id="${patient.user_id}">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </td>
+            `;
+            patientTableBody.appendChild(tr);
+        });
+    }
 
             tr.innerHTML = `
                 <td>${fullName}</td>
@@ -115,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             patientTableBody.appendChild(tr);
         });
-    }
+    
 
     async function viewPatientDetails(userId) {
         const patient = patientListCache.find(p => p.user_id === userId);
@@ -141,14 +186,8 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('detail-tests').innerHTML = '<p>Cargando resultados de exámenes...</p>';
             document.getElementById('detail-prescriptions').innerHTML = '<p>Cargando historial médico...</p>';
 
-            const recordUrl = `${API_BASE_URL}/patients/${userId}/record`;
-            const response = await fetch(recordUrl);
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error al cargar historial.`);
-            }
-
+            const recordUrl = `${API_BASE_URL}/doctors/patients/${userId}/record`;
+            const response = await fetchWithAuth(recordUrl);
             const details = await response.json();
         
             const consultationsHtml = details.consultation_notes.map(note => {
@@ -216,11 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const dataToSend = {
             email: document.getElementById('new-patient-email').value, 
             password: document.getElementById('new-patient-password').value, 
-
             first_name: nameParts[0] || '',
-            last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] ? 'Apellido' : ''), // Asigna un apellido si falta
+            last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] ? 'Apellido' : ''),
             cedula: document.getElementById('new-patient-cedula').value,
             phone_number: document.getElementById('new-patient-contact').value, 
+            date_of_birth: document.getElementById('new-patient-date-of-birth').value || null,
             allergies: document.getElementById('new-patient-allergies').value,
             medical_conditions: document.getElementById('new-patient-conditions').value,
         };
@@ -231,19 +270,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/patients`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/patients`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(dataToSend)
             });
 
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Error desconocido al registrar.');
-            }
 
             alert(`Paciente ${result.patient.first_name} ${result.patient.last_name} registrado exitosamente.`);
             
@@ -276,5 +308,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     loadPatients(); 
-
-});
