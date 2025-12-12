@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showStep3(patient) {
         currentPatient = patient;
         patientNameHeader.textContent = `Recetas para: ${patient.name}`;
-        loadPrescriptionHistory(patient.id);
+        loadPrescriptionHistory(patient.user_id);
 
         if (step1) step1.style.display = 'none';
         step2.style.display = 'none';
