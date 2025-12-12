@@ -1,36 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- Configuración de API ---
+    const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'
+        : 'https://medical-appointment-backend-2xx0.onrender.com/api';
+
+    // Helper para obtener el token de autenticación
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+            'X-Doctor-ID': user.doctor_id || ''
+        };
+    };
+
+    // Helper para hacer peticiones autenticadas
+    const fetchWithAuth = async (url, options = {}) => {
+        const headers = getAuthHeaders();
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...headers,
+                ...(options.headers || {})
+            }
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/panels/login.html';
+            throw new Error('Sesión expirada');
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error en la petición');
+        }
+
+        return response;
+    };
+
     const initialMockData = {
         stats: {
-            totalPacientes: 7
+            totalPacientes: 0
         },
-        patients: [
-            { id: 'p1', name: 'Ana García' },
-            { id: 'p2', name: 'Luis Torres' },
-            { id: 'p3', name: 'Maria López' },
-            { id: 'p4', name: 'Carlos Sanz' },
-            { id: 'p5', name: 'Elena Fernández' },
-            { id: 'p6', name: 'Javier Gómez' },
-            { id: 'p7', name: 'Sofía Niño' }
-        ],
-        prescriptions: {
-            'p3': [
-                {
-                    id: 'r1', date: '20/10/2025', diagnostico: 'Acné vulgar moderado',
-                    medicamentos: 'Peróxido de benzoílo 5% (Gel)\nAdapaleno 0.1% (Crema)',
-                    indicaciones: 'Aplicar Peróxido de benzoílo por la mañana.\nAplicar Adapaleno por la noche.\nUsar protector solar SPF 50+ diariamente.',
-                    duracion: '3 meses'
-                }
-            ],
-            'p5': [
-                {
-                    id: 'r2', date: '15/10/2025', diagnostico: 'Faringitis aguda',
-                    medicamentos: 'Amoxicilina 875mg',
-                    indicaciones: 'Tomar 1 comprimido cada 12 horas.',
-                    duracion: '7 días'
-                }
-            ]
-        }
+        patients: [],
+        prescriptions: {}
     };
 
     const DOCTOR_NAME = "Dr. Juan Perez";
@@ -53,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const formSaveButton = form.querySelector('button[type="submit"]');
 
     let appData = {};
+    let patientsFromDB = [];
+    let prescriptionsFromDB = {};
 
     let currentPatient = null;
     let currentPrescription = null;
@@ -76,6 +95,87 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Datos guardados en localStorage.");
         } catch (error) {
             console.error("Error al guardar en localStorage:", error);
+        }
+    }
+
+    async function loadPatientsFromDB() {
+        try {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/patients`);
+            const patients = await response.json();
+            patientsFromDB = patients.map(p => ({
+                user_id: p.user_id,
+                name: `${p.first_name} ${p.last_name}`,
+                first_name: p.first_name,
+                last_name: p.last_name,
+                cedula: p.cedula,
+                email: p.email
+            }));
+            console.log("Pacientes cargados de la BD:", patientsFromDB);
+            return patientsFromDB;
+        } catch (error) {
+            console.error("Error al cargar pacientes de la BD:", error);
+            alert("Error al cargar pacientes: " + error.message);
+            return [];
+        }
+    }
+
+    async function loadPrescriptionsFromDB() {
+        try {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`);
+            const prescriptions = await response.json();
+            
+            prescriptionsFromDB = {};
+            prescriptions.forEach(rx => {
+                if (!prescriptionsFromDB[rx.patient_user_id]) {
+                    prescriptionsFromDB[rx.patient_user_id] = [];
+                }
+                prescriptionsFromDB[rx.patient_user_id].push({
+                    id: rx.id,
+                    date: new Date(rx.created_at).toLocaleDateString('es-ES'),
+                    diagnostico: rx.diagnosis || '',
+                    medicamentos: rx.medications || '',
+                    indicaciones: rx.instructions || '',
+                    duracion: rx.duration || ''
+                });
+            });
+            console.log("Recetas cargadas de la BD:", prescriptionsFromDB);
+            return prescriptionsFromDB;
+        } catch (error) {
+            console.error("Error al cargar recetas de la BD:", error);
+            return {};
+        }
+    }
+
+    async function savePrescriptionToDB(patientUserId, prescriptionData) {
+        try {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    patient_user_id: patientUserId,
+                    diagnosis: prescriptionData.diagnostico,
+                    medications: prescriptionData.medicamentos,
+                    instructions: prescriptionData.indicaciones,
+                    duration: prescriptionData.duracion
+                })
+            });
+            const result = await response.json();
+            console.log("Receta guardada en la BD:", result);
+            return result;
+        } catch (error) {
+            console.error("Error al guardar receta en la BD:", error);
+            throw error;
+        }
+    }
+
+    async function deletePrescriptionFromDB(prescriptionId) {
+        try {
+            await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+                method: 'DELETE'
+            });
+            console.log("Receta eliminada de la BD");
+        } catch (error) {
+            console.error("Error al eliminar receta de la BD:", error);
+            throw error;
         }
     }
 
@@ -132,15 +232,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadStats() {
-        document.getElementById('total-pacientes').textContent = appData.patients.length;
+        document.getElementById('total-pacientes').textContent = patientsFromDB.length;
     }
 
     function loadPatients() {
         patientList.innerHTML = '';
-        const patients = appData.patients || [];
+        const patients = patientsFromDB || [];
 
         if (patients.length === 0) {
-            patientList.innerHTML = '<p>No hay pacientes registrados.</p>';
+            patientList.innerHTML = '<p>No hay pacientes registrados. Cargando...</p>';
             return;
         }
 
@@ -157,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadPrescriptionHistory(patientId) {
         prescriptionList.innerHTML = '';
-        const prescriptions = appData.prescriptions[patientId] || [];
+        const prescriptions = prescriptionsFromDB[patientId] || [];
 
         if (prescriptions.length === 0) {
             prescriptionList.innerHTML = '<p id="no-prescriptions-msg">Este paciente no tiene recetas anteriores.</p>';
@@ -177,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="prescription-item-actions">
                     <i class="fas fa-eye view-prescription-btn" data-prescription-id="${rx.id}" title="Ver Receta"></i>
-                    <i class="fas fa-edit edit-prescription-btn" data-prescription-id="${rx.id}" title="Editar Receta"></i>
                     <i class="fas fa-trash delete-prescription-btn" data-prescription-id="${rx.id}" title="Eliminar Receta"></i>
                 </div>
             `;
@@ -193,58 +292,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const indicaciones = document.getElementById('indic').value;
         const duracion = document.getElementById('duration').value;
 
+        const prescriptionData = {
+            diagnostico,
+            medicamentos,
+            indicaciones,
+            duracion
+        };
+
         if (editingPrescriptionId) {
-            const prescriptions = appData.prescriptions[currentPatient.id];
-            const rxIndex = prescriptions.findIndex(rx => rx.id === editingPrescriptionId);
-
-            if (rxIndex !== -1) {
-                prescriptions[rxIndex] = {
-                    ...prescriptions[rxIndex],
-                    diagnostico,
-                    medicamentos,
-                    indicaciones,
-                    duracion
-                };
-                alert('Receta actualizada con éxito.');
-            }
+            // Editar receta local (si la implementación lo requiere)
+            alert('Funcionalidad de edición en la BD está en desarrollo.');
         } else {
-            const newPrescription = {
-                id: `r${Date.now()}`,
-                date: new Date().toLocaleDateString('es-ES'),
-                diagnostico,
-                medicamentos,
-                indicaciones,
-                duracion
-            };
-
-            if (!appData.prescriptions[currentPatient.id]) {
-                appData.prescriptions[currentPatient.id] = [];
-            }
-            appData.prescriptions[currentPatient.id].push(newPrescription);
-            alert('Nueva receta guardada con éxito.');
+            // Guardar nueva receta en la BD
+            savePrescriptionToDB(currentPatient.user_id, prescriptionData)
+                .then(() => {
+                    alert('Nueva receta guardada con éxito.');
+                    loadPrescriptionsFromDB().then(() => {
+                        loadPrescriptionHistory(currentPatient.user_id);
+                        showHistoryView();
+                    });
+                })
+                .catch(error => {
+                    alert('Error al guardar receta: ' + error.message);
+                });
         }
 
-        saveDataToLocalStorage();
-        loadPrescriptionHistory(currentPatient.id);
-        showHistoryView();
         editingPrescriptionId = null;
     }
 
     function deletePrescription(patientId, prescriptionId) {
         if (!patientId || !prescriptionId) return;
 
-        const prescription = appData.prescriptions[patientId].find(rx => rx.id === prescriptionId);
+        const prescriptions = prescriptionsFromDB[patientId] || [];
+        const prescription = prescriptions.find(rx => rx.id === prescriptionId);
         if (!prescription) return;
 
         if (confirm(`¿Estás seguro de que quieres eliminar la receta del ${prescription.date} para ${currentPatient.name}?`)) {
-            appData.prescriptions[patientId] = appData.prescriptions[patientId].filter(
-                rx => rx.id !== prescriptionId
-            );
-
-            saveDataToLocalStorage();
-            loadPrescriptionHistory(patientId);
-
-            alert('Receta eliminada.');
+            deletePrescriptionFromDB(prescriptionId)
+                .then(() => {
+                    loadPrescriptionsFromDB().then(() => {
+                        loadPrescriptionHistory(patientId);
+                        alert('Receta eliminada.');
+                    });
+                })
+                .catch(error => {
+                    alert('Error al eliminar receta: ' + error.message);
+                });
         }
     }
 
@@ -337,8 +430,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     appData = loadDataFromLocalStorage();
 
-    loadStats();
-    showStep2();
+    // Cargar datos de la base de datos
+    Promise.all([loadPatientsFromDB(), loadPrescriptionsFromDB()])
+        .then(() => {
+            loadStats();
+            showStep2();
+        })
+        .catch(error => {
+            console.error("Error al cargar datos iniciales:", error);
+            // Usar datos locales como fallback
+            loadStats();
+            showStep2();
+        });
 
     document.getElementById('back-to-patients').addEventListener('click', showStep2);
     document.getElementById('btn-back-to-history').addEventListener('click', showHistoryView);
@@ -354,18 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!prescriptionId) return;
 
         if (target.classList.contains('view-prescription-btn')) {
-            const prescription = appData.prescriptions[currentPatient.id].find(rx => rx.id === prescriptionId);
+            const prescription = prescriptionsFromDB[currentPatient.user_id].find(rx => rx.id === prescriptionId);
             if (prescription) {
                 showPrescriptionView(prescription);
             }
         }
 
-        if (target.classList.contains('edit-prescription-btn')) {
-            editPrescription(currentPatient.id, prescriptionId);
-        }
-
         if (target.classList.contains('delete-prescription-btn')) {
-            deletePrescription(currentPatient.id, prescriptionId);
+            deletePrescription(currentPatient.user_id, prescriptionId);
         }
     });
 

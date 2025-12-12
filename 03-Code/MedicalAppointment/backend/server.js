@@ -48,6 +48,7 @@ const doctorRoutes = require('./routes/doctor');
 const appointmentRoutes = require('./routes/appointments');
 const medicalRecordRoutes = require('./routes/medicalRecord');
 const specialtyRoutes = require('./routes/specialty');
+const prescriptionRoutes = require('./routes/prescriptions');
 
 
 // ========== MANTENER TU RUTA DE LOGIN EXISTENTE ==========
@@ -119,6 +120,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/doctors/prescriptions', prescriptionRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/specialties', specialtyRoutes);
