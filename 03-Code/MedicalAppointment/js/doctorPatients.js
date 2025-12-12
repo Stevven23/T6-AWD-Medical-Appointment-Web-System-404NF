@@ -144,24 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-            tr.innerHTML = `
-                <td>${fullName}</td>
-                <td>${patient.cedula || 'N/A'}</td>
-                <td>${lastVisit}</td>
-                <td>${condition}</td>
-                <td>
-                    <button class="btn-primary btn-action btn-details" data-user-id="${patient.user_id}">
-                        <i class=" fas fa-eye"></i> Ver
-                    </button>
-                    <button class="btn-primary btn-action btn-edit" data-user-id="${patient.user_id}">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </td>
-            `;
-            patientTableBody.appendChild(tr);
-        });
-    
-
     async function viewPatientDetails(userId) {
         const patient = patientListCache.find(p => p.user_id === userId);
         if (!patient) {
@@ -308,3 +290,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     loadPatients(); 
+
+});
