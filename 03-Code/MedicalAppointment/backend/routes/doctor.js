@@ -34,20 +34,21 @@ router.post('/', doctorController.createDoctor);
 router.get('/', doctorController.getAllDoctors);
 
 // GET /api/doctors/:id - Obtener un doctor por ID
-router.get('/:id', doctorController.getDoctorById);
+// Restringir :id a UUID para evitar que rutas como 'prescriptions' sean interpretadas como id
+router.get('/:id([0-9a-fA-F\-]{36})', doctorController.getDoctorById);
 
 // PUT /api/doctors/:id - Actualizar un doctor (sin authMiddleware para pruebas)
-router.put('/:id', doctorController.updateDoctor);
+router.put('/:id([0-9a-fA-F\-]{36})', doctorController.updateDoctor);
 
 // DELETE /api/doctors/:id - Eliminar un doctor (sin authMiddleware para pruebas)
-router.delete('/:id', doctorController.deleteDoctor);
+router.delete('/:id([0-9a-fA-F\-]{36})', doctorController.deleteDoctor);
 
 // ========== RUTAS ADICIONALES CON PARÁMETROS ==========
 
 // GET /api/doctors/:id/schedules - Obtener horarios de un doctor
-router.get('/:id/schedules', doctorController.getDoctorSchedules);
+router.get('/:id([0-9a-fA-F\-]{36})/schedules', doctorController.getDoctorSchedules);
 
 // PATCH /api/doctors/:id/status - Actualizar solo el estado de un doctor
-router.patch('/:id/status', doctorController.updateDoctorStatus);
+router.patch('/:id([0-9a-fA-F\-]{36})/status', doctorController.updateDoctorStatus);
 
 module.exports = router;
