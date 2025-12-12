@@ -119,8 +119,9 @@ app.post('/api/auth/login', async (req, res) => {
 // ========== NUEVAS RUTAS DE PACIENTES ==========
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
-app.use('/api/doctors', doctorRoutes);
+// Registrar rutas específicas antes de la ruta con parámetro ":id"
 app.use('/api/doctors/prescriptions', prescriptionRoutes);
+app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/specialties', specialtyRoutes);
@@ -136,12 +137,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
 });
-
-// En tu app.js o server.js
-const patientApiRoutes = require('./routes/patientRoutes'); // El NUEVO archivo de rutas
-
-
-// Asigna las rutas a un prefijo de API, por ejemplo /api/patients
-app.use('/api/patients', patientApiRoutes);
-
-// ...
+// Nota: las rutas ya están registradas arriba.
