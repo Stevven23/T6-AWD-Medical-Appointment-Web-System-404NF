@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('token');
         return {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
     };
 
@@ -112,16 +112,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadPrescriptionsFromDB() {
-        try {
-            let response;
+        // Try several ways to fetch prescriptions and avoid showing raw HTML errors
+        const tryFetch = async (url, useAuth = true) => {
             try {
-                response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`);
-            } catch (err) {
-                console.warn('Ruta /doctors/prescriptions falló, intentando /prescriptions', err);
-                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
+                const res = useAuth ? await fetchWithAuth(url) : await fetch(url);
+                if (!res.ok) {
+                    const text = await res.text().catch(() => '');
+                    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+                }
+                const data = await res.json().catch(async () => {
+                    // If response is not JSON, try to get text for logging
+                    const txt = await res.text().catch(() => '');
+                    throw new Error(txt || 'Respuesta inesperada del servidor');
+                });
+                return data;
+            } catch (e) {
+                throw e;
             }
-            const prescriptions = await response.json();
-            
+        };
+
+        const endpoints = [
+            `${API_BASE_URL}/doctors/prescriptions`,
+            `${API_BASE_URL}/prescriptions`
+        ];
+
+        let prescriptions = null;
+
+        // 1) Try authenticated endpoints first
+        for (const url of endpoints) {
+            try {
+                prescriptions = await tryFetch(url, true);
+                break;
+            } catch (e) {
+                console.warn(`Fallo fetch auth ${url}:`, e.message || e);
+            }
+        }
+
+        // 2) If not found, try unauthenticated as last resort (some deployments may accept it)
+        if (!prescriptions) {
+            for (const url of endpoints) {
+                try {
+                    prescriptions = await tryFetch(url, false);
+                    break;
+                } catch (e) {
+                    console.warn(`Fallo fetch no-auth ${url}:`, e.message || e);
+                }
+            }
+        }
+
+        if (!prescriptions) {
+            console.error('No fue posible obtener recetas desde ninguna endpoint. Ver consola para más detalles.');
+            prescriptionsFromDB = {};
+            return {};
+        }
+
+        // Normalize and store
+        try {
             prescriptionsFromDB = {};
             prescriptions.forEach(rx => {
                 if (!prescriptionsFromDB[rx.patient_user_id]) {
@@ -138,9 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             console.log("Recetas cargadas de la BD:", prescriptionsFromDB);
             return prescriptionsFromDB;
-        } catch (error) {
-            console.error("Error al cargar recetas de la BD:", error);
-            prescriptionsFromDB = {}; // Limpiar en caso de error
+        } catch (err) {
+            console.error('Error normalizando recetas:', err);
+            prescriptionsFromDB = {};
             return {};
         }
     }
