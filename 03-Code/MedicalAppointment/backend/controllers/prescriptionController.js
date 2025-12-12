@@ -73,10 +73,22 @@ const prescriptionController = {
             } = req.body;
 
             // Validar campos requeridos
-            if (!patient_user_id || !diagnosis || !medications) {
+            if (!patient_user_id || !diagnosis || (medications === undefined || medications === null)) {
                 return res.status(400).json({
                     error: 'patient_user_id, diagnosis y medications son requeridos'
                 });
+            }
+
+            // Normalizar medications: si viene como arreglo, convertir a texto JSON/plano
+            let medsToStore = medications;
+            if (Array.isArray(medications)) {
+                // Guardar como texto con saltos de línea para compatibilidad con front-end
+                medsToStore = medications.join('\n');
+            } else if (typeof medications === 'object') {
+                // Si es objeto, stringifyarlo
+                try { medsToStore = JSON.stringify(medications); } catch (e) { medsToStore = String(medications); }
+            } else {
+                medsToStore = String(medications);
             }
 
             const { data: prescription, error } = await supabase
@@ -84,12 +96,10 @@ const prescriptionController = {
                 .insert([{
                     patient_user_id,
                     doctor_id: doctor_id || null,
-                    diagnosis,
-                    medications,
+                    diagnosis: String(diagnosis),
+                    medications: medsToStore,
                     instructions: instructions || null,
-                    duration: duration || null,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    duration: duration || null
                 }])
                 .select()
                 .single();
