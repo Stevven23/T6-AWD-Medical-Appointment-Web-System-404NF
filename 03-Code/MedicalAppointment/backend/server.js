@@ -26,6 +26,12 @@ app.use(cors({
 
 app.use(express.json());
 
+// Simple request logging for debugging (method + path)
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Configurar sesiones para Passport
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback_secret',
@@ -141,3 +147,15 @@ app.listen(PORT, () => {
   console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
 });
 // Nota: las rutas ya están registradas arriba.
+
+// Manejador 404 para devolver JSON en lugar de HTML (útil en producción)
+app.use((req, res) => {
+  console.warn('Ruta no encontrada:', req.method, req.originalUrl);
+  res.status(404).json({ error: `Ruta no encontrada: ${req.originalUrl}` });
+});
+
+// Manejador de errores genérico para asegurar respuestas JSON
+app.use((err, req, res, next) => {
+  console.error('Error inesperado:', err);
+  res.status(err.status || 500).json({ error: err.message || 'Error interno del servidor' });
+});
