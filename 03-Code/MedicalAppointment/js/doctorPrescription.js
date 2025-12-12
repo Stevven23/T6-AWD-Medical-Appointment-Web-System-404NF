@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('prescription-form');
     const btnDownloadPdf = document.getElementById('btn-download-pdf');
     const btnShowForm = document.getElementById('btn-show-form');
-    const formSaveButton = form.querySelector('button[type="submit"]');
+    const formSaveButton = form ? form.querySelector('button[type="submit"]') : null;
 
     // --- Variables de Estado Globales (Ahora solo de la DB) ---
     let patientsFromDB = [];
@@ -161,8 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             const result = await response.json();
-            console.log("Receta guardada en la BD:", result);
-            return result;
+            // El backend devuelve { message, prescription } en create
+            const created = result && (result.prescription || result);
+            console.log("Receta guardada en la BD:", created);
+            return created;
         } catch (error) {
             console.error("Error al guardar receta en la BD:", error);
             // El fallback a /prescriptions se ha simplificado, se asume que la ruta de doctors es la correcta.
@@ -171,18 +173,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updatePrescriptionInDB(prescriptionId, prescriptionData) {
-        // Implementación de UPDATE (PUT/PATCH) - Si la necesitas
-        alert('Funcionalidad de edición en la BD está en desarrollo.');
-        throw new Error('Edición no implementada en el backend.');
+        try {
+            if (!prescriptionId) throw new Error('ID de receta requerido para actualizar');
+
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    diagnosis: prescriptionData.diagnostico,
+                    medications: prescriptionData.medicamentos,
+                    instructions: prescriptionData.indicaciones,
+                    duration: prescriptionData.duracion
+                })
+            });
+
+            const result = await response.json();
+            const updated = result && (result.prescription || result);
+            // Refrescar lista local
+            await loadPrescriptionsFromDB();
+            return updated;
+        } catch (error) {
+            console.error('Error al actualizar receta en la BD:', error);
+            alert('Error al actualizar receta: ' + (error.message || error));
+            throw error;
+        }
     }
 
     async function deletePrescriptionFromDB(prescriptionId) {
         try {
             // Intentar primero la ruta específica del doctor para DELETE
-            await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
                 method: 'DELETE'
             });
-            console.log("Receta eliminada de la BD");
+            const result = await response.json().catch(() => ({}));
+            console.log("Receta eliminada de la BD:", result);
         } catch (error) {
             console.error("Error al eliminar receta de la BD:", error);
             // El fallback a /prescriptions se ha simplificado, se asume que la ruta de doctors es la correcta.
@@ -325,8 +348,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (editingPrescriptionId) {
-            // Edición de receta (solo se ha dejado el alert, ya que el backend no lo soporta)
-            updatePrescriptionInDB(editingPrescriptionId, prescriptionData);
+            // Edición de receta: enviar update y refrescar lista
+            updatePrescriptionInDB(editingPrescriptionId, prescriptionData)
+                .then(() => {
+                    alert('Receta actualizada con éxito.');
+                    loadPrescriptionsFromDB().then(() => {
+                        loadPrescriptionHistory(currentPatient.user_id);
+                        showHistoryView();
+                    });
+                })
+                .catch(error => {
+                    alert('Error al actualizar receta: ' + error.message);
+                });
         } else {
             // Guardar nueva receta en la BD
             savePrescriptionToDB(currentPatient.user_id, prescriptionData)
@@ -348,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!patientId || !prescriptionId) return;
 
         const prescriptions = prescriptionsFromDB[patientId] || [];
-        const prescription = prescriptions.find(rx => rx.id === prescriptionId);
+            const prescription = prescriptions.find(rx => String(rx.id) === String(prescriptionId));
         if (!prescription) return;
 
         if (confirm(`¿Estás seguro de que quieres eliminar la receta del ${prescription.date} para ${currentPatient.name}?`)) {
@@ -371,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!patientId || !prescriptionId) return;
 
         const prescriptions = prescriptionsFromDB[patientId] || [];
-        const prescription = prescriptions.find(rx => rx.id === prescriptionId);
+            const prescription = prescriptions.find(rx => String(rx.id) === String(prescriptionId));
         
         if (!prescription) {
             alert('Receta no encontrada para editar.');
@@ -385,8 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPrescription(prescription) {
         const view = document.getElementById('prescription-content-view');
-        const medsHtml = prescription.medicamentos.replace(/\n/g, '<br>');
-        const indicHtml = prescription.indicaciones.replace(/\n/g, '<br>');
+        if (!view) return;
+        const medsHtml = (prescription && prescription.medicamentos) ? String(prescription.medicamentos).replace(/\n/g, '<br>') : '';
+        const indicHtml = (prescription && prescription.indicaciones) ? String(prescription.indicaciones).replace(/\n/g, '<br>') : '';
 
         view.innerHTML = `
             <div class="header"><h4>${DOCTOR_NAME}</h4><p>Médico</p></div>
@@ -472,27 +506,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // 👂 EVENT LISTENERS (Se mantienen) 👂
     // ----------------------------------------------------------------------------------
 
-    document.getElementById('back-to-patients').addEventListener('click', showStep2);
-    document.getElementById('btn-back-to-history').addEventListener('click', showHistoryView);
-    document.getElementById('btn-show-form').addEventListener('click', () => showFormView(null)); // Asegurar que inicie en modo 'nuevo'
-    document.getElementById('btn-cancel-form').addEventListener('click', showHistoryView);
-    form.addEventListener('submit', handleSavePrescription);
-    btnDownloadPdf.addEventListener('click', downloadPrescriptionPdf);
+    const btnBackToPatients = document.getElementById('back-to-patients');
+    const btnBackToHistory = document.getElementById('btn-back-to-history');
+    const btnCancelForm = document.getElementById('btn-cancel-form');
 
-    prescriptionList.addEventListener('click', (event) => {
+    if (btnBackToPatients) btnBackToPatients.addEventListener('click', showStep2);
+    if (btnBackToHistory) btnBackToHistory.addEventListener('click', showHistoryView);
+    if (btnShowForm) btnShowForm.addEventListener('click', () => showFormView(null));
+    if (btnCancelForm) btnCancelForm.addEventListener('click', showHistoryView);
+    if (form) form.addEventListener('submit', handleSavePrescription);
+    if (btnDownloadPdf) btnDownloadPdf.addEventListener('click', downloadPrescriptionPdf);
+
+    if (prescriptionList) prescriptionList.addEventListener('click', (event) => {
         const target = event.target;
         const prescriptionId = target.dataset.prescriptionId;
 
         if (!prescriptionId) return;
 
         if (target.classList.contains('view-prescription-btn')) {
-            const prescription = prescriptionsFromDB[currentPatient.user_id].find(rx => rx.id === prescriptionId);
+            if (!currentPatient || !prescriptionsFromDB[currentPatient.user_id]) return;
+            const prescription = prescriptionsFromDB[currentPatient.user_id].find(rx => String(rx.id) === String(prescriptionId));
             if (prescription) {
                 showPrescriptionView(prescription);
             }
         }
 
         if (target.classList.contains('delete-prescription-btn')) {
+            if (!currentPatient) return;
             deletePrescription(currentPatient.user_id, prescriptionId);
         }
         
