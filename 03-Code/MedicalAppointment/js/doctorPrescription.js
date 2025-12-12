@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ? 'http://localhost:3000/api'
         : 'https://medical-appointment-backend-2xx0.onrender.com/api';
 
-    // Helper para obtener el token de autenticación
+    // ... (Código de getAuthHeaders y fetchWithAuth se mantiene igual) ...
+
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
         return {
@@ -135,11 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let response;
             try {
-                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
-            } catch (err) {
-                // fallback: some deployments expose prescriptions under /doctors/prescriptions
-                console.warn('Ruta /prescriptions falló, intentando /doctors/prescriptions', err);
+                // 🛑 MODIFICACIÓN CLAVE 1: Intentar primero la ruta funcional (/doctors/prescriptions)
                 response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`);
+            } catch (err) {
+                // 🛑 MODIFICACIÓN CLAVE 1: Si falla, intentar el fallback a la ruta base
+                console.warn('Ruta /doctors/prescriptions falló, intentando /prescriptions', err);
+                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
             }
             const prescriptions = await response.json();
             
@@ -161,6 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return prescriptionsFromDB;
         } catch (error) {
             console.error("Error al cargar recetas de la BD:", error);
+            // Mostrar un error más específico si aún falla
+            // alert("Error al cargar recetas: " + error.message);
             return {};
         }
     }
@@ -169,7 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let response;
             try {
-                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
+                // 🛑 MODIFICACIÓN CLAVE 2: Intentar primero la ruta específica del doctor para POST
+                response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
                     method: 'POST',
                     body: JSON.stringify({
                         patient_user_id: patientUserId,
@@ -180,8 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
             } catch (err) {
-                console.warn('POST /prescriptions falló, intentando POST /doctors/prescriptions', err);
-                response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
+                // Fallback a la ruta base, aunque en tu backend está deshabilitada y causaba conflictos
+                console.warn('POST /doctors/prescriptions falló, intentando POST /prescriptions', err);
+                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
                     method: 'POST',
                     body: JSON.stringify({
                         patient_user_id: patientUserId,
@@ -204,12 +210,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function deletePrescriptionFromDB(prescriptionId) {
         try {
             try {
-                await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
+                // 🛑 MODIFICACIÓN CLAVE 3: Intentar primero la ruta específica del doctor para DELETE
+                await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
                     method: 'DELETE'
                 });
             } catch (err) {
-                console.warn('DELETE /prescriptions/:id falló, intentando DELETE /doctors/prescriptions/:id', err);
-                await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+                // Fallback a la ruta base para DELETE
+                console.warn('DELETE /doctors/prescriptions/:id falló, intentando DELETE /prescriptions/:id', err);
+                await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
                     method: 'DELETE'
                 });
             }
@@ -219,6 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
             throw error;
         }
     }
+
+    // ... (El resto de las funciones se mantienen iguales) ...
+    // ... (showStep2, showStep3, showHistoryView, showFormView, showPrescriptionView, loadStats, loadPatients) ...
 
     function showStep2() {
         patientListTitle.textContent = `Seleccione un Paciente`;

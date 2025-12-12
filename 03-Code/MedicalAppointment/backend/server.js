@@ -127,9 +127,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 // Registrar rutas específicas antes de la ruta con parámetro ":id"
 app.use('/api/doctors/prescriptions', prescriptionRoutes);
-// Also expose prescriptions at a top-level path to avoid route conflicts
-// (some frontends call /api/prescriptions directly). Keep both mounts.
-app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
