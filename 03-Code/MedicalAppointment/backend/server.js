@@ -140,22 +140,20 @@ app.get('/api/test', (req, res) => {
   res.json({ mensaje: '¡El servidor funciona correctamente!' });
 });
 
-
-// Iniciar el servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
-});
-// Nota: las rutas ya están registradas arriba.
-
-// Manejador 404 para devolver JSON en lugar de HTML (útil en producción)
+// Manejador 404 para devolver JSON en lugar de HTML (debe estar ANTES de app.listen())
 app.use((req, res) => {
   console.warn('Ruta no encontrada:', req.method, req.originalUrl);
   res.status(404).json({ error: `Ruta no encontrada: ${req.originalUrl}` });
 });
 
-// Manejador de errores genérico para asegurar respuestas JSON
+// Manejador de errores genérico para asegurar respuestas JSON (debe estar ANTES de app.listen())
 app.use((err, req, res, next) => {
   console.error('Error inesperado:', err);
   res.status(err.status || 500).json({ error: err.message || 'Error interno del servidor' });
+});
+
+// Iniciar el servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
 });
