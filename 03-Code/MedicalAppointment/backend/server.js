@@ -125,8 +125,8 @@ app.post('/api/auth/login', async (req, res) => {
 // ========== NUEVAS RUTAS DE PACIENTES ==========
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
-// Registrar rutas específicas antes de la ruta con parámetro ":id"
-app.use('/api/doctors/prescriptions', prescriptionRoutes);
+// Prescriptions en su propia ruta para evitar conflicto con /api/doctors/:id
+app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);

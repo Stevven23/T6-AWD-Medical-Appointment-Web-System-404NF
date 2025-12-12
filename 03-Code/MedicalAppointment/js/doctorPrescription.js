@@ -132,8 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const endpoints = [
-            `${API_BASE_URL}/doctors/prescriptions`,
-            `${API_BASE_URL}/prescriptions`
+            `${API_BASE_URL}/prescriptions`,
+            `${API_BASE_URL}/doctors/prescriptions`
         ];
 
         let prescriptions = null;
@@ -194,8 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function savePrescriptionToDB(patientUserId, prescriptionData) {
         try {
             let response;
-            // Intentar primero la ruta específica del doctor para POST
-            response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
+            // Usar ruta /api/prescriptions para evitar conflictos
+            response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
                 method: 'POST',
                 body: JSON.stringify({
                     patient_user_id: patientUserId,
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (!prescriptionId) throw new Error('ID de receta requerido para actualizar');
 
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
                 method: 'PUT',
                 body: JSON.stringify({
                     diagnosis: prescriptionData.diagnostico,
@@ -246,15 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePrescriptionFromDB(prescriptionId) {
         try {
-            // Intentar primero la ruta específica del doctor para DELETE
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+            // Usar ruta /api/prescriptions para DELETE
+            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
                 method: 'DELETE'
             });
             const result = await response.json().catch(() => ({}));
             console.log("Receta eliminada de la BD:", result);
         } catch (error) {
             console.error("Error al eliminar receta de la BD:", error);
-            // El fallback a /prescriptions se ha simplificado, se asume que la ruta de doctors es la correcta.
             throw error;
         }
     }
