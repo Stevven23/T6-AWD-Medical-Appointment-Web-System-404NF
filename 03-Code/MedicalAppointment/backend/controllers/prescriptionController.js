@@ -73,9 +73,15 @@ const prescriptionController = {
             } = req.body;
 
             // Validar campos requeridos
-            if (!patient_user_id || !diagnosis || (medications === undefined || medications === null)) {
+            if (!patient_user_id || !diagnosis) {
                 return res.status(400).json({
-                    error: 'patient_user_id, diagnosis y medications son requeridos'
+                    error: 'patient_user_id y diagnosis son requeridos'
+                });
+            }
+
+            if (medications === undefined || medications === null || (typeof medications === 'string' && medications.trim() === '')) {
+                return res.status(400).json({
+                    error: 'medications es requerido y no puede estar vacío'
                 });
             }
 
@@ -84,27 +90,41 @@ const prescriptionController = {
             if (Array.isArray(medications)) {
                 // Guardar como texto con saltos de línea para compatibilidad con front-end
                 medsToStore = medications.join('\n');
-            } else if (typeof medications === 'object') {
+            } else if (typeof medications === 'object' && medications !== null) {
                 // Si es objeto, stringifyarlo
-                try { medsToStore = JSON.stringify(medications); } catch (e) { medsToStore = String(medications); }
+                try {
+                    medsToStore = JSON.stringify(medications);
+                } catch (e) {
+                    medsToStore = String(medications);
+                }
             } else {
-                medsToStore = String(medications);
+                medsToStore = String(medications).trim();
+            }
+
+            // Asegurar que medications no esté vacío después de normalizar
+            if (!medsToStore || medsToStore.trim() === '') {
+                return res.status(400).json({
+                    error: 'medications no puede estar vacío'
+                });
             }
 
             const { data: prescription, error } = await supabase
                 .from('prescriptions')
                 .insert([{
-                    patient_user_id,
-                    doctor_id: doctor_id || null,
-                    diagnosis: String(diagnosis),
+                    patient_user_id: patient_user_id.trim(),
+                    doctor_id: doctor_id && doctor_id.trim() ? doctor_id.trim() : null,
+                    diagnosis: String(diagnosis).trim(),
                     medications: medsToStore,
-                    instructions: instructions || null,
-                    duration: duration || null
+                    instructions: instructions && instructions.trim() ? instructions.trim() : null,
+                    duration: duration && duration.trim() ? duration.trim() : null
                 }])
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error detallado en insert:', error);
+                throw error;
+            }
 
             res.status(201).json({
                 message: 'Receta creada exitosamente',
@@ -112,7 +132,10 @@ const prescriptionController = {
             });
         } catch (error) {
             console.error('Error en createPrescription:', error);
-            res.status(500).json({ error: error.message || 'Error al crear la receta' });
+            res.status(500).json({ 
+                error: error.message || 'Error al crear la receta',
+                details: error.details || error.hint || '' 
+            });
         }
     },
 
@@ -130,20 +153,60 @@ const prescriptionController = {
                 duration
             } = req.body;
 
+            // Validar ID
+            if (!id) {
+                return res.status(400).json({ error: 'ID de receta es requerido' });
+            }
+
+            // Preparar objeto de actualización
+            const updateData = {};
+
+            if (diagnosis !== undefined && diagnosis !== null) {
+                updateData.diagnosis = String(diagnosis).trim();
+            }
+
+            if (medications !== undefined && medications !== null) {
+                let medsToStore = medications;
+                if (Array.isArray(medications)) {
+                    medsToStore = medications.join('\n');
+                } else if (typeof medications === 'object' && medications !== null) {
+                    try {
+                        medsToStore = JSON.stringify(medications);
+                    } catch (e) {
+                        medsToStore = String(medications);
+                    }
+                } else {
+                    medsToStore = String(medications).trim();
+                }
+                
+                if (medsToStore && medsToStore.trim() !== '') {
+                    updateData.medications = medsToStore;
+                }
+            }
+
+            if (instructions !== undefined) {
+                updateData.instructions = instructions && instructions.trim() ? instructions.trim() : null;
+            }
+
+            if (duration !== undefined) {
+                updateData.duration = duration && duration.trim() ? duration.trim() : null;
+            }
+
+            // Agregar timestamp de actualización
+            updateData.updated_at = new Date().toISOString();
+
             const { data: prescription, error } = await supabase
                 .from('prescriptions')
-                .update({
-                    diagnosis,
-                    medications,
-                    instructions,
-                    duration,
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('id', id)
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error detallado en update:', error);
+                throw error;
+            }
+            
             if (!prescription) {
                 return res.status(404).json({ error: 'Receta no encontrada' });
             }
@@ -154,7 +217,10 @@ const prescriptionController = {
             });
         } catch (error) {
             console.error('Error en updatePrescription:', error);
-            res.status(500).json({ error: error.message || 'Error al actualizar la receta' });
+            res.status(500).json({ 
+                error: error.message || 'Error al actualizar la receta',
+                details: error.details || error.hint || ''
+            });
         }
     },
 
