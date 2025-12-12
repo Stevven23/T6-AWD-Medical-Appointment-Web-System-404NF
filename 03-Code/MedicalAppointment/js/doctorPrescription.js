@@ -33,8 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Error en la petición');
+            // Try to parse JSON error, otherwise return text
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.message || JSON.stringify(errorData);
+                } else {
+                    const text = await response.text();
+                    // If HTML returned (like a 404 page), include a short snippet
+                    errorMessage = text ? (text.length > 200 ? text.slice(0, 200) + '...' : text) : errorMessage;
+                }
+            } catch (e) {
+                // fallback
+            }
+            throw new Error(errorMessage || 'Error en la petición');
         }
 
         return response;
@@ -119,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadPrescriptionsFromDB() {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
             const prescriptions = await response.json();
             
             prescriptionsFromDB = {};
@@ -146,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function savePrescriptionToDB(patientUserId, prescriptionData) {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
                 method: 'POST',
                 body: JSON.stringify({
                     patient_user_id: patientUserId,
@@ -167,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePrescriptionFromDB(prescriptionId) {
         try {
-            await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+            await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
                 method: 'DELETE'
             });
             console.log("Receta eliminada de la BD");
