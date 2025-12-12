@@ -133,7 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadPrescriptionsFromDB() {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
+            let response;
+            try {
+                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
+            } catch (err) {
+                // fallback: some deployments expose prescriptions under /doctors/prescriptions
+                console.warn('Ruta /prescriptions falló, intentando /doctors/prescriptions', err);
+                response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`);
+            }
             const prescriptions = await response.json();
             
             prescriptionsFromDB = {};
@@ -160,16 +167,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function savePrescriptionToDB(patientUserId, prescriptionData) {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    patient_user_id: patientUserId,
-                    diagnosis: prescriptionData.diagnostico,
-                    medications: prescriptionData.medicamentos,
-                    instructions: prescriptionData.indicaciones,
-                    duration: prescriptionData.duracion
-                })
-            });
+            let response;
+            try {
+                response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        patient_user_id: patientUserId,
+                        diagnosis: prescriptionData.diagnostico,
+                        medications: prescriptionData.medicamentos,
+                        instructions: prescriptionData.indicaciones,
+                        duration: prescriptionData.duracion
+                    })
+                });
+            } catch (err) {
+                console.warn('POST /prescriptions falló, intentando POST /doctors/prescriptions', err);
+                response = await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        patient_user_id: patientUserId,
+                        diagnosis: prescriptionData.diagnostico,
+                        medications: prescriptionData.medicamentos,
+                        instructions: prescriptionData.indicaciones,
+                        duration: prescriptionData.duracion
+                    })
+                });
+            }
             const result = await response.json();
             console.log("Receta guardada en la BD:", result);
             return result;
@@ -181,9 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePrescriptionFromDB(prescriptionId) {
         try {
-            await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
-                method: 'DELETE'
-            });
+            try {
+                await fetchWithAuth(`${API_BASE_URL}/prescriptions/${prescriptionId}`, {
+                    method: 'DELETE'
+                });
+            } catch (err) {
+                console.warn('DELETE /prescriptions/:id falló, intentando DELETE /doctors/prescriptions/:id', err);
+                await fetchWithAuth(`${API_BASE_URL}/doctors/prescriptions/${prescriptionId}`, {
+                    method: 'DELETE'
+                });
+            }
             console.log("Receta eliminada de la BD");
         } catch (error) {
             console.error("Error al eliminar receta de la BD:", error);
