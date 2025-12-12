@@ -8,11 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper para obtener el token de autenticación
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
         return {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : '',
-            'X-Doctor-ID': user.doctor_id || ''
+            'Authorization': token ? `Bearer ${token}` : ''
         };
     };
 
