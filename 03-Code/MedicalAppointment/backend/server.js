@@ -126,11 +126,12 @@ app.post('/api/auth/login', async (req, res) => {
 // ========== NUEVAS RUTAS DE PACIENTES ==========
 // IMPORTANTE: Las rutas más específicas DEBEN ir ANTES de las parametrizadas
 app.use('/api/auth', authRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/specialties', specialtyRoutes);
 app.use('/api/consultation-rooms', consultationRoomRoutes);
 // Prescriptions en su propia ruta para evitar conflicto con /api/doctors/:id
-app.use('/api/prescriptions', prescriptionRoutes);
+
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 // IMPORTANTE: /api/doctors debe ir DESPUÉS de las otras rutas porque tiene :id parametrizado
