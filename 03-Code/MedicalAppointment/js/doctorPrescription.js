@@ -112,84 +112,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadPrescriptionsFromDB() {
-        // Try several ways to fetch prescriptions and avoid showing raw HTML errors
-        const tryFetch = async (url, useAuth = true) => {
-            try {
-                const res = useAuth ? await fetchWithAuth(url) : await fetch(url);
-                if (!res.ok) {
-                    const text = await res.text().catch(() => '');
-                    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
-                }
-                const data = await res.json().catch(async () => {
-                    // If response is not JSON, try to get text for logging
-                    const txt = await res.text().catch(() => '');
-                    throw new Error(txt || 'Respuesta inesperada del servidor');
-                });
-                return data;
-            } catch (e) {
-                throw e;
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/prescriptions`);
+        const prescriptions = await response.json();
+
+        prescriptionsFromDB = {};
+        prescriptions.forEach(rx => {
+            if (!prescriptionsFromDB[rx.patient_user_id]) {
+                prescriptionsFromDB[rx.patient_user_id] = [];
             }
-        };
-
-        const endpoints = [
-            `${API_BASE_URL}/prescriptions`,
-            `${API_BASE_URL}/doctors/prescriptions`
-        ];
-
-        let prescriptions = null;
-
-        // 1) Try authenticated endpoints first
-        for (const url of endpoints) {
-            try {
-                prescriptions = await tryFetch(url, true);
-                break;
-            } catch (e) {
-                console.warn(`Fallo fetch auth ${url}:`, e.message || e);
-            }
-        }
-
-        // 2) If not found, try unauthenticated as last resort (some deployments may accept it)
-        if (!prescriptions) {
-            for (const url of endpoints) {
-                try {
-                    prescriptions = await tryFetch(url, false);
-                    break;
-                } catch (e) {
-                    console.warn(`Fallo fetch no-auth ${url}:`, e.message || e);
-                }
-            }
-        }
-
-        if (!prescriptions) {
-            console.error('No fue posible obtener recetas desde ninguna endpoint. Ver consola para más detalles.');
-            prescriptionsFromDB = {};
-            return {};
-        }
-
-        // Normalize and store
-        try {
-            prescriptionsFromDB = {};
-            prescriptions.forEach(rx => {
-                if (!prescriptionsFromDB[rx.patient_user_id]) {
-                    prescriptionsFromDB[rx.patient_user_id] = [];
-                }
-                prescriptionsFromDB[rx.patient_user_id].push({
-                    id: rx.id,
-                    date: new Date(rx.created_at).toLocaleDateString('es-ES'),
-                    diagnostico: rx.diagnosis || '',
-                    medicamentos: rx.medications || '',
-                    indicaciones: rx.instructions || '',
-                    duracion: rx.duration || ''
-                });
+            prescriptionsFromDB[rx.patient_user_id].push({
+                id: rx.id,
+                date: new Date(rx.created_at).toLocaleDateString('es-ES'),
+                diagnostico: rx.diagnosis || '',
+                medicamentos: rx.medications || '',
+                indicaciones: rx.instructions || '',
+                duracion: rx.duration || ''
             });
-            console.log("Recetas cargadas de la BD:", prescriptionsFromDB);
-            return prescriptionsFromDB;
-        } catch (err) {
-            console.error('Error normalizando recetas:', err);
-            prescriptionsFromDB = {};
-            return {};
-        }
+        });
+
+        console.log("Recetas cargadas de la BD:", prescriptionsFromDB);
+        return prescriptionsFromDB;
+    } catch (error) {
+        console.error("Error al cargar recetas:", error);
+        prescriptionsFromDB = {};
+        return {};
     }
+}
+
 
     async function savePrescriptionToDB(patientUserId, prescriptionData) {
         try {
