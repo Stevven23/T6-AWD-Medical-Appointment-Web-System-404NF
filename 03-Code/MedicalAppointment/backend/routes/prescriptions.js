@@ -1,4 +1,6 @@
 const express = require('express');
+console.log('🔥 prescriptions routes LOADED');
+
 const router = express.Router();
 const prescriptionController = require('../controllers/prescriptionController');
 const { authMiddleware } = require('../middleware/auth');
