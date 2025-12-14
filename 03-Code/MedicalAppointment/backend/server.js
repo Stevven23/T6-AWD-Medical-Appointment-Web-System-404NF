@@ -54,7 +54,7 @@ const doctorRoutes = require('./routes/doctor');
 const appointmentRoutes = require('./routes/appointments');
 const medicalRecordRoutes = require('./routes/medicalRecord');
 const specialtyRoutes = require('./routes/specialty');
-const prescriptionRoutes = require('./routes/prescriptions');
+const prescriptionRoutes = require('./routes/prescription');
 const consultationRoomRoutes = require('./routes/consultationRooms');
 
 
