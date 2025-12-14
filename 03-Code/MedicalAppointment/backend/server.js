@@ -1,15 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const supabase = require('./database');
 const session = require('express-session');
 const passport = require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ===============================
-   CORS
-================================ */
 app.use(cors({
   origin: [
     'http://127.0.0.1:5500',
@@ -19,38 +19,35 @@ app.use(cors({
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With'],
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
 
-/* ===============================
-   LOG DE REQUESTS
-================================ */
+// Simple request logging for debugging (method + path)
 app.use((req, res, next) => {
   console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-/* ===============================
-   SESSION + PASSPORT
-================================ */
+// Configurar sesiones para Passport
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback_secret',
   resave: false,
   saveUninitialized: false,
-  cookie: {
+  cookie: { 
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 }));
 
+// Inicializar Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-/* ===============================
-   IMPORTAR RUTAS
-================================ */
+// ========== IMPORTAR RUTAS NUEVAS ==========
 const authRoutes = require('./routes/auth');
 const patientRoutes = require('./routes/patient');
 const doctorRoutes = require('./routes/doctor');
@@ -60,57 +57,104 @@ const specialtyRoutes = require('./routes/specialty');
 const prescriptionRoutes = require('./routes/prescriptions');
 const consultationRoomRoutes = require('./routes/consultationRooms');
 
-/* ===============================
-   REGISTRO DE RUTAS (ORDEN CRÍTICO)
-================================ */
 
-// AUTH
+// ========== MANTENER TU RUTA DE LOGIN EXISTENTE ==========
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    console.log('Recibida petición de login:', req.body);
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+    }
+
+    // Buscar usuario
+    const { data: user, error } = await supabase
+      .from('users')
+      .select(`
+        *,
+        roles:role_id (
+          name,
+          code
+        )
+      `)
+      .eq('email', email)
+      .single();
+
+    console.log('Usuario encontrado:', user);
+    console.log('Error de búsqueda:', error);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Verificar contraseña
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
+
+    // Generar token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.roles.name
+      },
+      process.env.JWT_SECRET || 'tu_secreto_temporal',
+      { expiresIn: '24h' }
+    );
+
+    // Enviar respuesta
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.roles.name
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en login:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+});
+
+// ========== NUEVAS RUTAS DE PACIENTES ==========
+// IMPORTANTE: Las rutas más específicas DEBEN ir ANTES de las parametrizadas
 app.use('/api/auth', authRoutes);
-
-// PACIENTES
 app.use('/api/patients', patientRoutes);
-
-// ⚠️ PRESCRIPTIONS ANTES DE DOCTORS (OBLIGATORIO)
-app.use('/api/prescriptions', prescriptionRoutes);
-
-// DOCTORS (TIENE /:id)
-app.use('/api/doctors', doctorRoutes);
-
-// OTRAS
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/specialties', specialtyRoutes);
 app.use('/api/consultation-rooms', consultationRoomRoutes);
+// Prescriptions en su propia ruta para evitar conflicto con /api/doctors/:id
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/medical-records', medicalRecordRoutes);
+app.use('/api/appointments', appointmentRoutes);
+// IMPORTANTE: /api/doctors debe ir DESPUÉS de las otras rutas porque tiene :id parametrizado
+app.use('/api/doctors', doctorRoutes);
 
-/* ===============================
-   TEST
-================================ */
+// ========== MANTENER TUS RUTAS EXISTENTES ==========
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'API funcionando correctamente 🚀' });
+  res.json({ mensaje: '¡El servidor funciona correctamente!' });
 });
 
-/* ===============================
-   404 JSON (NO HTML)
-================================ */
+// Manejador 404 para devolver JSON en lugar de HTML (debe estar ANTES de app.listen())
 app.use((req, res) => {
-  res.status(404).json({
-    error: `Ruta no encontrada: ${req.method} ${req.originalUrl}`
-  });
+  console.warn('Ruta no encontrada:', req.method, req.originalUrl);
+  res.status(404).json({ error: `Ruta no encontrada: ${req.originalUrl}` });
 });
 
-/* ===============================
-   ERROR HANDLER
-================================ */
+// Manejador de errores genérico para asegurar respuestas JSON (debe estar ANTES de app.listen())
 app.use((err, req, res, next) => {
   console.error('Error inesperado:', err);
-  res.status(500).json({
-    error: err.message || 'Error interno del servidor'
-  });
+  res.status(err.status || 500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-/* ===============================
-   START SERVER
-================================ */
+// Iniciar el servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
 });
