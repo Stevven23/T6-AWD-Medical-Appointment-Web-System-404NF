@@ -538,19 +538,20 @@ const appointmentController = {
     }
   },
 
-  
+  updateAppointmentStatus: async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      
+
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status })
+        .update({ status_id: status, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select();
+        .select()
+        .single();
 
       if (error) throw error;
-      res.json(data[0]);
+      res.json(data);
     } catch (error) {
       console.error('Error updating appointment:', error);
       res.status(400).json({ error: error.message });
