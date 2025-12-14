@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
 
 const doctorController = require('../controllers/doctorController');
 const patientManagementController = require('../controllers/patientManagementController');
+
+// Require authentication for all routes
+router.use(authMiddleware);
 
 // ====================
 // RUTAS DE PACIENTES
@@ -17,6 +21,9 @@ router.get('/patients/:userId/record', patientManagementController.getPatientRec
 router.get('/specialties', doctorController.getSpecialties);
 router.get('/stats', doctorController.getDoctorStats);
 router.get('/filter', doctorController.filterDoctors);
+router.get('/me', doctorController.getCurrentDoctor);
+router.get('/my-patients', doctorController.getDoctorPatients);
+router.get('/schedule', doctorController.getDoctorSchedules);
 router.get('/specialty/:specialty_id', doctorController.getDoctorsBySpecialty);
 
 // ====================
