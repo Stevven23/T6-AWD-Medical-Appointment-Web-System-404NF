@@ -3,6 +3,9 @@ const router = express.Router();
 const prescriptionController = require('../controllers/prescriptionController');
 const { authMiddleware } = require('../middleware/auth');
 
+// Función para validar si el ID es un UUID válido
+const isUUID = (id) => /^[0-9a-fA-F-]{36}$/.test(id);
+
 // GET /api/doctors/prescriptions o /api/prescriptions - Obtener todas las recetas
 // Esta ruta debe ser ANTES de la ruta /:id para evitar conflictos de routing
 router.get('/', authMiddleware, prescriptionController.getAllPrescriptions);
@@ -11,13 +14,40 @@ router.get('/', authMiddleware, prescriptionController.getAllPrescriptions);
 router.post('/', authMiddleware, prescriptionController.createPrescription);
 
 // GET /api/doctors/prescriptions/:id o /api/prescriptions/:id - Obtener una receta por ID
-// Patrón UUID para asegurar que solo UUIDs válidos sean capturados
-router.get('/:id([0-9a-fA-F\\-]{36})', authMiddleware, prescriptionController.getPrescriptionById);
+// Validamos el UUID en el controlador
+router.get('/:id', authMiddleware, async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!isUUID(id)) {
+    return res.status(400).json({ error: 'ID de receta inválido' });
+  }
+
+  // Llamamos al controlador con el ID validado
+  return prescriptionController.getPrescriptionById(req, res, next);
+});
 
 // PUT /api/doctors/prescriptions/:id o /api/prescriptions/:id - Actualizar una receta
-router.put('/:id([0-9a-fA-F\\-]{36})', authMiddleware, prescriptionController.updatePrescription);
+router.put('/:id', authMiddleware, async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!isUUID(id)) {
+    return res.status(400).json({ error: 'ID de receta inválido' });
+  }
+
+  // Llamamos al controlador con el ID validado
+  return prescriptionController.updatePrescription(req, res, next);
+});
 
 // DELETE /api/doctors/prescriptions/:id o /api/prescriptions/:id - Eliminar una receta
-router.delete('/:id([0-9a-fA-F\\-]{36})', authMiddleware, prescriptionController.deletePrescription);
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!isUUID(id)) {
+    return res.status(400).json({ error: 'ID de receta inválido' });
+  }
+
+  // Llamamos al controlador con el ID validado
+  return prescriptionController.deletePrescription(req, res, next);
+});
 
 module.exports = router;
