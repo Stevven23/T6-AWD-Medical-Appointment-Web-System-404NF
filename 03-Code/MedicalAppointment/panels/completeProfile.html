@@ -111,27 +111,57 @@
     const urlParams = new URLSearchParams(window.location.search);
     const oauthParam = urlParams.get('oauth');
     
+    console.log('=== DEBUG COMPLETE PROFILE ===');
+    console.log('URL completa:', window.location.href);
+    console.log('Parámetro oauth presente:', !!oauthParam);
+    
     if (oauthParam) {
       try {
-        // Decodificar datos de OAuth
-        const payload = JSON.parse(atob(oauthParam));
+        console.log('Procesando OAuth callback...');
+        // Decodificar base64 a bytes
+        const binaryString = atob(oauthParam);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Decodificar bytes a string UTF-8
+        const decoder = new TextDecoder('utf-8');
+        const jsonPayload = decoder.decode(bytes);
+        console.log('JSON decodificado:', jsonPayload);
+        
+        const payload = JSON.parse(jsonPayload);
+        console.log('Payload decodificado:', payload);
+        
         localStorage.setItem('token', payload.token);
         localStorage.setItem('user', JSON.stringify(payload.user));
+        console.log('Token guardado en localStorage');
         
         // Limpiar URL
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (error) {
         console.error('Error procesando OAuth:', error);
+        console.error('Detalles del error:', error.message);
+        console.error('Stack:', error.stack);
       }
     }
 
-    // Obtener token y usuario desde localStorage
+    // Obtener token y usuario desde localStorage (DESPUÉS de procesar OAuth)
     const token = localStorage.getItem('token');
     const userJSON = localStorage.getItem('user');
 
+    console.log('Token en localStorage:', token ? 'Existe' : 'NO EXISTE');
+    console.log('User en localStorage:', userJSON ? 'Existe' : 'NO EXISTE');
+
+    // Verificar autenticación
     if (!token) {
-      window.location.href = 'login.html';
+      console.error('No hay token disponible - Redirigiendo a login');
+      alert('No se encontró token de autenticación. Serás redirigido al login.');
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 2000);
     } else {
+      console.log('Token encontrado - Continuando...');
       // Mostrar nombre del usuario si está disponible
       if (userJSON) {
         try {

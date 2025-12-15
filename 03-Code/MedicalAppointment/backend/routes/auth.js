@@ -36,14 +36,30 @@ router.get('/google/callback',
             const roleName = req.user.roles.name;
 
             // Preparar datos del usuario para el frontend
+            // Sanitizar strings para evitar problemas con caracteres especiales corruptos
+            const sanitizeString = (str) => {
+                if (!str) return '';
+                // Reemplazar caracteres problemáticos:
+                // - Caracteres de control (0x00-0x1F, 0x7F-0x9F)
+                // - Carácter de reemplazo Unicode (U+FFFD / 65533)
+                return str
+                    .replace(/\uFFFD/g, 'Ñ')  // Reemplazar � con Ñ
+                    .replace(/[\x00-\x1F\x7F-\x9F]/g, '')  // Eliminar caracteres de control
+                    .trim();
+            };
+
             const userData = {
                 id: req.user.id,
                 email: req.user.email,
-                first_name: req.user.first_name,
-                last_name: req.user.last_name,
+                first_name: sanitizeString(req.user.first_name),
+                last_name: sanitizeString(req.user.last_name),
                 role: roleName,
                 cedula: req.user.cedula
             };
+
+            console.log('UserData antes de enviar:', userData);
+            console.log('last_name original:', req.user.last_name);
+            console.log('last_name sanitizado:', userData.last_name);
 
             // Verificar si es un nuevo usuario de Google (sin datos completos)
             const { data: patientData } = await supabase
