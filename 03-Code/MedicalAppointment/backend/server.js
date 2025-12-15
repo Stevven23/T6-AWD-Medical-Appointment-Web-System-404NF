@@ -4,7 +4,6 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const supabase = require('./database');
-const session = require('express-session');
 const passport = require('./config/passport');
 
 const app = express();
@@ -32,20 +31,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configurar sesiones para Passport
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
-
-// Inicializar Passport
+// Inicializar Passport (sin sesión - stateless JWT OAuth)
 app.use(passport.initialize());
-app.use(passport.session());
 
 // ========== IMPORTAR RUTAS NUEVAS ==========
 const authRoutes = require('./routes/auth');

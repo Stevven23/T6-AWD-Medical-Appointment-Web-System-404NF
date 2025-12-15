@@ -110,21 +110,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
   console.warn('⚠️  Google OAuth no configurado (variables GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL no encontradas)');
 }
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const { data: user } = await supabase
-      .from('users')
-      .select('*, roles(name)')
-      .eq('id', id)
-      .single();
-    done(null, user);
-  } catch (error) {
-    done(error, null);
-  }
-});
+// Sin serializeUser/deserializeUser - OAuth stateless con JWT
 
 module.exports = passport;
