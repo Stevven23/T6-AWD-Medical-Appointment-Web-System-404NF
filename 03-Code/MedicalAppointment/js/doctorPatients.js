@@ -103,6 +103,23 @@ document.addEventListener("DOMContentLoaded", () => {
             renderPatientTable(patients);
             showPage('list'); 
 
+            // Verificar si hay un paciente a buscar desde reportes
+            const buscarPaciente = localStorage.getItem('buscarPaciente');
+            if (buscarPaciente) {
+                // Buscar y mostrar el paciente
+                const pacienteEncontrado = patients.find(p => {
+                    const nombreCompleto = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+                    return nombreCompleto === buscarPaciente;
+                });
+                
+                if (pacienteEncontrado) {
+                    viewPatientDetails(pacienteEncontrado.user_id);
+                }
+                
+                // Limpiar el localStorage
+                localStorage.removeItem('buscarPaciente');
+            }
+
         } catch (error) {
             console.error("Error al cargar pacientes:", error);
             patientTableBody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error al cargar: ${error.message}</td></tr>`;

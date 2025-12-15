@@ -71,6 +71,8 @@
                             <option value="dia">Hoy</option>
                             <option value="semana" selected>Esta Semana</option>
                             <option value="mes">Este Mes</option>
+                            <option value="anio">Este Año</option>
+                            <option value="todos">Todos</option>
                         </select>
                     </div>
                     <div class="report-content">
@@ -99,6 +101,8 @@
                             <option value="dia">Hoy</option>
                             <option value="semana" selected>Esta Semana</option>
                             <option value="mes">Este Mes</option>
+                            <option value="anio">Este Año</option>
+                            <option value="todos">Todos</option>
                         </select>
                     </div>
                     <div class="report-content">
@@ -120,6 +124,8 @@
                         <select id="consultas-periodo">
                             <option value="semana" selected>Esta Semana</option>
                             <option value="mes">Este Mes</option>
+                            <option value="anio">Este Año</option>
+                            <option value="todos">Todos</option>
                         </select>
                     </div>
                     <div class="report-content">
@@ -146,6 +152,8 @@
                         <select id="tipos-consulta-periodo">
                             <option value="semana" selected>Esta Semana</option>
                             <option value="mes">Este Mes</option>
+                            <option value="anio">Este Año</option>
+                            <option value="todos">Todos</option>
                         </select>
                     </div>
                     <div class="report-content">
@@ -157,11 +165,29 @@
                 <div id="graficas-section" class="card report-section">
                     <h2>Gráficas de Actividad</h2>
                     <div class="chart-container">
+                        <div class="filter-controls">
+                            <label for="grafica-tipo-periodo">Ver periodo:</label>
+                            <select id="grafica-tipo-periodo">
+                                <option value="semana" selected>Esta Semana</option>
+                                <option value="mes">Este Mes</option>
+                                <option value="anio">Este Año</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </div>
                         <h3>Citas por Tipo</h3>
                         <canvas id="citasTipoChart"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3>Actividad Semanal</h3>
+                        <div class="filter-controls">
+                            <label for="grafica-actividad-periodo">Ver periodo:</label>
+                            <select id="grafica-actividad-periodo">
+                                <option value="semana" selected>Esta Semana</option>
+                                <option value="mes">Este Mes</option>
+                                <option value="anio">Este Año</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </div>
+                        <h3>Actividad por Periodo</h3>
                         <canvas id="actividadSemanalChart"></canvas>
                     </div>
                 </div>

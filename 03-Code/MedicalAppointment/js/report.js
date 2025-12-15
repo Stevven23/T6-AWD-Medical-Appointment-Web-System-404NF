@@ -83,6 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
             startDate.setHours(0, 0, 0, 0);
             endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             endDate.setHours(23, 59, 59, 999);
+        } else if (periodo === 'anio') {
+            startDate = new Date(today.getFullYear(), 0, 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(today.getFullYear(), 11, 31);
+            endDate.setHours(23, 59, 59, 999);
+        } else if (periodo === 'todos') {
+            // Fecha muy antigua para obtener todos los registros
+            startDate = new Date('2000-01-01');
+            endDate = new Date('2099-12-31');
         }
         return { startDate, endDate };
     };
@@ -105,11 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Transform API data to match frontend structure
             allCitas = data.appointments.map(apt => ({
-                fecha: apt.scheduled_start?.split('T')[0] || '',
-                hora: apt.scheduled_start?.split('T')[1]?.substring(0, 5) || '',
-                paciente: `${apt.patient_first_name || ''} ${apt.patient_last_name || ''}`.trim(),
-                tipo: apt.appointment_type || 'Consulta General',
-                estado: mapStatusToSpanish(apt.status_code)
+                fecha: apt.fecha || apt.scheduled_start?.split('T')[0] || '',
+                hora: apt.hora || apt.scheduled_start?.split('T')[1]?.substring(0, 5) || '',
+                paciente: apt.paciente || `${apt.patient_first_name || ''} ${apt.patient_last_name || ''}`.trim(),
+                tipo: apt.tipo || apt.appointment_type || apt.reason || 'Consulta General',
+                estado: mapStatusToSpanish(apt.estado || apt.status_code || apt.status)
             }));
 
             console.log('✅ Citas cargadas:', allCitas.length);
@@ -127,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const { startDate, endDate } = getDateRange(periodo);
             
             const response = await fetchWithAuth(
-                `${API_BASE_URL}/reports/modified-appointments?` + 
+                `${API_BASE_URL}/reports/modified?` + 
                 `startDate=${formatDate(startDate)}&` +
                 `endDate=${formatDate(endDate)}`
             );
@@ -135,13 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             // Transform API data
-            allConsultasModificadas = data.modifications.map(mod => ({
-                fechaOriginal: mod.original_date?.split('T')[0] || '',
-                nuevaFecha: mod.new_date?.split('T')[0] || mod.cancelled_at?.split('T')[0] || '',
-                paciente: `${mod.patient_first_name || ''} ${mod.patient_last_name || ''}`.trim(),
-                motivo: mod.modification_reason || 'No especificado'
-            }));
-
+            allConsultasModificadas = data.modifiedAppointments || [];
+            
             console.log('✅ Consultas modificadas cargadas:', allConsultasModificadas.length);
             return allConsultasModificadas;
         } catch (error) {
@@ -172,6 +176,86 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function fetchActivityByPeriod(periodo) {
+        try {
+            await loadAppointmentsData(periodo);
+            
+            const activityMap = {};
+            const labels = [];
+            
+            if (periodo === 'semana' || periodo === 'dia') {
+                // Para semana, usar endpoint específico de weekly-activity
+                const response = await fetchWithAuth(`${API_BASE_URL}/reports/weekly-activity`);
+                const data = await response.json();
+                return { activityByDay: data.activityByDay, labels: data.labels };
+            } else if (periodo === 'mes') {
+                // Agrupar por día del mes
+                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                for (let i = 1; i <= daysInMonth; i++) {
+                    labels.push(i.toString());
+                    activityMap[i] = 0;
+                }
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const day = new Date(apt.fecha).getDate();
+                        activityMap[day] = (activityMap[day] || 0) + 1;
+                    }
+                });
+            } else if (periodo === 'anio') {
+                // Agrupar por mes del año
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                meses.forEach((mes, idx) => {
+                    labels.push(mes);
+                    activityMap[idx] = 0;
+                });
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const month = new Date(apt.fecha).getMonth();
+                        activityMap[month] = (activityMap[month] || 0) + 1;
+                    }
+                });
+            } else if (periodo === 'todos') {
+                // Agrupar por año
+                const years = new Set();
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const year = new Date(apt.fecha).getFullYear();
+                        years.add(year);
+                    }
+                });
+                const sortedYears = Array.from(years).sort();
+                sortedYears.forEach(year => {
+                    labels.push(year.toString());
+                    activityMap[year] = 0;
+                });
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const year = new Date(apt.fecha).getFullYear();
+                        activityMap[year] = (activityMap[year] || 0) + 1;
+                    }
+                });
+            }
+
+            // Construir el array final basado en el tipo de periodo
+            let activityByDay;
+            if (periodo === 'anio') {
+                // Para año, usar índices (0-11)
+                activityByDay = labels.map((label, idx) => activityMap[idx] || 0);
+            } else if (periodo === 'mes') {
+                // Para mes, usar días (1-31)
+                activityByDay = labels.map(label => activityMap[parseInt(label)] || 0);
+            } else {
+                // Para 'todos' (años), usar el año como clave
+                activityByDay = labels.map(label => activityMap[parseInt(label)] || 0);
+            }
+            
+            return { activityByDay, labels };
+        } catch (error) {
+            console.error('❌ Error fetching activity by period:', error);
+            return { activityByDay: [], labels: [] };
+        }
+    }
+
     // Helper function to map status codes to Spanish
     function mapStatusToSpanish(statusCode) {
         const statusMap = {
@@ -192,6 +276,89 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.insertBefore(errorDiv, document.body.firstChild);
         
         setTimeout(() => errorDiv.remove(), 5000);
+    }
+
+    async function fetchActivityByPeriod(periodo) {
+        try {
+            await loadAppointmentsData(periodo);
+            
+            const activityMap = {};
+            const labels = [];
+            
+            if (periodo === 'semana' || periodo === 'dia') {
+                // Para semana, usar lógica de días de la semana
+                const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                daysOfWeek.forEach((day, idx) => {
+                    labels.push(day);
+                    activityMap[idx] = 0;
+                });
+                allCitas.forEach(cita => {
+                    if (cita.fecha) {
+                        const dayOfWeek = new Date(cita.fecha).getDay();
+                        activityMap[dayOfWeek] = (activityMap[dayOfWeek] || 0) + 1;
+                    }
+                });
+                const activityByDay = labels.map((label, idx) => activityMap[idx] || 0);
+                return { activityByDay, labels };
+            } else if (periodo === 'mes') {
+                // Agrupar por día del mes
+                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                for (let i = 1; i <= daysInMonth; i++) {
+                    labels.push(i.toString());
+                    activityMap[i] = 0;
+                }
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const day = new Date(apt.fecha).getDate();
+                        activityMap[day] = (activityMap[day] || 0) + 1;
+                    }
+                });
+                const activityByDay = labels.map(label => activityMap[parseInt(label)] || 0);
+                return { activityByDay, labels };
+            } else if (periodo === 'anio') {
+                // Agrupar por mes del año
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                meses.forEach((mes, idx) => {
+                    labels.push(mes);
+                    activityMap[idx] = 0;
+                });
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const month = new Date(apt.fecha).getMonth();
+                        activityMap[month] = (activityMap[month] || 0) + 1;
+                    }
+                });
+                const activityByDay = labels.map((label, idx) => activityMap[idx] || 0);
+                return { activityByDay, labels };
+            } else if (periodo === 'todos') {
+                // Agrupar por año
+                const years = new Set();
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const year = new Date(apt.fecha).getFullYear();
+                        years.add(year);
+                    }
+                });
+                const sortedYears = Array.from(years).sort();
+                sortedYears.forEach(year => {
+                    labels.push(year.toString());
+                    activityMap[year] = 0;
+                });
+                allCitas.forEach(apt => {
+                    if (apt.fecha) {
+                        const year = new Date(apt.fecha).getFullYear();
+                        activityMap[year] = (activityMap[year] || 0) + 1;
+                    }
+                });
+                const activityByDay = labels.map(label => activityMap[parseInt(label)] || 0);
+                return { activityByDay, labels };
+            }
+            
+            return { activityByDay: [], labels: [] };
+        } catch (error) {
+            console.error('❌ Error fetching activity by period:', error);
+            return { activityByDay: [], labels: [] };
+        }
     }
 
     // ----------------------------------------------------------------------------------
@@ -311,14 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 📈 FUNCIONES DE GRÁFICAS 📈
     // ----------------------------------------------------------------------------------
 
-    const renderCitasTipoChart = async () => {
+    const renderCitasTipoChart = async (periodo = 'mes') => {
         const ctx = document.getElementById('citasTipoChart').getContext('2d');
         if (citasTipoChart) citasTipoChart.destroy();
 
-        // Use current data or load for current month
-        if (allCitas.length === 0) {
-            await loadAppointmentsData('mes');
-        }
+        // Load data for the specified period
+        await loadAppointmentsData(periodo);
 
         const tipoCounts = {};
         allCitas.forEach(cita => {
@@ -350,28 +515,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const renderActividadSemanalChart = async () => {
+    const renderActividadSemanalChart = async (periodo = 'semana') => {
         const ctx = document.getElementById('actividadSemanalChart').getContext('2d');
         if (actividadSemanalChart) actividadSemanalChart.destroy();
 
-        // Load data for current week
-        await loadAppointmentsData('semana');
+        const data = await fetchActivityByPeriod(periodo);
 
-        const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const activityByDay = new Array(7).fill(0);
-
-        allCitas.forEach(cita => {
-            const citaDate = new Date(cita.fecha);
-            activityByDay[citaDate.getDay()]++;
-        });
+        // Configurar título según el periodo
+        let chartTitle = 'Actividad de Citas';
+        if (periodo === 'dia' || periodo === 'semana') {
+            chartTitle = 'Actividad de Citas por Día de la Semana';
+        } else if (periodo === 'mes') {
+            chartTitle = 'Actividad de Citas por Día del Mes';
+        } else if (periodo === 'anio') {
+            chartTitle = 'Actividad de Citas por Mes del Año';
+        } else if (periodo === 'todos') {
+            chartTitle = 'Actividad de Citas por Año';
+        }
 
         actividadSemanalChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: daysOfWeek,
+                labels: data.labels,
                 datasets: [{
                     label: 'Número de Citas',
-                    data: activityByDay,
+                    data: data.activityByDay,
                     backgroundColor: '#007bff',
                     borderColor: '#007bff',
                     borderWidth: 1
@@ -385,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     title: {
                         display: true,
-                        text: 'Actividad de Citas por Día de la Semana'
+                        text: chartTitle
                     }
                 },
                 scales: {
@@ -448,11 +616,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pacientes-data').addEventListener('click', (e) => {
         if (e.target.classList.contains('historial-btn')) {
             const paciente = e.target.dataset.paciente;
-            // TODO: Implement patient history view
-            console.log('Ver historial de:', paciente);
-            alert(`Funcionalidad de historial clínico para ${paciente} - Por implementar`);
+            // Guardar el nombre del paciente para buscarlo en la página de pacientes
+            localStorage.setItem('buscarPaciente', paciente);
+            // Redirigir a la página de pacientes
+            window.location.href = './doctorPatients.html';
         }
     });
+
+    // Event listeners para los selectores de periodo de las gráficas
+    const graficaTipoPeriodoSelect = document.getElementById('grafica-tipo-periodo');
+    const graficaActividadPeriodoSelect = document.getElementById('grafica-actividad-periodo');
+    
+    if (graficaTipoPeriodoSelect) {
+        graficaTipoPeriodoSelect.addEventListener('change', (e) => {
+            renderCitasTipoChart(e.target.value);
+        });
+    }
+    
+    if (graficaActividadPeriodoSelect) {
+        graficaActividadPeriodoSelect.addEventListener('change', (e) => {
+            renderActividadSemanalChart(e.target.value);
+        });
+    }
 
     // ----------------------------------------------------------------------------------
     // 🚀 INICIALIZACIÓN 🚀
