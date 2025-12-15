@@ -56,6 +56,7 @@ const medicalRecordRoutes = require('./routes/medicalRecord');
 const specialtyRoutes = require('./routes/specialty');
 const prescriptionRoutes = require('./routes/prescriptions');
 const consultationRoomRoutes = require('./routes/consultationRooms');
+const reportRoutes = require('./routes/reports');
 
 
 // ========== RUTAS DE LA API ==========
@@ -65,14 +66,13 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/specialties', specialtyRoutes);
 app.use('/api/consultation-rooms', consultationRoomRoutes);
-// Prescriptions en su propia ruta para evitar conflicto con /api/doctors/:id
+app.use('/api/reports', reportRoutes);
 
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 // IMPORTANTE: /api/doctors debe ir DESPUÉS de las otras rutas porque tiene :id parametrizado
 app.use('/api/doctors', doctorRoutes);
 
-// ========== MANTENER TUS RUTAS EXISTENTES ==========
 app.get('/api/test', (req, res) => {
   res.json({ mensaje: '¡El servidor funciona correctamente!' });
 });
