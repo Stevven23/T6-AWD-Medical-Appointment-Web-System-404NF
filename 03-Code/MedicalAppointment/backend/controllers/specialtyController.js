@@ -10,12 +10,13 @@ const specialtyController = {
                 return res.status(400).json({ error: 'El nombre de la especialidad es requerido' });
             }
 
-            const { data: existingSpecialty } = await supabase
+            const { data: existingSpecialty, error: existingError } = await supabase
                 .from('specialties')
                 .select('id')
                 .ilike('name', name.trim())
                 .maybeSingle();
 
+            if (existingError) throw existingError;
             if (existingSpecialty) {
                 return res.status(400).json({ error: 'La especialidad ya está registrada' });
             }
@@ -83,7 +84,12 @@ const specialtyController = {
                 .eq('id', id)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                if (error.code === 'PGRST116' || error.message?.includes('Result contains no rows')) {
+                    return res.status(404).json({ error: 'Especialidad no encontrada' });
+                }
+                throw error;
+            }
 
             if (!data) {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
@@ -107,10 +113,16 @@ const specialtyController = {
                 .eq('id', id)
                 .single();
 
-            if (specialtyError) throw specialtyError;
+            if (specialtyError) {
+                if (specialtyError.code === 'PGRST116' || specialtyError.message?.includes('Result contains no rows')) {
+                    return res.status(404).json({ error: 'Especialidad no encontrada' });
+                }
+                throw specialtyError;
+            }
             if (!specialty) {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
+
 
             const { data: doctors, error: doctorsError } = await supabase
                 .from('doctors')
@@ -118,7 +130,9 @@ const specialtyController = {
                 .eq('specialty_id', id)
                 .order('created_at', { ascending: false });
 
-            if (doctorsError) throw doctorsError;
+            if (doctorsError) {
+                console.warn('Warning: error fetching doctors for specialty', doctorsError);
+            }
 
             res.json({
                 ...specialty,
@@ -137,23 +151,35 @@ const specialtyController = {
             const { id } = req.params;
             const { name, description } = req.body;
 
-            const { data: existingSpecialty } = await supabase
+            const { data: existingSpecialty, error: existingError } = await supabase
                 .from('specialties')
                 .select('id')
                 .eq('id', id)
                 .single();
 
+            if (existingError) {
+                if (existingError.code === 'PGRST116' || existingError.message?.includes('Result contains no rows')) {
+                    return res.status(404).json({ error: 'Especialidad no encontrada' });
+                }
+                throw existingError;
+            }
+
             if (!existingSpecialty) {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
 
-            if (name && name.trim() !== '') {
-                const { data: duplicateSpecialty } = await supabase
+            if (name !== undefined) {
+                if (typeof name !== 'string' || name.trim() === '') {
+                    return res.status(400).json({ error: 'El nombre de la especialidad no puede estar vacío' });
+                }
+                const { data: duplicateSpecialty, error: dupError } = await supabase
                     .from('specialties')
                     .select('id')
                     .ilike('name', name.trim())
                     .neq('id', id)
                     .maybeSingle();
+
+                if (dupError) throw dupError;
 
                 if (duplicateSpecialty) {
                     return res.status(400).json({ error: 'Ya existe otra especialidad con ese nombre' });
@@ -163,6 +189,7 @@ const specialtyController = {
             const updateData = {};
             if (name !== undefined) updateData.name = name.trim();
             if (description !== undefined) updateData.description = description || null;
+
 
             const { data: specialty, error: specialtyError } = await supabase
                 .from('specialties')
@@ -185,20 +212,29 @@ const specialtyController = {
         try {
             const { id } = req.params;
 
-            const { data: existingSpecialty } = await supabase
+            const { data: existingSpecialty, error: existingError } = await supabase
                 .from('specialties')
                 .select('id, name')
                 .eq('id', id)
                 .single();
 
+            if (existingError) {
+                if (existingError.code === 'PGRST116' || existingError.message?.includes('Result contains no rows')) {
+                    return res.status(404).json({ error: 'Especialidad no encontrada' });
+                }
+                throw existingError;
+            }
+
             if (!existingSpecialty) {
                 return res.status(404).json({ error: 'Especialidad no encontrada' });
             }
 
-            const { data: doctors } = await supabase
+            const { data: doctors, error: doctorsError } = await supabase
                 .from('doctors')
                 .select('id')
                 .eq('specialty_id', id);
+
+            if (doctorsError) throw doctorsError;
 
             if (doctors && doctors.length > 0) {
                 return res.status(400).json({ 
@@ -207,16 +243,18 @@ const specialtyController = {
                 });
             }
 
-            const { error: specialtyError } = await supabase
+            const { data: deleted, error: specialtyError } = await supabase
                 .from('specialties')
                 .delete()
-                .eq('id', id);
+                .eq('id', id)
+                .select()
+                .single();
 
             if (specialtyError) throw specialtyError;
 
             res.json({ 
                 message: 'Especialidad eliminada exitosamente',
-                deleted: existingSpecialty 
+                deleted: deleted || existingSpecialty
             });
         } catch (error) {
             console.error('Error deleting specialty:', error);

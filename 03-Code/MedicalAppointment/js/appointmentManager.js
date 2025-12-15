@@ -1,157 +1,177 @@
-// Appointment Management System with LocalStorage
+// Appointment Management System - Connected to Backend API
 class AppointmentManager {
     constructor() {
-        this.appointments = this.loadAppointments();
+        this.appointments = [];
         this.currentEditId = null;
+        this.apiBaseUrl = this.getApiBaseUrl();
         this.init();
     }
 
-    init() {
-        this.renderAppointments();
-        this.setupEventListeners();
-        this.checkUpcomingAppointments(); // Para notificaciones
+    getApiBaseUrl() {
+        return window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000/api'
+            : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
     }
 
-    // LocalStorage methods
-    loadAppointments() {
-        const stored = localStorage.getItem('clinicaAppointments');
-        if (stored) {
-            return JSON.parse(stored);
-        }
-        return this.getInitialData();
+    getAuthHeaders() {
+        const token = localStorage.getItem('token');
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
     }
 
-    saveAppointments() {
-        localStorage.setItem('clinicaAppointments', JSON.stringify(this.appointments));
-        // Notificar cambios al sistema de notificaciones
-        if (window.notificationManager) {
-            window.notificationManager.checkAppointmentReminders();
-        }
-    }
-
-    getInitialData() {
-        return [
-            {
-                id: 1,
-                patientName: 'Carlos Mendoza',
-                doctorName: 'Dr. Sofia Pérez',
-                specialty: 'Cardiología',
-                date: '2025-10-25',
-                time: '10:30',
-                office: 'Consultorio 305',
-                status: 'confirmed', // confirmed, pending, cancelled, completed
-                reason: 'Control de rutina',
-                createdAt: new Date('2025-10-20').toISOString()
-            },
-            {
-                id: 2,
-                patientName: 'Carlos Mendoza',
-                doctorName: 'Dr. Juan Martínez',
-                specialty: 'Medicina General',
-                date: '2025-11-02',
-                time: '15:00',
-                office: 'Consultorio 102',
-                status: 'pending',
-                reason: 'Consulta general',
-                createdAt: new Date('2025-10-22').toISOString()
-            },
-            {
-                id: 3,
-                patientName: 'Carlos Mendoza',
-                doctorName: 'Dra. Ana López',
-                specialty: 'Oftalmología',
-                date: '2025-11-15',
-                time: '09:00',
-                office: 'Consultorio 201',
-                status: 'confirmed',
-                reason: 'Revisión de vista',
-                createdAt: new Date('2025-10-23').toISOString()
+    async fetchWithAuth(url, options = {}) {
+        const headers = this.getAuthHeaders();
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...headers,
+                ...(options.headers || {})
             }
-        ];
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/panels/login.html';
+            throw new Error('Sesión expirada');
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || 'Error en la petición');
+        }
+
+        return response;
     }
 
-    // CRUD Operations
-    addAppointment(appointmentData) {
-        const newId = this.appointments.length > 0 
-            ? Math.max(...this.appointments.map(a => a.id)) + 1 
-            : 1;
-        
-        // Validar disponibilidad antes de crear
-        if (!this.checkAvailability(appointmentData.date, appointmentData.time, appointmentData.doctorName)) {
-            this.showToast('El doctor no está disponible en ese horario', 'error');
+    async init() {
+        try {
+            await this.loadAppointments();
+            this.setupEventListeners();
+        } catch (error) {
+            console.error('Error initializing appointment manager:', error);
+            this.showToast('Error al cargar las citas', 'error');
+        }
+    }
+
+    // API methods - Replace localStorage with API calls
+    async loadAppointments() {
+        try {
+            const response = await this.fetchWithAuth(`${this.apiBaseUrl}/appointments/patient`);
+            const data = await response.json();
+            
+            // Transform API data to match component structure
+            this.appointments = data.map(appointment => ({
+                id: appointment.id,
+                patientName: `${appointment.patients?.first_name || ''} ${appointment.patients?.last_name || ''}`.trim(),
+                doctorName: `Dr. ${appointment.doctors?.users?.first_name || ''} ${appointment.doctors?.users?.last_name || ''}`.trim(),
+                specialty: appointment.doctors?.specialties?.name || 'No especificado',
+                date: appointment.scheduled_start?.split('T')[0] || '',
+                time: appointment.scheduled_start?.split('T')[1]?.substring(0, 5) || '',
+                office: appointment.doctors?.office || 'Por confirmar',
+                status: appointment.status_code || 'pending',
+                reason: appointment.reason || 'Consulta general',
+                createdAt: appointment.created_at
+            }));
+
+            this.renderAppointments();
+            return this.appointments;
+        } catch (error) {
+            console.error('Error loading appointments:', error);
+            this.showToast('Error al cargar las citas: ' + error.message, 'error');
+            this.appointments = [];
+            return [];
+        }
+    }
+
+    async addAppointment(appointmentData) {
+        try {
+            // Validate date before sending
+            if (!this.validateDate(appointmentData.date, appointmentData.time)) {
+                return false;
+            }
+
+            // Prepare data for API
+            const requestBody = {
+                doctor_id: appointmentData.doctorId, // You'll need to get doctor ID
+                scheduled_start: `${appointmentData.date}T${appointmentData.time}:00`,
+                scheduled_end: this.calculateEndTime(appointmentData.date, appointmentData.time),
+                reason: appointmentData.reason,
+                status_code: 'pending'
+            };
+
+            const response = await this.fetchWithAuth(`${this.apiBaseUrl}/appointments`, {
+                method: 'POST',
+                body: JSON.stringify(requestBody)
+            });
+
+            const result = await response.json();
+            
+            this.showToast('Cita agendada exitosamente', 'success');
+            await this.loadAppointments(); // Reload from API
+            
+            return true;
+        } catch (error) {
+            console.error('Error adding appointment:', error);
+            this.showToast('Error al agendar la cita: ' + error.message, 'error');
             return false;
         }
-
-        const newAppointment = {
-            id: newId,
-            ...appointmentData,
-            patientName: 'Carlos Mendoza', // Usuario actual
-            status: 'pending',
-            createdAt: new Date().toISOString()
-        };
-
-        this.appointments.push(newAppointment);
-        this.saveAppointments();
-        this.renderAppointments();
-        this.showToast('Cita agendada exitosamente', 'success');
-        
-        // Crear notificación
-        if (window.notificationManager) {
-            window.notificationManager.createAppointmentNotification(newAppointment);
-        }
-        
-        return true;
     }
 
-    updateAppointment(id, appointmentData) {
-        const index = this.appointments.findIndex(a => a.id === id);
-        if (index !== -1) {
-            this.appointments[index] = {
-                ...this.appointments[index],
-                ...appointmentData
+    calculateEndTime(date, time) {
+        const start = new Date(`${date}T${time}:00`);
+        start.setMinutes(start.getMinutes() + 30); // 30 min appointment
+        return start.toISOString();
+    }
+
+    async updateAppointment(id, appointmentData) {
+        try {
+            const requestBody = {
+                scheduled_start: `${appointmentData.date}T${appointmentData.time}:00`,
+                scheduled_end: this.calculateEndTime(appointmentData.date, appointmentData.time),
+                reason: appointmentData.reason
             };
-            this.saveAppointments();
-            this.renderAppointments();
+
+            await this.fetchWithAuth(`${this.apiBaseUrl}/appointments/${id}/reschedule`, {
+                method: 'PUT',
+                body: JSON.stringify(requestBody)
+            });
+
             this.showToast('Cita actualizada exitosamente', 'success');
+            await this.loadAppointments();
+        } catch (error) {
+            console.error('Error updating appointment:', error);
+            this.showToast('Error al actualizar la cita: ' + error.message, 'error');
         }
     }
 
-    cancelAppointment(id) {
-        const index = this.appointments.findIndex(a => a.id === id);
-        if (index !== -1) {
-            this.appointments[index].status = 'cancelled';
-            this.saveAppointments();
-            this.renderAppointments();
+    async cancelAppointment(id) {
+        try {
+            await this.fetchWithAuth(`${this.apiBaseUrl}/appointments/${id}`, {
+                method: 'DELETE'
+            });
+
             this.showToast('Cita cancelada exitosamente', 'success');
+            await this.loadAppointments();
+        } catch (error) {
+            console.error('Error cancelling appointment:', error);
+            this.showToast('Error al cancelar la cita: ' + error.message, 'error');
         }
     }
 
-    deleteAppointment(id) {
-        const index = this.appointments.findIndex(a => a.id === id);
-        if (index !== -1) {
-            this.appointments.splice(index, 1);
-            this.saveAppointments();
-            this.renderAppointments();
-            this.showToast('Cita eliminada exitosamente', 'success');
+    async getAppointmentById(id) {
+        try {
+            const response = await this.fetchWithAuth(`${this.apiBaseUrl}/appointments/${id}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching appointment:', error);
+            return null;
         }
     }
 
-    getAppointmentById(id) {
-        return this.appointments.find(a => a.id === id);
-    }
-
-    // Validación de disponibilidad
-    checkAvailability(date, time, doctorName) {
-        const existingAppointment = this.appointments.find(a => 
-            a.date === date && 
-            a.time === time && 
-            a.doctorName === doctorName &&
-            a.status !== 'cancelled'
-        );
-        return !existingAppointment;
-    }
-
-    // Validar que la fecha no sea en el pasado
+    // Validation methods
     validateDate(date, time) {
         const appointmentDateTime = new Date(`${date}T${time}`);
         const now = new Date();
@@ -251,6 +271,7 @@ class AppointmentManager {
         const classes = {
             'confirmed': 'upcoming',
             'pending': 'upcoming',
+            'scheduled': 'upcoming',
             'cancelled': 'cancelled',
             'completed': 'past'
         };
@@ -261,6 +282,7 @@ class AppointmentManager {
         const classes = {
             'confirmed': 'confirmed',
             'pending': 'pending',
+            'scheduled': 'pending',
             'cancelled': 'cancelled',
             'completed': 'completed'
         };
@@ -271,6 +293,7 @@ class AppointmentManager {
         const texts = {
             'confirmed': 'Confirmada',
             'pending': 'Pendiente',
+            'scheduled': 'Agendada',
             'cancelled': 'Cancelada',
             'completed': 'Completada'
         };
@@ -288,7 +311,7 @@ class AppointmentManager {
 
     // Modal methods
     viewAppointmentDetails(id) {
-        const appointment = this.getAppointmentById(id);
+        const appointment = this.appointments.find(a => a.id === id);
         if (!appointment) return;
 
         const modalContent = `
@@ -332,13 +355,13 @@ class AppointmentManager {
     }
 
     rescheduleAppointment(id) {
-        const appointment = this.getAppointmentById(id);
+        const appointment = this.appointments.find(a => a.id === id);
         if (!appointment) return;
 
         this.currentEditId = id;
         document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Reprogramar Cita';
         
-        // Llenar formulario con datos actuales
+        // Fill form with current data
         document.getElementById('appointmentDoctor').value = appointment.doctorName;
         document.getElementById('appointmentSpecialty').value = appointment.specialty;
         document.getElementById('appointmentDate').value = appointment.date;
@@ -349,7 +372,7 @@ class AppointmentManager {
     }
 
     confirmCancel(id) {
-        const appointment = this.getAppointmentById(id);
+        const appointment = this.appointments.find(a => a.id === id);
         if (!appointment) return;
 
         const message = `¿Está seguro que desea cancelar la cita con <strong>${appointment.doctorName}</strong> el ${new Date(appointment.date).toLocaleDateString('es-EC')}?`;
@@ -357,25 +380,6 @@ class AppointmentManager {
         this.showConfirmModal(message, () => {
             this.cancelAppointment(id);
             closeConfirmModal();
-        });
-    }
-
-    // Verificar citas próximas para notificaciones
-    checkUpcomingAppointments() {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        this.appointments.forEach(appointment => {
-            const appointmentDate = new Date(appointment.date);
-            
-            // Si la cita es mañana y está confirmada
-            if (appointmentDate.toDateString() === tomorrow.toDateString() && 
-                appointment.status === 'confirmed') {
-                if (window.notificationManager) {
-                    window.notificationManager.scheduleAppointmentReminder(appointment);
-                }
-            }
         });
     }
 
@@ -393,7 +397,7 @@ class AppointmentManager {
             });
         });
 
-        // Formulario de nueva cita
+        // New appointment form
         const form = document.getElementById('appointmentForm');
         if (form) {
             form.addEventListener('submit', (e) => {
@@ -402,7 +406,7 @@ class AppointmentManager {
             });
         }
 
-        // Botón nueva cita
+        // New appointment button
         const newAppointmentBtn = document.querySelector('.btn-primary');
         if (newAppointmentBtn) {
             newAppointmentBtn.addEventListener('click', () => {
@@ -412,38 +416,27 @@ class AppointmentManager {
         }
     }
 
-    handleFormSubmit() {
+    async handleFormSubmit() {
         const appointmentData = {
-            doctorName: document.getElementById('appointmentDoctor').value,
+            doctorId: document.getElementById('appointmentDoctor').value, // Need to store doctor ID
             specialty: document.getElementById('appointmentSpecialty').value,
             date: document.getElementById('appointmentDate').value,
             time: document.getElementById('appointmentTime').value,
-            reason: document.getElementById('appointmentReason').value,
-            office: this.getOfficeForDoctor(document.getElementById('appointmentDoctor').value)
+            reason: document.getElementById('appointmentReason').value
         };
 
-        // Validar fecha
+        // Validate date
         if (!this.validateDate(appointmentData.date, appointmentData.time)) {
             return;
         }
 
         if (this.currentEditId) {
-            this.updateAppointment(this.currentEditId, appointmentData);
+            await this.updateAppointment(this.currentEditId, appointmentData);
         } else {
-            this.addAppointment(appointmentData);
+            await this.addAppointment(appointmentData);
         }
 
         closeAppointmentModal();
-    }
-
-    getOfficeForDoctor(doctorName) {
-        // Lógica simple para asignar consultorio
-        const offices = {
-            'Dr. Sofia Pérez': 'Consultorio 305',
-            'Dr. Juan Martínez': 'Consultorio 102',
-            'Dra. Ana López': 'Consultorio 201'
-        };
-        return offices[doctorName] || 'Consultorio 100';
     }
 
     // Toast notification
@@ -492,11 +485,9 @@ class AppointmentManager {
             </div>
         `;
         
-        // Agregar clase al body
         document.body.classList.add('modal-open');
         document.body.appendChild(modal);
         
-        // Cerrar al hacer clic fuera
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.classList.remove('modal-open');
@@ -519,7 +510,6 @@ class AppointmentManager {
         
         newButton.addEventListener('click', onConfirm);
         
-        // Agregar clase al body
         document.body.classList.add('modal-open');
         document.getElementById('confirmModal').classList.add('show');
     }
@@ -549,7 +539,7 @@ class AppointmentManager {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
-    // Obtener próxima cita para el dashboard
+    // Get next appointment for dashboard
     getNextAppointment() {
         const now = new Date();
         const upcomingAppointments = this.appointments
@@ -565,11 +555,9 @@ function openAppointmentModal() {
     const modal = document.getElementById('appointmentModal');
     if (modal) {
         document.getElementById('appointmentForm').reset();
-        // Establecer fecha mínima como hoy
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('appointmentDate').setAttribute('min', today);
         
-        // Agregar clase al body para evitar scroll
         document.body.classList.add('modal-open');
         modal.classList.add('show');
     }
@@ -579,7 +567,6 @@ function closeAppointmentModal() {
     const modal = document.getElementById('appointmentModal');
     if (modal) {
         modal.classList.remove('show');
-        // Remover clase del body
         document.body.classList.remove('modal-open');
     }
 }
@@ -588,12 +575,11 @@ function closeConfirmModal() {
     const modal = document.getElementById('confirmModal');
     if (modal) {
         modal.classList.remove('show');
-        // Remover clase del body
         document.body.classList.remove('modal-open');
     }
 }
 
-// Cerrar modales al hacer clic fuera
+// Close modals when clicking outside
 window.onclick = function(event) {
     const appointmentModal = document.getElementById('appointmentModal');
     const confirmModal = document.getElementById('confirmModal');
@@ -606,7 +592,7 @@ window.onclick = function(event) {
     }
 }
 
-// Inicializar cuando el DOM esté listo
+// Initialize when DOM is ready
 let appointmentManager;
 document.addEventListener('DOMContentLoaded', () => {
     appointmentManager = new AppointmentManager();

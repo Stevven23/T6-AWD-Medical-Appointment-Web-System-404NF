@@ -3,11 +3,13 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const supabase = require('../database');
 const bcrypt = require('bcrypt');
 
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
-  },
+// Configurar Google OAuth solo si existen las credenciales
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL
+    },
   async (accessToken, refreshToken, profile, done) => {
     try {
       console.log('Google profile received:', profile.id);
@@ -103,7 +105,10 @@ passport.use(new GoogleStrategy({
       return done(error, null);
     }
   }
-));
+  ));
+} else {
+  console.warn('⚠️  Google OAuth no configurado (variables GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL no encontradas)');
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
