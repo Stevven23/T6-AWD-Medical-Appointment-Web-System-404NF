@@ -36,6 +36,8 @@ app.use(passport.initialize());
 
 // ========== IMPORTAR RUTAS NUEVAS ==========
 const authRoutes = require('./routes/auth');
+const sessionsRoutes = require('./routes/sessions');
+const passwordResetsRoutes = require('./routes/passwordResets');
 const patientRoutes = require('./routes/patient');
 const doctorRoutes = require('./routes/doctor');
 const appointmentRoutes = require('./routes/appointments');
@@ -49,6 +51,8 @@ const reportRoutes = require('./routes/reports');
 // ========== RUTAS DE LA API ==========
 // IMPORTANTE: Las rutas más específicas DEBEN ir ANTES de las parametrizadas
 app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionsRoutes);
+app.use('/api/password-resets', passwordResetsRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/specialties', specialtyRoutes);
