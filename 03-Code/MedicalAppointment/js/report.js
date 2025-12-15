@@ -1,4 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Configuración de API ---
+    const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'
+        : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
+
+    // --- Variables de estado ---
+    let allCitas = [];
+    let allConsultasModificadas = [];
+    let citasTipoChart = null;
+    let actividadSemanalChart = null;
+
+    // ----------------------------------------------------------------------------------
+    // 🔐 FUNCIONES DE AUTENTICACIÓN Y FETCH 🔐
+    // ----------------------------------------------------------------------------------
+
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+    };
+
+    const fetchWithAuth = async (url, options = {}) => {
+        const headers = getAuthHeaders();
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...headers,
+                ...(options.headers || {})
+            }
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/panels/login.html';
+            throw new Error('Sesión expirada');
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || 'Error en la petición');
+        }
+
+        return response;
+    };
+
+    // ----------------------------------------------------------------------------------
+    // 📅 FUNCIONES DE MANEJO DE FECHAS 📅
+    // ----------------------------------------------------------------------------------
+
     const formatDate = (date) => {
         const d = new Date(date);
         let month = '' + (d.getMonth() + 1);
@@ -19,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let endDate = new Date(today);
 
         if (periodo === 'dia') {
+            // Start and end are the same (today)
         } else if (periodo === 'semana') {
             const dayOfWeek = today.getDay();
             startDate.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
@@ -28,162 +81,225 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (periodo === 'mes') {
             startDate.setDate(1);
             startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            endDate.setHours(23, 59, 59, 999);
         }
         return { startDate, endDate };
     };
 
-    const generateDynamicData = () => {
-        const today = new Date();
-        const currentWeekStart = new Date(today);
-        currentWeekStart.setDate(today.getDate() - (today.getDay() + 6) % 7);
-        currentWeekStart.setHours(0, 0, 0, 0);
+    // ----------------------------------------------------------------------------------
+    // 📊 FUNCIONES DE CARGA DE DATOS DEL BACKEND 📊
+    // ----------------------------------------------------------------------------------
 
-        const getPastDate = (daysAgo) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() - daysAgo);
-            return d;
+    async function loadAppointmentsData(periodo) {
+        try {
+            const { startDate, endDate } = getDateRange(periodo);
+            
+            const response = await fetchWithAuth(
+                `${API_BASE_URL}/reports/appointments?` + 
+                `startDate=${formatDate(startDate)}&` +
+                `endDate=${formatDate(endDate)}`
+            );
+            
+            const data = await response.json();
+            
+            // Transform API data to match frontend structure
+            allCitas = data.appointments.map(apt => ({
+                fecha: apt.scheduled_start?.split('T')[0] || '',
+                hora: apt.scheduled_start?.split('T')[1]?.substring(0, 5) || '',
+                paciente: `${apt.patient_first_name || ''} ${apt.patient_last_name || ''}`.trim(),
+                tipo: apt.appointment_type || 'Consulta General',
+                estado: mapStatusToSpanish(apt.status_code)
+            }));
+
+            console.log('✅ Citas cargadas:', allCitas.length);
+            return allCitas;
+        } catch (error) {
+            console.error('❌ Error al cargar citas:', error);
+            showError('Error al cargar las citas: ' + error.message);
+            allCitas = [];
+            return [];
+        }
+    }
+
+    async function loadModifiedConsultations(periodo) {
+        try {
+            const { startDate, endDate } = getDateRange(periodo);
+            
+            const response = await fetchWithAuth(
+                `${API_BASE_URL}/reports/modified-appointments?` + 
+                `startDate=${formatDate(startDate)}&` +
+                `endDate=${formatDate(endDate)}`
+            );
+            
+            const data = await response.json();
+            
+            // Transform API data
+            allConsultasModificadas = data.modifications.map(mod => ({
+                fechaOriginal: mod.original_date?.split('T')[0] || '',
+                nuevaFecha: mod.new_date?.split('T')[0] || mod.cancelled_at?.split('T')[0] || '',
+                paciente: `${mod.patient_first_name || ''} ${mod.patient_last_name || ''}`.trim(),
+                motivo: mod.modification_reason || 'No especificado'
+            }));
+
+            console.log('✅ Consultas modificadas cargadas:', allConsultasModificadas.length);
+            return allConsultasModificadas;
+        } catch (error) {
+            console.error('❌ Error al cargar consultas modificadas:', error);
+            showError('Error al cargar consultas modificadas: ' + error.message);
+            allConsultasModificadas = [];
+            return [];
+        }
+    }
+
+    async function loadStatistics(periodo) {
+        try {
+            const { startDate, endDate } = getDateRange(periodo);
+            
+            const response = await fetchWithAuth(
+                `${API_BASE_URL}/reports/statistics?` + 
+                `startDate=${formatDate(startDate)}&` +
+                `endDate=${formatDate(endDate)}`
+            );
+            
+            const data = await response.json();
+            console.log('✅ Estadísticas cargadas:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Error al cargar estadísticas:', error);
+            showError('Error al cargar estadísticas: ' + error.message);
+            return null;
+        }
+    }
+
+    // Helper function to map status codes to Spanish
+    function mapStatusToSpanish(statusCode) {
+        const statusMap = {
+            'scheduled': 'Pendiente',
+            'confirmed': 'Confirmada',
+            'completed': 'Completada',
+            'cancelled': 'Cancelada',
+            'no_show': 'No asistió'
         };
+        return statusMap[statusCode] || statusCode;
+    }
 
-        const allCitas = [
-            { fecha: formatDate(today), hora: '10:00', paciente: 'Ana García', tipo: 'Consulta General', estado: 'Confirmada' },
-            { fecha: formatDate(today), hora: '11:00', paciente: 'Juan Pérez', tipo: 'Revisión', estado: 'Confirmada' },
+    function showError(message) {
+        // Simple error display - you can enhance this
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger';
+        errorDiv.textContent = message;
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+        
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
 
-            { fecha: formatDate(getPastDate(1)), hora: '09:30', paciente: 'María López', tipo: 'Seguimiento', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(2)), hora: '14:00', paciente: 'Carlos Ruiz', tipo: 'Consulta General', estado: 'Pendiente' },
-            { fecha: formatDate(getPastDate(3)), hora: '16:00', paciente: 'Sofía Martínez', tipo: 'Urgencia', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(8)), hora: '17:00', paciente: 'Pedro Sánchez', tipo: 'Consulta General', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(10)), hora: '10:30', paciente: 'Laura Gómez', tipo: 'Vacunación', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(15)), hora: '12:00', paciente: 'Diego Fernández', tipo: 'Revisión', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(20)), hora: '09:00', paciente: 'Elena Díaz', tipo: 'Consulta General', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(25)), hora: '13:00', paciente: 'Jorge Herrera', tipo: 'Seguimiento', estado: 'Cancelada' },
+    // ----------------------------------------------------------------------------------
+    // 🎨 FUNCIONES DE RENDERIZADO 🎨
+    // ----------------------------------------------------------------------------------
 
-            { fecha: formatDate(today), hora: '14:30', paciente: 'Luisa Mendoza', tipo: 'Revisión', estado: 'Pendiente' },
-            { fecha: formatDate(today), hora: '15:00', paciente: 'Miguel Torres', tipo: 'Urgencia', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(1)), hora: '12:00', paciente: 'Carmen Vega', tipo: 'Consulta General', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(4)), hora: '11:30', paciente: 'Ricardo Solís', tipo: 'Vacunación', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(5)), hora: '10:00', paciente: 'Verónica Salas', tipo: 'Seguimiento', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(7)), hora: '08:00', paciente: 'Javier Alonso', tipo: 'Consulta General', estado: 'Confirmada' }, // Semana pasada
-            { fecha: formatDate(getPastDate(12)), hora: '16:30', paciente: 'Isabel Reyes', tipo: 'Revisión', estado: 'Cancelada' },
-            { fecha: formatDate(getPastDate(18)), hora: '11:00', paciente: 'Andrés Navarro', tipo: 'Urgencia', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(22)), hora: '15:00', paciente: 'Gabriela Ponce', tipo: 'Consulta General', estado: 'Confirmada' },
-            { fecha: formatDate(getPastDate(28)), hora: '10:00', paciente: 'Simón Bolívar', tipo: 'Seguimiento', estado: 'Pendiente' },
-            { fecha: formatDate(getPastDate(35)), hora: '13:30', paciente: 'Manuela Sáenz', tipo: 'Revisión', estado: 'Confirmada' }, // Mes pasado
-            { fecha: formatDate(getPastDate(40)), hora: '09:00', paciente: 'Antonio Nariño', tipo: 'Consulta General', estado: 'Confirmada' } // Mes pasado
-        ];
-
-        const allConsultasModificadas = [
-            { fechaOriginal: formatDate(getPastDate(5)), nuevaFecha: formatDate(today), paciente: 'Jorge Herrera', motivo: 'Cancelada por paciente' },
-            { fechaOriginal: formatDate(getPastDate(10)), nuevaFecha: formatDate(getPastDate(2)), paciente: 'Lucía Morales', motivo: 'Reprogramada por médico' },
-            { fechaOriginal: formatDate(getPastDate(12)), nuevaFecha: formatDate(getPastDate(45)), paciente: 'Roberto Vega', motivo: 'Cancelada por médico' },
-            { fechaOriginal: formatDate(getPastDate(1)), nuevaFecha: formatDate(today), paciente: 'David Cárdenas', motivo: 'Reprogramada por paciente' },
-            { fechaOriginal: formatDate(getPastDate(15)), nuevaFecha: formatDate(getPastDate(50)), paciente: 'Mónica Rivas', motivo: 'Cancelada por paciente' },
-            { fechaOriginal: formatDate(getPastDate(20)), nuevaFecha: formatDate(getPastDate(19)), paciente: 'Fernando Paz', motivo: 'Reprogramada por médico' },
-            { fechaOriginal: formatDate(getPastDate(30)), nuevaFecha: formatDate(getPastDate(25)), paciente: 'Clara Luna', motivo: 'Cancelada por médico' }, // Mes pasado
-            { fechaOriginal: formatDate(getPastDate(3),), nuevaFecha: formatDate(getPastDate(30)), paciente: 'Ana García', motivo: 'Cancelada por paciente' }
-        ];
-
-        return { allCitas, allConsultasModificadas };
-    };
-
-    const { allCitas, allConsultasModificadas } = generateDynamicData();
-
-    // Renderizar datos de citas
-    const renderCitas = (periodo) => {
-        const { startDate, endDate } = getDateRange(periodo);
-        const filteredCitas = allCitas.filter(cita => {
-            const citaDate = new Date(cita.fecha);
-            citaDate.setHours(0, 0, 0, 0);
-            return citaDate >= startDate && citaDate <= endDate;
-        });
-
+    const renderCitas = async (periodo) => {
+        await loadAppointmentsData(periodo);
+        
         const tbody = document.getElementById('citas-data');
         tbody.innerHTML = '';
-        filteredCitas.forEach(cita => {
+        
+        if (allCitas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay citas en este período</td></tr>';
+            document.getElementById('total-citas').textContent = '0';
+            return;
+        }
+        
+        allCitas.forEach(cita => {
             const row = tbody.insertRow();
             row.innerHTML = `
-                        <td>${cita.fecha}</td>
-                        <td>${cita.hora}</td>
-                        <td>${cita.paciente}</td>
-                        <td>${cita.tipo}</td>
-                        <td>${cita.estado}</td>
-                    `;
+                <td>${cita.fecha}</td>
+                <td>${cita.hora}</td>
+                <td>${cita.paciente}</td>
+                <td>${cita.tipo}</td>
+                <td>${cita.estado}</td>
+            `;
         });
-        document.getElementById('total-citas').textContent = filteredCitas.length;
+        
+        document.getElementById('total-citas').textContent = allCitas.length;
     };
 
-
-    const renderPacientes = (periodo) => {
-        const { startDate, endDate } = getDateRange(periodo);
+    const renderPacientes = async (periodo) => {
+        await loadAppointmentsData(periodo);
+        
         const uniquePacientes = new Set();
-        allCitas.filter(cita => {
-            const citaDate = new Date(cita.fecha);
-            citaDate.setHours(0, 0, 0, 0);
-            return citaDate >= startDate && citaDate <= endDate;
-        }).forEach(cita => uniquePacientes.add(cita.paciente));
+        allCitas.forEach(cita => uniquePacientes.add(cita.paciente));
 
         const ul = document.getElementById('pacientes-data');
         ul.innerHTML = '';
+        
+        if (uniquePacientes.size === 0) {
+            ul.innerHTML = '<li>No hay pacientes en este período</li>';
+            document.getElementById('total-pacientes').textContent = '0';
+            return;
+        }
+        
         uniquePacientes.forEach(paciente => {
             const li = document.createElement('li');
-
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Ya no usamos li.textContent, sino li.innerHTML
-            // para poder añadir el botón.
             li.innerHTML = `
                 <span>${paciente}</span>
                 <button class="historial-btn" data-paciente="${paciente}">Ver historial clínico</button>
             `;
-            // Nota: Agregué 'data-paciente' al botón para que 
-            // luego puedas identificar fácilmente a qué paciente 
-            // corresponde el clic en un futuro event listener.
-            // --- FIN DE LA MODIFICACIÓN ---
-
             ul.appendChild(li);
         });
+        
         document.getElementById('total-pacientes').textContent = uniquePacientes.size;
     };
 
-    // Renderizar datos de consultas modificadas
-    const renderConsultasModificadas = (estado, periodo) => {
-        const { startDate, endDate } = getDateRange(periodo);
+    const renderConsultasModificadas = async (estado, periodo) => {
+        await loadModifiedConsultations(periodo);
+        
         const filteredConsultas = allConsultasModificadas.filter(consulta => {
-            const originalDate = new Date(consulta.fechaOriginal);
-            originalDate.setHours(0, 0, 0, 0);
-            const isWithinPeriod = originalDate >= startDate && originalDate <= endDate;
-            return isWithinPeriod && (
+            return (
                 (estado === 'canceladas' && consulta.motivo.includes('Cancelada')) ||
-                (estado === 'reprogramadas' && consulta.motivo.includes('Reprogramada'))
+                (estado === 'reprogramadas' && consulta.motivo.includes('Reprogramada')) ||
+                (estado === 'todas')
             );
         });
 
         const tbody = document.getElementById('consultas-data');
         tbody.innerHTML = '';
+        
+        if (filteredConsultas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay consultas modificadas en este período</td></tr>';
+            document.getElementById('total-consultas').textContent = '0';
+            return;
+        }
+        
         filteredConsultas.forEach(consulta => {
             const row = tbody.insertRow();
             row.innerHTML = `
-                        <td>${consulta.fechaOriginal}</td>
-                        <td>${consulta.nuevaFecha}</td>
-                        <td>${consulta.paciente}</td>
-                        <td>${consulta.motivo}</td>
-                    `;
+                <td>${consulta.fechaOriginal}</td>
+                <td>${consulta.nuevaFecha || 'N/A'}</td>
+                <td>${consulta.paciente}</td>
+                <td>${consulta.motivo}</td>
+            `;
         });
+        
         document.getElementById('total-consultas').textContent = filteredConsultas.length;
     };
 
-    // Renderizar tipos de consulta
-    const renderTiposConsulta = (periodo) => {
-        const { startDate, endDate } = getDateRange(periodo);
+    const renderTiposConsulta = async (periodo) => {
+        await loadAppointmentsData(periodo);
+        
         const tipoCounts = {};
-        allCitas.filter(cita => {
-            const citaDate = new Date(cita.fecha);
-            citaDate.setHours(0, 0, 0, 0);
-            return citaDate >= startDate && citaDate <= endDate;
-        }).forEach(cita => {
+        allCitas.forEach(cita => {
             tipoCounts[cita.tipo] = (tipoCounts[cita.tipo] || 0) + 1;
         });
 
         const ul = document.getElementById('tipos-consulta-data');
         ul.innerHTML = '';
+        
+        if (Object.keys(tipoCounts).length === 0) {
+            ul.innerHTML = '<li>No hay datos en este período</li>';
+            return;
+        }
+        
         for (const tipo in tipoCounts) {
             const li = document.createElement('li');
             li.textContent = `${tipo}: ${tipoCounts[tipo]}`;
@@ -191,12 +307,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Gráficas
-    let citasTipoChart, actividadSemanalChart;
+    // ----------------------------------------------------------------------------------
+    // 📈 FUNCIONES DE GRÁFICAS 📈
+    // ----------------------------------------------------------------------------------
 
-    const renderCitasTipoChart = () => {
+    const renderCitasTipoChart = async () => {
         const ctx = document.getElementById('citasTipoChart').getContext('2d');
-        if (citasTipoChart) citasTipoChart.destroy(); // Destruir instancia anterior si existe
+        if (citasTipoChart) citasTipoChart.destroy();
+
+        // Use current data or load for current month
+        if (allCitas.length === 0) {
+            await loadAppointmentsData('mes');
+        }
 
         const tipoCounts = {};
         allCitas.forEach(cita => {
@@ -228,29 +350,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const renderActividadSemanalChart = () => {
+    const renderActividadSemanalChart = async () => {
         const ctx = document.getElementById('actividadSemanalChart').getContext('2d');
         if (actividadSemanalChart) actividadSemanalChart.destroy();
+
+        // Load data for current week
+        await loadAppointmentsData('semana');
 
         const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const activityByDay = new Array(7).fill(0);
 
-        const today = new Date();
-        const currentWeekStart = new Date(today);
-        currentWeekStart.setDate(today.getDate() - (today.getDay() + 6) % 7);
-        currentWeekStart.setHours(0, 0, 0, 0);
-
-        const currentWeekEnd = new Date(currentWeekStart);
-        currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
-        currentWeekEnd.setHours(23, 59, 59, 999);
-
-
         allCitas.forEach(cita => {
             const citaDate = new Date(cita.fecha);
-            citaDate.setHours(0, 0, 0, 0);
-            if (citaDate >= currentWeekStart && citaDate <= currentWeekEnd) {
-                activityByDay[citaDate.getDay()]++;
-            }
+            activityByDay[citaDate.getDay()]++;
         });
 
         actividadSemanalChart = new Chart(ctx, {
@@ -289,6 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // ----------------------------------------------------------------------------------
+    // 👂 EVENT LISTENERS 👂
+    // ----------------------------------------------------------------------------------
+
     const reportNavLinks = document.querySelectorAll('.reports-nav a');
     const reportSections = document.querySelectorAll('.report-section');
 
@@ -310,31 +426,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
     document.getElementById('citas-periodo').addEventListener('change', (e) => renderCitas(e.target.value));
     document.getElementById('pacientes-periodo').addEventListener('change', (e) => renderPacientes(e.target.value));
+    
     document.getElementById('consultas-estado').addEventListener('change', () => {
         const estado = document.getElementById('consultas-estado').value;
         const periodo = document.getElementById('consultas-periodo').value;
         renderConsultasModificadas(estado, periodo);
     });
+    
     document.getElementById('consultas-periodo').addEventListener('change', () => {
         const estado = document.getElementById('consultas-estado').value;
         const periodo = document.getElementById('consultas-periodo').value;
         renderConsultasModificadas(estado, periodo);
     });
+    
     document.getElementById('tipos-consulta-periodo').addEventListener('change', (e) => renderTiposConsulta(e.target.value));
 
+    // Event delegation for historial buttons
+    document.getElementById('pacientes-data').addEventListener('click', (e) => {
+        if (e.target.classList.contains('historial-btn')) {
+            const paciente = e.target.dataset.paciente;
+            // TODO: Implement patient history view
+            console.log('Ver historial de:', paciente);
+            alert(`Funcionalidad de historial clínico para ${paciente} - Por implementar`);
+        }
+    });
 
-    renderCitas(document.getElementById('citas-periodo').value);
-    renderPacientes(document.getElementById('pacientes-periodo').value);
-    renderConsultasModificadas(
-        document.getElementById('consultas-estado').value,
-        document.getElementById('consultas-periodo').value
-    );
-    renderTiposConsulta(document.getElementById('tipos-consulta-periodo').value);
+    // ----------------------------------------------------------------------------------
+    // 🚀 INICIALIZACIÓN 🚀
+    // ----------------------------------------------------------------------------------
 
-    if (document.getElementById('graficas-section').classList.contains('active-report-content')) {
-        renderCitasTipoChart();
-        renderActividadSemanalChart();
-    }
+    // Initial render
+    (async () => {
+        try {
+            await renderCitas(document.getElementById('citas-periodo').value);
+            await renderPacientes(document.getElementById('pacientes-periodo').value);
+            await renderConsultasModificadas(
+                document.getElementById('consultas-estado').value,
+                document.getElementById('consultas-periodo').value
+            );
+            await renderTiposConsulta(document.getElementById('tipos-consulta-periodo').value);
+
+            // Render charts if section is active
+            if (document.getElementById('graficas-section').classList.contains('active-report-content')) {
+                await renderCitasTipoChart();
+                await renderActividadSemanalChart();
+            }
+        } catch (error) {
+            console.error('Error en inicialización:', error);
+            showError('Error al inicializar los reportes');
+        }
+    })();
 });
