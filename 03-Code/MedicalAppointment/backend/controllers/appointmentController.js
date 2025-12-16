@@ -790,7 +790,122 @@ const appointmentController = {
       console.error('Error updating appointment:', error);
       res.status(400).json({ error: error.message });
     }
+  },
+  // Obtener detalle de cita (Doctor)
+  getDoctorAppointmentById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          appointment_status (code, label),
+          users:patient_user_id (
+            first_name,
+            last_name,
+            email,
+            phone_number
+          ),
+          patients!inner (
+            date_of_birth,
+            gender,
+            address
+          ),
+          consultation_rooms (
+            name,
+            room_number,
+            floor
+          )
+        `)
+        .eq('id', id)
+        .eq('doctor_id', doctor.id)
+        .single();
+
+      if (error || !data) {
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching doctor appointment:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Actualizar cita (Doctor)
+  updateAppointmentByDoctor: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { scheduled_start, scheduled_end, room_id, reason, notes } = req.body;
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      const { data: appointment, error: checkError } = await supabase
+        .from('appointments')
+        .select('doctor_id')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !appointment) {
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (appointment.doctor_id !== doctor.id) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para modificar esta cita' 
+        });
+      }
+
+      const updateData = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (scheduled_start) updateData.scheduled_start = scheduled_start;
+      if (scheduled_end) updateData.scheduled_end = scheduled_end;
+      if (room_id !== undefined) updateData.room_id = room_id;
+      if (reason !== undefined) updateData.reason = reason;
+      if (notes !== undefined) updateData.notes = notes;
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({
+        message: 'Cita actualizada exitosamente',
+        appointment: data
+      });
+    } catch (error) {
+      console.error('Error updating appointment by doctor:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
+
 };
 
 module.exports = appointmentController;

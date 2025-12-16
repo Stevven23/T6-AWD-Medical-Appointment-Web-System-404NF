@@ -443,6 +443,342 @@ const consultationNoteController = {
       console.error('Error fetching all consultation notes:', error);
       res.status(500).json({ error: error.message });
     }
+  },
+
+  // Agregar addendum a nota existente (Doctor)
+  addAddendum: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { addendum_text } = req.body;
+      const doctorUserId = req.user.id;
+
+      if (!addendum_text || addendum_text.trim() === '') {
+        return res.status(400).json({ 
+          error: 'El texto del addendum es requerido' 
+        });
+      }
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', doctorUserId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      const { data: note, error: checkError } = await supabase
+        .from('consultation_notes')
+        .select('doctor_id, addendums')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !note) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      if (note.doctor_id !== doctor.id) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para modificar esta nota' 
+        });
+      }
+
+      const addendums = note.addendums || [];
+      addendums.push({
+        text: addendum_text,
+        created_by: doctorUserId,
+        created_at: new Date().toISOString()
+      });
+
+      const { data, error } = await supabase
+        .from('consultation_notes')
+        .update({
+          addendums,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({
+        message: 'Addendum agregado exitosamente',
+        consultationNote: data
+      });
+    } catch (error) {
+      console.error('Error adding addendum:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Descargar nota como PDF
+  downloadConsultationNotePDF: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      const { data: note, error } = await supabase
+        .from('consultation_notes')
+        .select(`
+          *,
+          appointments (
+            scheduled_start,
+            reason
+          ),
+          doctors!inner (
+            users!inner (
+              first_name,
+              last_name
+            ),
+            specialties (
+              name
+            )
+          ),
+          users:patient_user_id (
+            first_name,
+            last_name,
+            email,
+            phone_number
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error || !note) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      // Verificar permisos
+      if (userRole === 'patient' && note.patient_user_id !== userId) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para descargar esta nota' 
+        });
+      }
+
+      if (userRole === 'doctor') {
+        const { data: doctor } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+
+        if (doctor && note.doctor_id !== doctor.id) {
+          return res.status(403).json({ 
+            error: 'No tienes permiso para descargar esta nota' 
+          });
+        }
+      }
+
+      // Aquí iría la lógica de generación de PDF
+      // Por ahora retornamos un placeholder
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=consulta_${id}.pdf`);
+      res.status(501).json({ 
+        message: 'PDF generation not implemented yet',
+        note: note
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Exportar nota
+  exportConsultationNote: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { format = 'json' } = req.query;
+
+      const { data: note, error } = await supabase
+        .from('consultation_notes')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error || !note) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      if (format === 'json') {
+        res.json(note);
+      } else {
+        res.status(400).json({ 
+          error: 'Formato no soportado. Use format=json' 
+        });
+      }
+    } catch (error) {
+      console.error('Error exporting consultation note:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Obtener estadísticas de notas (Admin)
+  getConsultationNoteStatistics: async (req, res) => {
+    try {
+      const { start_date, end_date, doctor_id } = req.query;
+
+      let query = supabase
+        .from('consultation_notes')
+        .select('id, doctor_id, created_at')
+        .eq('is_active', true);
+
+      if (start_date) {
+        query = query.gte('created_at', start_date);
+      }
+
+      if (end_date) {
+        query = query.lte('created_at', end_date + 'T23:59:59');
+      }
+
+      if (doctor_id) {
+        query = query.eq('doctor_id', doctor_id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const stats = {
+        total: data.length,
+        by_doctor: {},
+        by_month: {}
+      };
+
+      data.forEach(note => {
+        // Por doctor
+        if (!stats.by_doctor[note.doctor_id]) {
+          stats.by_doctor[note.doctor_id] = 0;
+        }
+        stats.by_doctor[note.doctor_id]++;
+
+        // Por mes
+        const month = new Date(note.created_at).toISOString().substring(0, 7);
+        if (!stats.by_month[month]) {
+          stats.by_month[month] = 0;
+        }
+        stats.by_month[month]++;
+      });
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting consultation note statistics:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Obtener nota por ID (Paciente)
+  getPatientConsultationNoteById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const patientUserId = req.user.id;
+
+      const { data, error } = await supabase
+        .from('consultation_notes')
+        .select(`
+          *,
+          appointments (
+            scheduled_start
+          ),
+          doctors!inner (
+            users!inner (
+              first_name,
+              last_name
+            ),
+            specialties (
+              name
+            )
+          )
+        `)
+        .eq('id', id)
+        .eq('patient_user_id', patientUserId)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !data) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching patient consultation note:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Obtener nota por ID (Admin)
+  getConsultationNoteByIdAdmin: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { data, error } = await supabase
+        .from('consultation_notes')
+        .select(`
+          *,
+          appointments (
+            scheduled_start,
+            reason
+          ),
+          doctors!inner (
+            users!inner (
+              first_name,
+              last_name
+            ),
+            specialties (
+              name
+            )
+          ),
+          users:patient_user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error || !data) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching consultation note (admin):', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Eliminar permanentemente (Admin)
+  permanentDeleteConsultationNote: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { data: note, error: checkError } = await supabase
+        .from('consultation_notes')
+        .select('id')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !note) {
+        return res.status(404).json({ error: 'Nota no encontrada' });
+      }
+
+      const { error } = await supabase
+        .from('consultation_notes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      res.json({ 
+        message: 'Nota eliminada permanentemente' 
+      });
+    } catch (error) {
+      console.error('Error permanently deleting consultation note:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
