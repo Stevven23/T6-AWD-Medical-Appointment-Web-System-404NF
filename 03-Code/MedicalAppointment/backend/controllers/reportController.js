@@ -532,6 +532,124 @@ const reportController = {
       console.error('Error en getModifiedAppointmentsReport:', error);
       res.status(500).json({ error: 'Error al obtener consultas modificadas' });
     }
+  }, 
+
+  // Dashboard del doctor
+  getDoctorDashboard: async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      // Citas de hoy
+      const { data: todayAppointments } = await supabase
+        .from('appointments')
+        .select('id, status_id')
+        .eq('doctor_id', doctor.id)
+        .gte('scheduled_start', today)
+        .lt('scheduled_start', today + 'T23:59:59');
+
+      // Citas de la semana
+      const { data: weekAppointments } = await supabase
+        .from('appointments')
+        .select('id, status_id')
+        .eq('doctor_id', doctor.id)
+        .gte('scheduled_start', weekAgo.toISOString());
+
+      // Pacientes únicos del mes
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+      const { data: monthPatients } = await supabase
+        .from('appointments')
+        .select('patient_user_id')
+        .eq('doctor_id', doctor.id)
+        .gte('scheduled_start', monthAgo.toISOString());
+
+      const uniquePatients = new Set(monthPatients?.map(a => a.patient_user_id) || []);
+
+      res.json({
+        today: {
+          total: todayAppointments?.length || 0,
+          confirmed: todayAppointments?.filter(a => a.status_id === 2).length || 0
+        },
+        week: {
+          total: weekAppointments?.length || 0,
+          completed: weekAppointments?.filter(a => a.status_id === 3).length || 0
+        },
+        month: {
+          uniquePatients: uniquePatients.size
+        }
+      });
+    } catch (error) {
+      console.error('Error getting doctor dashboard:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Dashboard del admin
+  getAdminDashboard: async (req, res) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Total de doctores activos
+      const { data: doctors } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('active', true);
+
+      // Total de pacientes
+      const { data: patients } = await supabase
+        .from('users')
+        .select('id, role_id')
+        .eq('role_id', 3); // patient role
+
+      // Citas de hoy
+      const { data: todayAppointments } = await supabase
+        .from('appointments')
+        .select('id, status_id')
+        .gte('scheduled_start', today)
+        .lt('scheduled_start', today + 'T23:59:59');
+
+      // Citas del mes
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const { data: monthAppointments } = await supabase
+        .from('appointments')
+        .select('id, status_id')
+        .gte('scheduled_start', monthStart.toISOString());
+
+      res.json({
+        doctors: {
+          total: doctors?.length || 0
+        },
+        patients: {
+          total: patients?.length || 0
+        },
+        appointments: {
+          today: todayAppointments?.length || 0,
+          month: monthAppointments?.length || 0,
+          pending: todayAppointments?.filter(a => a.status_id === 1).length || 0
+        }
+      });
+    } catch (error) {
+      console.error('Error getting admin dashboard:', error);
+      res.status(500).json({ error: error.message });
+    }
   }
 
 };
