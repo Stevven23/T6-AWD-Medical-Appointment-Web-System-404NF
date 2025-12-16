@@ -22,6 +22,71 @@ const appointmentController = {
     }
   },
 
+  getUpcomingAppointments: async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const { limit = 5, days = 7 } = req.query;
+
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + parseInt(days));
+
+    let query = supabase
+      .from('appointments')
+      .select(`
+        id,
+        scheduled_start,
+        scheduled_end,
+        reason,
+        status_id,
+        appointment_status (code, label),
+        consultation_rooms (name, room_number)
+      `)
+      .gte('scheduled_start', now.toISOString())
+      .lte('scheduled_start', futureDate.toISOString())
+      .in('status_id', [1, 2])
+      .order('scheduled_start', { ascending: true })
+      .limit(parseInt(limit));
+
+    if (userRole === 'patient') {
+      query = query
+        .eq('patient_user_id', userId)
+        .select(`
+          *,
+          doctors!appointments_doctor_id_fkey!inner (
+            users!inner (first_name, last_name),
+            specialties (name)
+          )
+        `);
+    } else if (userRole === 'doctor') {
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (doctor) {
+        query = query
+          .eq('doctor_id', doctor.id)
+          .select(`
+            *,
+            users:patient_user_id (first_name, last_name)
+          `);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Error fetching upcoming appointments:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
+
   // Crear nueva cita
   createAppointment: async (req, res) => {
     try {
@@ -248,6 +313,124 @@ const appointmentController = {
     }
   },
 
+  // Confirmar cita (Doctor)
+  confirmAppointment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+      const userId = req.user.id;
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      // Verificar que la cita pertenece al doctor
+      const { data: appointment, error: checkError } = await supabase
+        .from('appointments')
+        .select('doctor_id, status_id')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !appointment) {
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (appointment.doctor_id !== doctor.id) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para confirmar esta cita' 
+        });
+      }
+
+      // Actualizar a estado confirmed (2)
+      const { data, error } = await supabase
+        .from('appointments')
+        .update({
+          status_id: 2,
+          notes: notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({
+        message: 'Cita confirmada exitosamente',
+        appointment: data
+      });
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Completar cita (Doctor)
+  completeAppointment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { diagnosis, treatment, notes } = req.body;
+      const userId = req.user.id;
+
+      const { data: doctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!doctor) {
+        return res.status(404).json({ error: 'Doctor no encontrado' });
+      }
+
+      const { data: appointment, error: checkError } = await supabase
+        .from('appointments')
+        .select('doctor_id, status_id')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !appointment) {
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (appointment.doctor_id !== doctor.id) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para completar esta cita' 
+        });
+      }
+
+      // Actualizar a estado completed (3)
+      const { data, error } = await supabase
+        .from('appointments')
+        .update({
+          status_id: 3,
+          diagnosis: diagnosis || null,
+          treatment: treatment || null,
+          notes: notes || null,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({
+        message: 'Cita completada exitosamente',
+        appointment: data
+      });
+    } catch (error) {
+      console.error('Error completing appointment:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+
   // Cancelar cita
   cancelAppointment: async (req, res) => {
     try {
@@ -293,6 +476,57 @@ const appointmentController = {
     }
   },
 
+  // Actualizar cita (Paciente)
+  updateAppointment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const patientUserId = req.user.id;
+      const { reason } = req.body;
+
+      const { data: appointment, error: checkError } = await supabase
+        .from('appointments')
+        .select('patient_user_id, status_id')
+        .eq('id', id)
+        .single();
+
+      if (checkError || !appointment) {
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (appointment.patient_user_id !== patientUserId) {
+        return res.status(403).json({ 
+          error: 'No tienes permiso para modificar esta cita' 
+        });
+      }
+
+      if (![1, 2].includes(appointment.status_id)) {
+        return res.status(400).json({ 
+          error: 'Solo se pueden modificar citas programadas o confirmadas' 
+        });
+      }
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .update({
+          reason: reason || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({
+        message: 'Cita actualizada exitosamente',
+        appointment: data
+      });
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  
   // Reagendar cita
   rescheduleAppointment: async (req, res) => {
     try {
