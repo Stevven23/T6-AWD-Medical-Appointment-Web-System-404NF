@@ -8,10 +8,74 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../css/doctorStyle.css">
+    <style>
+        /* Two-column layout for patient sections (responsive) */
+        #patient-sections {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        #active-patients-section, #new-patients-section {
+            flex: 1 1 48%;
+            min-width: 300px;
+        }
+
+        /* Limit height of patient lists and make them scrollable */
+        .appointment-step #patient-sections .patient-list-container {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 900px) {
+            #active-patients-section, #new-patients-section { flex: 1 1 100%; }
+        }
+        /* Header compact stats */
+        .header-row{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom: 8px;
+        }
+        .header-row .page-title{
+            margin:0;
+            font-size:1.5rem;
+            font-weight:600;
+        }
+        .header-stats{
+            display:flex;
+            gap:10px;
+            align-items:center;
+        }
+        .stat-mini{
+            background:transparent;
+            border-radius:8px;
+            padding:6px 10px;
+            text-align:center;
+            min-width:64px;
+        }
+        .stat-mini .stat-label{
+            font-size:0.75rem;
+            color:#666;
+            line-height:1;
+        }
+        .stat-mini .stat-value{
+            font-size:1.05rem;
+            font-weight:700;
+            color:#222;
+            line-height:1;
+        }
+        @media (max-width:600px){
+            .header-row .page-title{font-size:1.2rem}
+        }
+    </style>
 </head>
 
 <body>
-    <div class="dashboard-container">
+    <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo1">
@@ -33,27 +97,59 @@
             </nav>
         </aside>
 
-        <main class="main-content">
-            <header class="dashboard-header">
-                <h1>Agendar Cita Médica</h1>
-            </header>
-
-            <div class="stats-grid-prescription">
-                <div class="stat-card">
-                    <h3>Citas Agendadas</h3>
-                    <p id="total-appointments">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Pacientes Activos</h3>
-                    <p id="total-patients">0</p>
-                </div>
+        <main class="main-content" style="position:fixed; top:0; left:var(--sidebar-width); right:0; bottom:0; overflow:auto; padding:20px; background-color:var(--background-light);">
+            <div class="header-row">
+                <h1 class="page-title">Agendar Cita Médica</h1>
             </div>
 
             <div class="card prescription-wizard">
                 <!-- Step 1: Select Patient -->
                 <div id="step-1-patient" class="appointment-step">
-                    <h2 id="patient-list-title">Seleccione un Paciente</h2>
-                    <div id="patient-list" class="patient-list-container"></div>
+                    <div class="patient-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                        <h2 id="patient-list-title" style="margin:0;">Seleccione un Paciente</h2>
+                        <div class="patient-stats" style="display:flex;gap:8px;align-items:center;">
+                            <div class="stat-mini" style="padding:4px 8px;">
+                                <div class="stat-label">Citas</div>
+                                <div id="total-appointments" class="stat-value">0</div>
+                            </div>
+                            <div class="stat-mini" style="padding:4px 8px;">
+                                <div class="stat-label">Activos</div>
+                                <div id="total-patients" class="stat-value">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Patients Section -->
+                        <div id="patient-sections">
+                            <div id="active-patients-section">
+                        <h3 style="margin-top: 20px; color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">
+                            <i class="fas fa-user-check"></i> Pacientes Activos
+                        </h3>
+                        <div id="active-patient-list" class="patient-list-container"></div>
+                    </div>
+                    
+                    <!-- New Patients Section -->
+                            <div id="new-patients-section">
+                        <h3 style="margin-top: 30px; color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">
+                            <i class="fas fa-user-plus"></i> Pacientes Nuevos
+                        </h3>
+                        <div id="new-patient-list" class="patient-list-container"></div>
+                    </div>
+                            </div>
+                </div>
+
+                <!-- Step 1.5: Patient Appointments -->
+                <div id="step-1-5-patient-appointments" class="appointment-step" style="display: none;">
+                    <button id="back-to-patient-list" class="submit-button"><i class="fas fa-arrow-left"></i> Cambiar Paciente</button>
+                    <h2 id="patient-appointments-header">Citas de: [Nombre Paciente]</h2>
+                    
+                    <div style="margin-top: 20px;">
+                        <button id="btn-add-new-appointment" class="submit-button" style="margin-bottom: 20px;">
+                            <i class="fas fa-plus"></i> Agregar Nueva Cita
+                        </button>
+                        
+                        <div id="patient-appointments-list" style="margin-top: 15px;"></div>
+                    </div>
                 </div>
 
                 <!-- Step 2: Schedule Details -->

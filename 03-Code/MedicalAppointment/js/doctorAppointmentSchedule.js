@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const step3Confirmation = document.getElementById('step-3-confirmation');
     const step4Appointments = document.getElementById('step-4-appointments');
 
-    const patientList = document.getElementById('patient-list');
+    const activePatientList = document.getElementById('active-patient-list');
+    const newPatientList = document.getElementById('new-patient-list');
     const patientNameHeader = document.getElementById('patient-name-header');
     const appointmentForm = document.getElementById('appointment-form');
     const appointmentDateInput = document.getElementById('appointment-date');
@@ -22,17 +23,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const appointmentsListContainer = document.getElementById('appointments-list-container');
 
     // --- Global State ---
-    let patientsFromDB = [];
+    let activePatients = [];
+    let newPatients = [];
     let roomsFromDB = [];
     let currentPatient = null;
     let currentDoctorId = null;
     let currentUserId = null;
     let doctorSchedules = [];
     let appointmentsFromDB = [];
+    let editingAppointmentId = null;  // Track if we're editing
 
     // ----------------------------------------------------------------------------------
     // 🔐 AUTHENTICATION & FETCH HELPERS 🔐
     // ----------------------------------------------------------------------------------
+
+    // Helper: return only first token of first name and first token of last name
+    const shortFullName = (firstName, lastName) => {
+        const f = (firstName || '').toString().trim().split(/\s+/)[0] || '';
+        const l = (lastName || '').toString().trim().split(/\s+/)[0] || '';
+        return `${f} ${l}`.trim();
+    };
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
@@ -105,37 +115,51 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadPatientsFromDB() {
         try {
             const response = await fetchWithAuth(`${API_BASE_URL}/doctors/my-patients`);
-            const patients = await response.json();
-            patientsFromDB = (patients || []).map(p => ({
-                user_id: p.id,
-                name: `${p.first_name} ${p.last_name}`,
+            const data = await response.json();
+            
+            activePatients = (data.activePatients || []).map(p => ({
+                id: p.id,
+                name: shortFullName(p.first_name, p.last_name),
                 first_name: p.first_name,
                 last_name: p.last_name,
                 cedula: p.cedula,
                 email: p.email
             }));
-            console.log("Pacientes cargados:", patientsFromDB);
-            return patientsFromDB;
+            
+            newPatients = (data.newPatients || []).map(p => ({
+                id: p.id,
+                name: shortFullName(p.first_name, p.last_name),
+                first_name: p.first_name,
+                last_name: p.last_name,
+                cedula: p.cedula,
+                email: p.email
+            }));
+            
+            console.log("Pacientes activos cargados:", activePatients);
+            console.log("Pacientes nuevos cargados:", newPatients);
+            return { activePatients, newPatients };
         } catch (error) {
             console.error("Error al cargar pacientes:", error);
             // Try fallback endpoint
             try {
                 const fallbackResponse = await fetchWithAuth(`${API_BASE_URL}/doctors/patients`);
                 const fallbackPatients = await fallbackResponse.json();
-                patientsFromDB = (fallbackPatients || []).map(p => ({
-                    user_id: p.user_id,
-                    name: `${p.first_name} ${p.last_name}`,
+                activePatients = (fallbackPatients || []).map(p => ({
+                    id: p.user_id || p.id,
+                    name: shortFullName(p.first_name, p.last_name),
                     first_name: p.first_name,
                     last_name: p.last_name,
                     cedula: p.cedula,
                     email: p.email
                 }));
-                return patientsFromDB;
+                newPatients = [];
+                return { activePatients, newPatients };
             } catch (fallbackError) {
                 console.error("Error al cargar pacientes (fallback):", fallbackError);
                 alert("Error al cargar pacientes: " + error.message);
-                patientsFromDB = [];
-                return [];
+                activePatients = [];
+                newPatients = [];
+                return { activePatients, newPatients };
             }
         }
     }
@@ -197,12 +221,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showStep2(patient) {
         currentPatient = patient;
-        patientNameHeader.textContent = `Agendar cita para: ${patient.name}`;
+        // Show step 1.5 (patient appointments) instead of going directly to schedule
+        showStep1_5(patient);
+    }
+
+    function showStep1_5(patient) {
+        currentPatient = patient;
+        const step1_5 = document.getElementById('step-1-5-patient-appointments');
+        document.getElementById('patient-appointments-header').textContent = `Citas de: ${patient.name}`;
+        
+        step1Patient.style.display = 'none';
+        step1_5.style.display = 'block';
+        step2Schedule.style.display = 'none';
+        step3Confirmation.style.display = 'none';
+        step4Appointments.style.display = 'none';
+
+        loadPatientAppointments(patient.id);
+    }
+
+    function showStep2Schedule() {
+        const step1_5 = document.getElementById('step-1-5-patient-appointments');
+        patientNameHeader.textContent = `Agendar cita para: ${currentPatient.name}`;
         appointmentForm.reset();
         appointmentDateInput.value = '';
         appointmentTimeSelect.innerHTML = '<option value="">-- Seleccione una hora --</option>';
 
         step1Patient.style.display = 'none';
+        step1_5.style.display = 'none';
         step2Schedule.style.display = 'block';
         step3Confirmation.style.display = 'none';
         step4Appointments.style.display = 'none';
@@ -258,21 +303,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadPatients() {
-        patientList.innerHTML = '';
-        const patients = patientsFromDB || [];
-
-        if (patients.length === 0) {
-            patientList.innerHTML = '<p>No hay pacientes registrados.</p>';
-            return;
+        // Load active patients
+        activePatientList.innerHTML = '';
+        if (activePatients.length === 0) {
+            activePatientList.innerHTML = '<p style="color: #999;">No hay pacientes activos registrados.</p>';
+        } else {
+            activePatients.forEach(patient => {
+                const card = document.createElement('div');
+                card.className = 'patient-card';
+                card.innerHTML = `<i class="fas fa-user"></i><div class="patient-name">${patient.name}</div>`;
+                card.addEventListener('click', () => showStep2(patient));
+                activePatientList.appendChild(card);
+            });
         }
 
-        patients.forEach(patient => {
-            const card = document.createElement('div');
-            card.className = 'patient-card';
-            card.innerHTML = `<i class="fas fa-user"></i><div class="patient-name">${patient.name}</div>`;
-            card.addEventListener('click', () => showStep2(patient));
-            patientList.appendChild(card);
-        });
+        // Load new patients
+        newPatientList.innerHTML = '';
+        if (newPatients.length === 0) {
+            newPatientList.innerHTML = '<p style="color: #999;">No hay pacientes nuevos registrados.</p>';
+        } else {
+            newPatients.forEach(patient => {
+                const card = document.createElement('div');
+                card.className = 'patient-card';
+                card.innerHTML = `<i class="fas fa-user"></i><div class="patient-name">${patient.name}</div>`;
+                card.addEventListener('click', () => showStep2(patient));
+                newPatientList.appendChild(card);
+            });
+        }
     }
 
     function populateRoomSelect() {
@@ -288,16 +345,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadStats() {
-        document.getElementById('total-patients').textContent = patientsFromDB.length;
+        const totalPatients = activePatients.length + newPatients.length;
+        document.getElementById('total-patients').textContent = totalPatients;
         document.getElementById('total-appointments').textContent = appointmentsFromDB.length;
     }
 
     // Get available times for a date based on doctor's schedule
     function getAvailableTimesForDate(date) {
-        const dayOfWeek = new Date(date).getDay(); // 0 = Sunday, 1 = Monday, etc
+        // Parse date in local timezone, not UTC
+        const [year, month, day] = date.split('-');
+        const selectedDate = new Date(year, month - 1, day);
+        const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc
         const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to 0 = Monday format
 
+        console.log('getAvailableTimesForDate:', date, 'parsed as:', selectedDate.toLocaleDateString(), 'dayOfWeek:', dayOfWeek, 'adjustedDay:', adjustedDay);
+
         const scheduleForDay = doctorSchedules.find(s => s.day_of_week === adjustedDay && s.is_working_day);
+        console.log('scheduleForDay:', scheduleForDay);
 
         if (!scheduleForDay) {
             return []; // No schedule for this day
@@ -307,11 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const [startHour, startMin] = scheduleForDay.start_time.split(':').map(Number);
         const [endHour, endMin] = scheduleForDay.end_time.split(':').map(Number);
 
-        let currentTime = new Date();
+        // Create times using the SELECTED DATE, not today's date
+        let currentTime = new Date(selectedDate);
         currentTime.setHours(startHour, startMin, 0);
 
-        const endTime = new Date();
+        const endTime = new Date(selectedDate);
         endTime.setHours(endHour, endMin, 0);
+
+        console.log('Horarios:', { startHour, startMin, endHour, endMin });
 
         // 30-minute intervals
         while (currentTime < endTime) {
@@ -323,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTime.setMinutes(currentTime.getMinutes() + 30);
         }
 
+        console.log('Horas generadas:', times.length);
         return times;
     }
 
@@ -362,6 +430,158 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Load patient appointments (for step 1.5)
+    function loadPatientAppointments(patientId) {
+        const container = document.getElementById('patient-appointments-list');
+        container.innerHTML = '';
+
+        console.log('loadPatientAppointments: patientId =', patientId);
+        console.log('loadPatientAppointments: appointmentsFromDB =', appointmentsFromDB);
+
+        const patientAppointments = appointmentsFromDB.filter(a => {
+            console.log('Comparando:', a.patient_user_id, '===', patientId, '?', a.patient_user_id === patientId);
+            return a.patient_user_id === patientId;
+        });
+
+        console.log('loadPatientAppointments: patientAppointments encontradas =', patientAppointments);
+
+        if (patientAppointments.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center;">Este paciente no tiene citas agendadas.</p>';
+            return;
+        }
+
+        patientAppointments.forEach(apt => {
+            const startDate = new Date(apt.scheduled_start);
+            const formattedDate = startDate.toLocaleDateString('es-ES');
+            const formattedTime = startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;';
+            card.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
+                    <div style="flex:1;">
+                        <p><strong>Fecha:</strong> ${formattedDate}</p>
+                        <p><strong>Hora:</strong> ${formattedTime}</p>
+                        <p><strong>Motivo:</strong> ${apt.reason || 'No especificado'}</p>
+                        <p><strong>ID Cita:</strong> <small>${apt.id}</small></p>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-direction:column;">
+                        <button class="btn-edit-appointment" data-apt-id="${apt.id}" style="padding:6px 12px;background:#2196F3;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-delete-appointment" data-apt-id="${apt.id}" style="padding:6px 12px;background:#f44336;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        // Add event listeners to edit/delete buttons
+        document.querySelectorAll('.btn-edit-appointment').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const aptId = e.currentTarget.getAttribute('data-apt-id');
+                console.log('Botón editar clickeado, aptId:', aptId);
+                editAppointment(aptId);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-appointment').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const aptId = e.currentTarget.getAttribute('data-apt-id');
+                deleteAppointment(aptId);
+            });
+        });
+    }
+
+    async function editAppointment(appointmentId) {
+        const apt = appointmentsFromDB.find(a => a.id === appointmentId);
+        console.log('Editando cita:', appointmentId, apt);
+        
+        if (!apt) {
+            alert('No se encontró la cita');
+            console.error('Cita no encontrada. appointmentsFromDB:', appointmentsFromDB);
+            return;
+        }
+
+        editingAppointmentId = appointmentId;  // Mark we're editing
+        const startDate = new Date(apt.scheduled_start);
+        const dateString = startDate.toISOString().split('T')[0];
+        const timeString = startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        console.log('Valores a precargar:', { dateString, timeString, reason: apt.reason, roomId: apt.room_id });
+
+        // Show schedule form to edit first (it will reset the form)
+        showStep2Schedule();
+
+        // Now set form values
+        appointmentDateInput.value = dateString;
+        reasonTextarea.value = apt.reason || '';
+        roomSelect.value = apt.room_id || '';
+
+        // Fill the time select directly using the selected date
+        const availableTimes = getAvailableTimesForDate(dateString);
+        console.log('Horas disponibles para editar:', availableTimes);
+
+        appointmentTimeSelect.innerHTML = '<option value="">-- Seleccione una hora --</option>';
+        if (availableTimes.length > 0) {
+            availableTimes.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot.time;
+                option.textContent = slot.time;
+                appointmentTimeSelect.appendChild(option);
+            });
+        }
+
+        // After a short delay, find and set the matching time option
+        setTimeout(() => {
+            console.log('Buscando opción con hora:', timeString);
+            console.log('Total opciones en select:', appointmentTimeSelect.options.length);
+
+            // Find the option that matches the time
+            const options = Array.from(appointmentTimeSelect.options);
+
+            const matchingOption = options.find(opt => {
+                const optText = opt.text.trim();
+                console.log('Comparando:', optText, '===', timeString, '?', optText === timeString);
+                return optText === timeString;
+            });
+
+            if (matchingOption) {
+                appointmentTimeSelect.value = matchingOption.value;
+                console.log('Hora establecida:', matchingOption.value);
+            } else {
+                console.warn('No se encontró opción para la hora:', timeString);
+                console.log('Opciones disponibles:', Array.from(appointmentTimeSelect.options).map(o => o.text));
+            }
+        }, 200);
+    }
+
+    async function deleteAppointment(appointmentId) {
+        if (!confirm('¿Está seguro de que desea eliminar esta cita?')) {
+            return;
+        }
+
+        try {
+            const response = await fetchWithAuth(`${API_BASE_URL}/appointments/${appointmentId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al eliminar la cita');
+            }
+
+            alert('Cita eliminada exitosamente');
+            await loadAppointments();
+            loadPatientAppointments(currentPatient.id);
+            loadStats();
+        } catch (error) {
+            console.error('Error al eliminar cita:', error);
+            alert('Error al eliminar cita: ' + error.message);
+        }
+    }
+
     // Save appointment
     async function saveAppointment(appointmentData) {
         try {
@@ -386,6 +606,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Button: Back to patients
     document.getElementById('back-to-patients').addEventListener('click', showStep1);
+
+    // Button: Back to patient list (from step 1.5)
+    document.getElementById('back-to-patient-list').addEventListener('click', showStep1);
+
+    // Button: Add new appointment (from step 1.5)
+    document.getElementById('btn-add-new-appointment').addEventListener('click', showStep2Schedule);
 
     // Button: Cancel appointment
     document.getElementById('btn-cancel-appointment').addEventListener('click', showStep1);
@@ -451,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         endDateTime.setMinutes(endDateTime.getMinutes() + 30); // Default 30-minute appointment
 
         const appointmentData = {
-            patient_user_id: currentPatient.user_id,
+            patient_user_id: currentPatient.id,
             doctor_id: currentDoctorId,
             scheduled_start: startDateTime.toISOString(),
             scheduled_end: endDateTime.toISOString(),
@@ -459,6 +685,8 @@ document.addEventListener('DOMContentLoaded', () => {
             room_id: roomId || null,
             status_id: 1 // Assuming 1 = scheduled
         };
+
+        console.log('Enviando cita:', appointmentData);
 
         try {
             const savedAppointment = await saveAppointment(appointmentData);

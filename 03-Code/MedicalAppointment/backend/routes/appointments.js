@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const appointmentController = require('../../controllers/appointmentController');
-const { authMiddleware, requireRole } = require('../../middleware/auth');
+const appointmentController = require('../controllers/appointmentController');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
 router.use(authMiddleware);
 

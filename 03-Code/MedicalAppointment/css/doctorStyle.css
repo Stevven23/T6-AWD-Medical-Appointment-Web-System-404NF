@@ -58,6 +58,25 @@ body::-webkit-scrollbar {
     display: none;
 }
 
+/* Compatibility aliases so doctor panels use patient styles */
+/* Map doctor class names to patient layout rules */
+.dashboard-container { display: flex; min-height: 100vh; }
+.main-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+.dashboard-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+.main-nav { }
+.main-nav ul { list-style: none; padding: 0; margin: 0; }
+.main-nav li { margin-bottom: 5px; }
+.main-nav a { display: flex; align-items: center; padding: 12px 20px; color: var(--sidebar-text); text-decoration: none; font-size: 15px; transition: background-color 0.2s, color 0.2s; border-left: 5px solid transparent; }
+.main-nav a i { margin-right: 15px; font-size: 18px; color: var(--light-text-color); }
+.main-nav li.active a { background-color: var(--sidebar-active-bg); color: var(--sidebar-active-text); border-left-color: var(--primary-color); font-weight: 500; }
+.main-nav li.active a i { color: var(--sidebar-active-text); }
+.main-nav a:hover:not(.active) { background-color: rgba(74, 144, 226, 0.1); color: var(--primary-color); }
+.main-nav a:hover:not(.active) i { color: var(--primary-color); }
+
+/* Ensure header class used by patient pages also applies to doctor pages */
+.header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 28px; font-weight: 500; color: var(--text-color); }
+
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -382,7 +401,6 @@ body::-webkit-scrollbar {
     font-size: 14px;
     color: var(--light-text-color);
 }
-
 .notifications-container {
     display: flex;
     flex-direction: column;
@@ -758,7 +776,7 @@ body::-webkit-scrollbar {
 
 .calendar-grid-layout {
     display: grid;
-    grid-template-columns: 80px repeat(7, minmax(150px, 1fr));
+    grid-template-columns: 80px repeat(7, 1fr);
     position: relative;
 }
 
@@ -882,7 +900,7 @@ body::-webkit-scrollbar {
     font-size: 0.8rem;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal; /* allow wrapping so time can appear on its own line if needed */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     color: var(--appointment-text-green);
     line-height: 1.2;
@@ -934,7 +952,7 @@ body::-webkit-scrollbar {
 }
 
 .reports-grid {
-    display: flex;
+    dsaplay: flex;
     flex-direction: column;
     gap: 20px;
 }
@@ -2633,7 +2651,6 @@ textarea.form-input {
 }
 
 .patient-list-container {
-    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
     margin-top: 20px;

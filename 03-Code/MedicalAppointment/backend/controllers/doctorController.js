@@ -66,9 +66,14 @@ const doctorController = {
                 .eq('user_id', userId)
                 .single();
 
+            console.log('getDoctorSchedules: requester userId =', userId);
+
             if (doctorError || !doctor) {
+                console.log('getDoctorSchedules: doctor not found for userId', userId, 'error:', doctorError);
                 return res.status(404).json({ error: 'Doctor no encontrado' });
             }
+
+            console.log('getDoctorSchedules: found doctor id =', doctor.id);
 
             const { data: schedules, error } = await supabase
                 .from('doctor_schedules')
@@ -76,11 +81,56 @@ const doctorController = {
                 .eq('doctor_id', doctor.id)
                 .order('day_of_week', { ascending: true });
 
+            console.log('getDoctorSchedules: query returned schedules count =', Array.isArray(schedules) ? schedules.length : schedules);
+
             if (error) throw error;
 
             res.json(schedules || []);
         } catch (error) {
             console.error('Error fetching doctor schedules:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+    createDoctorSchedule: async (req, res) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) return res.status(401).json({ error: 'Doctor no autenticado' });
+
+            const {
+                doctor_id,
+                day_of_week,
+                start_time,
+                end_time,
+                break_start_time = null,
+                break_end_time = null,
+                is_working_day = true
+            } = req.body;
+
+            // Basic validation
+            if (!doctor_id || typeof day_of_week === 'undefined' || !start_time || !end_time) {
+                return res.status(400).json({ error: 'Faltan campos requeridos: doctor_id, day_of_week, start_time, end_time' });
+            }
+
+            const payload = {
+                doctor_id,
+                day_of_week,
+                start_time,
+                end_time,
+                break_start_time,
+                break_end_time,
+                is_working_day
+            };
+
+            const { data, error } = await supabase
+                .from('doctor_schedules')
+                .insert([payload])
+                .select();
+
+            if (error) throw error;
+
+            res.status(201).json({ message: 'Horario creado', schedule: data && data[0] ? data[0] : null });
+        } catch (error) {
+            console.error('Error creating doctor schedule:', error);
             res.status(500).json({ error: error.message });
         }
     },
@@ -143,35 +193,56 @@ const doctorController = {
                 return res.status(404).json({ error: 'Doctor no encontrado' });
             }
 
-            // Get patients from appointments
-            const { data: patients, error } = await supabase
-                .from('appointments')
+            // Get all active patients
+            const { data: allPatients, error: patientsError } = await supabase
+                .from('patients')
                 .select(`
-                    patient_user_id,
-                    users:patient_user_id (
+                    user_id,
+                    users:user_id (
                         id,
                         first_name,
                         last_name,
                         email,
                         phone_number,
-                        cedula
+                        cedula,
+                        is_active
                     )
                 `)
-                .eq('doctor_id', doctor.id)
-                .neq('status_id', 5) // Exclude cancelled appointments
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (patientsError) throw patientsError;
 
-            // Remove duplicates and format
-            const uniquePatients = {};
-            (patients || []).forEach(apt => {
-                if (apt.users && !uniquePatients[apt.patient_user_id]) {
-                    uniquePatients[apt.patient_user_id] = apt.users;
-                }
+            // Get patients with active appointments for this doctor
+            const { data: appointmentPatients, error: appointmentError } = await supabase
+                .from('appointments')
+                .select('patient_user_id')
+                .eq('doctor_id', doctor.id)
+                .neq('status_id', 5); // Exclude cancelled appointments
+
+            if (appointmentError) throw appointmentError;
+
+            // Deduplicate patient_user_id values
+            const activePatientIds = new Set();
+            (appointmentPatients || []).forEach(apt => {
+                if (apt && apt.patient_user_id) activePatientIds.add(apt.patient_user_id);
             });
 
-            res.json(Object.values(uniquePatients));
+            // Separate into active and new patients
+            const formattedPatients = (allPatients || [])
+                .filter(p => p.users && p.users.is_active)
+                .map(p => p.users);
+
+            const activePatients = formattedPatients.filter(p => activePatientIds.has(p.id));
+            const newPatients = formattedPatients.filter(p => !activePatientIds.has(p.id));
+
+            res.json({
+                activePatients: activePatients.sort((a, b) => 
+                    `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+                ),
+                newPatients: newPatients.sort((a, b) => 
+                    `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+                )
+            });
         } catch (error) {
             console.error('Error fetching doctor patients:', error);
             res.status(500).json({ error: error.message });

@@ -624,6 +624,7 @@ const appointmentController = {
         .from('appointments')
         .select(`
           id,
+          patient_user_id,
           scheduled_start,
           scheduled_end,
           reason,
@@ -655,6 +656,7 @@ const appointmentController = {
       // Format response
       const appointments = (data || []).map(apt => ({
         id: apt.id,
+        patient_user_id: apt.patient_user_id,
         patient_name: apt.users ? `${apt.users.first_name} ${apt.users.last_name}` : 'Paciente desconocido',
         patient_email: apt.users?.email,
         scheduled_start: apt.scheduled_start,
@@ -904,8 +906,23 @@ const appointmentController = {
       console.error('Error updating appointment by doctor:', error);
       res.status(500).json({ error: error.message });
     }
-  }
+  }, // Coma necesaria aquí
 
+  markAsNoShow: async (req, res) => {
+    res.status(501).json({ message: "No implementado aún" });
+  },
+
+  getAllAppointments: async (req, res) => {
+    res.status(501).json({ message: "No implementado aún" });
+  },
+
+  getAppointmentByIdAdmin: async (req, res) => {
+    res.status(501).json({ message: "No implementado aún" });
+  },
+
+  forceDeleteAppointment: async (req, res) => {
+    res.status(501).json({ message: "No implementado aún" });
+  }
 };
 
 module.exports = appointmentController;

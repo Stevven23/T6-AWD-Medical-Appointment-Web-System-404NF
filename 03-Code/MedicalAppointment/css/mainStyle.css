@@ -139,9 +139,15 @@ body {
 
 /* Main Content */
 .main-content {
-    flex-grow: 1;
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    bottom: 0;
+    overflow: auto;
     padding: 30px;
     background-color: var(--background-light);
+    box-sizing: border-box;
 }
 
 .header {
@@ -404,6 +410,220 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+/* Calendar full-width / full-height overrides (make weekly calendar fill available space) */
+.weekly-calendar,
+.calendar-card,
+.calendar-scroll-wrapper,
+.calendar-grid-layout,
+.calendar-grid {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+}
+
+/* Ensure the scroll wrapper uses the available vertical space inside main-content */
+.calendar-scroll-wrapper {
+    height: calc(100vh - 220px) !important;
+    overflow: auto !important;
+}
+
+/* Make grid columns flexible so the calendar expands horizontally */
+.calendar-grid-layout {
+    display: grid !important;
+    grid-template-columns: 80px repeat(7, 1fr) !important;
+    gap: 12px !important;
+    align-items: start !important;
+}
+
+/* If a .card wrapper constrains width, allow its children to stretch */
+.card.calendar-card {
+    width: 100% !important;
+    padding: 18px !important;
+}
+
+/* Prevent centering restrictions coming from other styles */
+.weekly-calendar .container,
+.weekly-calendar .card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Force any inner container to stop constraining width */
+.weekly-calendar .container {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+}
+
+/* Ensure the calendar card and inner grid stretch fully */
+.weekly-calendar .card,
+.weekly-calendar .calendar-card,
+.weekly-calendar .calendar-grid {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Reduce main-content side padding only for the weekly calendar view so it uses more horizontal space */
+.main-content .weekly-calendar {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* If there's a centered wrapper, remove its auto margins */
+.weekly-calendar .centered,
+.weekly-calendar .content-center {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Strong overrides to force the weekly calendar to fill the available main-content area */
+.main-content .weekly-calendar,
+.main-content .weekly-calendar .calendar-card,
+.main-content .weekly-calendar .calendar-scroll-wrapper,
+.main-content .weekly-calendar .calendar-grid-layout,
+.main-content .weekly-calendar .calendar-grid {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure the weekly calendar doesn't stay centered with auto margins */
+.main-content .weekly-calendar .card,
+.main-content .weekly-calendar .calendar-card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Reduce the side padding in main-content only for the weekly calendar view so calendar can expand */
+.main-content .weekly-calendar {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+}
+
+/* Make scroll wrapper use most of viewport height to show more rows */
+.main-content .weekly-calendar .calendar-scroll-wrapper {
+    height: calc(100vh - 200px) !important;
+    overflow: auto !important;
+}
+
+/* If there's an inner centered wrapper, force it to full width */
+.main-content .weekly-calendar .inner,
+.main-content .weekly-calendar .wrapper,
+.main-content .weekly-calendar .content-wrapper {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* doctorPrescription: show patient list as a responsive grid (4-5 columns on wide screens) */
+.main-content #patient-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+    align-items: start !important;
+    padding: 8px !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+
+.main-content #patient-list .patient-card {
+    padding: 10px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
+    min-height: 90px !important;
+}
+
+.main-content #patient-list .patient-card i {
+    font-size: 26px !important;
+    margin-bottom: 8px !important;
+}
+
+.main-content #patient-list .patient-name {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+}
+
+/* Slightly tighter on very small screens */
+@media (max-width: 600px) {
+    .main-content #patient-list {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    .main-content #patient-list .patient-card {
+        padding: 8px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* Compact total-pacientes badge: show count at the right near the 'Generar Receta' area */
+#total-pacientes {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 28px;
+    padding: 0 10px;
+    background-color: var(--primary-color);
+    color: #fff;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-left: 12px;
+}
+
+/* If the badge sits too high, reduce its vertical impact on small screens */
+@media (max-width: 900px) {
+    #total-pacientes {
+        height: 26px;
+        min-width: 32px;
+        font-size: 12px;
+        padding: 0 8px;
+    }
+}
+
+/* Prescription stats (compact two-item block shown near title) */
+#prescription-stats {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-left: auto;
+}
+
+#prescription-stats .mini-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-medium);
+}
+
+#prescription-stats .mini-label {
+    font-size: 12px;
+    color: var(--text-medium);
+}
+
+#prescription-stats .mini-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+@media (max-width: 800px) {
+    #prescription-stats { margin-top: 0; }
 }
 
 .btn-reschedule:hover {

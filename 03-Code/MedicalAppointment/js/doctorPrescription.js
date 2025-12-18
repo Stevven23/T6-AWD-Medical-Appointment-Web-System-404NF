@@ -25,6 +25,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnShowForm = document.getElementById('btn-show-form');
     const formSaveButton = form ? form.querySelector('button[type="submit"]') : null;
 
+    // Move the total-pacientes badge next to the 'Generar Nueva Receta' button
+    // so it stays compact on the right side without taking much space.
+    const totalPacientesEl = document.getElementById('total-pacientes');
+    if (btnShowForm && totalPacientesEl) {
+        const parent = btnShowForm.parentElement;
+        if (parent) {
+            // make parent a flex container to align button and badge
+            parent.style.display = parent.style.display || 'flex';
+            parent.style.alignItems = 'center';
+        }
+        // insert the badge right after the button
+        try {
+            btnShowForm.insertAdjacentElement('afterend', totalPacientesEl);
+            totalPacientesEl.style.marginLeft = '8px';
+        } catch (e) {
+            // fallback: ensure it's visible somewhere
+            totalPacientesEl.style.float = 'right';
+        }
+    }
+
     // --- Variables de Estado (Solo de la DB) ---
     let patientsFromDB = [];
     let prescriptionsFromDB = {};
@@ -270,6 +290,60 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalPacientesEl = document.getElementById('total-pacientes');
         if (totalPacientesEl) {
             totalPacientesEl.textContent = patientsFromDB.length;
+        }
+
+        // Build/update compact stats panel (Citas / Activos) next to the patient list title
+        const patientListTitle = document.getElementById('patient-list-title');
+        if (patientListTitle) {
+            let statsEl = document.getElementById('prescription-stats');
+            // compute totals
+            const totalActivos = patientsFromDB.length || 0;
+            const totalCitas = Object.values(prescriptionsFromDB || {}).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
+
+                if (!statsEl) {
+                    statsEl = document.createElement('div');
+                    statsEl.id = 'prescription-stats';
+                    // Prefer inserting into the page header next to the main title
+                    try {
+                        // Find an H1 that matches the page title
+                        let pageHeaderH1 = null;
+                        document.querySelectorAll('h1').forEach(h => {
+                            if (!pageHeaderH1 && h.textContent && h.textContent.toLowerCase().includes('generar receta')) {
+                                pageHeaderH1 = h;
+                            }
+                        });
+
+                        if (pageHeaderH1 && pageHeaderH1.parentElement) {
+                            const headerParent = pageHeaderH1.parentElement;
+                            headerParent.style.display = headerParent.style.display || 'flex';
+                            headerParent.style.alignItems = 'center';
+                            headerParent.style.justifyContent = headerParent.style.justifyContent || 'flex-start';
+                            // append stats at the end of the header so it appears at the right
+                            headerParent.appendChild(statsEl);
+                        } else {
+                            // fallback: insert after patient list title
+                            try {
+                                patientListTitle.insertAdjacentElement('afterend', statsEl);
+                            } catch (e) {
+                                patientListTitle.parentElement && patientListTitle.parentElement.appendChild(statsEl);
+                            }
+                        }
+                    } catch (e) {
+                        // Best-effort fallback
+                        patientListTitle.parentElement && patientListTitle.parentElement.appendChild(statsEl);
+                    }
+                }
+
+            statsEl.innerHTML = `
+                <div class="mini-stat">
+                    <div class="mini-label">Citas</div>
+                    <div class="mini-value">${totalCitas}</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-label">Activos</div>
+                    <div class="mini-value">${totalActivos}</div>
+                </div>
+            `;
         }
     }
 

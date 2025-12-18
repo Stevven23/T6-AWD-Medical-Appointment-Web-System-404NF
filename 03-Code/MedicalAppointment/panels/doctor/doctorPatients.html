@@ -8,10 +8,58 @@
     <link rel="stylesheet" href="../../css/doctorStyle.css">
     <link rel="stylesheet" href="../../css/mainStyle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Page-specific spacing improvements for doctorPatients */
+        /* Make the card container use full available width so the table can expand */
+        #patient-list-page .patient-list-container {
+            padding: 28px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Ensure the card itself stretches to container width */
+        #patient-list-page .patient-list-container.card {
+            width: 100%;
+            max-width: none;
+        }
+
+        .header-actions { gap: 14px; }
+
+        .filter-tabs { gap: 12px; margin-bottom: 18px; }
+        .filter-tabs button { padding: 10px 16px; border-radius: 8px; }
+
+        .patient-table { width: 100%; table-layout: auto; border-collapse: collapse; }
+        .patient-table th { text-align: left; padding: 14px 18px; color: #444; }
+        .patient-table td { padding: 16px 18px; vertical-align: middle; word-break: break-word; }
+
+        /* More breathing room between rows */
+        .patient-table tbody tr { border-bottom: 1px solid #eef2f5; }
+        .patient-table tbody tr td { height: 56px; }
+
+        /* Make actions column buttons align vertically but not push table width */
+        .patient-table td.actions-col { white-space: nowrap; width: 1%; }
+        .patient-table th.actions-col { width: 1%; }
+
+        .patient-profile { display:flex; gap:20px; align-items:center; }
+        .patient-avatar { width:96px; height:96px; border-radius:8px; object-fit:cover; }
+
+        .patient-overview .card { margin-bottom: 20px; }
+
+        .form-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group.large-field { grid-column: span 3; }
+
+        /* Responsive adjustments */
+        @media (max-width: 1000px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .patient-profile { flex-direction: column; align-items:flex-start; }
+            .patient-table td, .patient-table th { padding: 12px; }
+        }
+    </style>
 </head>
 
 <body>
-    <div class="dashboard-container">
+    <div class="container">
 
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -22,6 +70,7 @@
             <nav class="main-nav">
                 <ul>
                     <li><a href="./doctorHome.html"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li><a href="./doctorAppointmentSchedule.html"><i class="fas fa-calendar-check"></i> Agendar Cita</a></li>
                     <li><a href="./doctorSchedule.html"><i class="fas fa-calendar-alt"></i> Mi Agenda</a></li>
                     <li class="active"><a href="./doctorPatients.html"><i class="fas fa-users"></i> Pacientes</a></li>
                     <li><a href="./doctorPrescription.html"><i class="fas fa-file-medical"></i> Generar Receta</a></li>
@@ -44,11 +93,7 @@
             </header>
 
             <section class="patient-list-container card">
-                <div class="filter-tabs">
-                    <button class="active">Todos</button>
-                    <button>Crónicos</button>
-                    <button>Nuevos</button>
-                </div>
+                
 
                 <table class="patient-table">
                     <thead>
