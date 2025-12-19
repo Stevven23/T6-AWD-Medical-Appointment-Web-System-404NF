@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             activePatients = (data.activePatients || []).map(p => ({
-                id: p.id,
+                id: p.user_id || p.id,
                 name: shortFullName(p.first_name, p.last_name),
                 first_name: p.first_name,
                 last_name: p.last_name,
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
             
             newPatients = (data.newPatients || []).map(p => ({
-                id: p.id,
+                id: p.user_id || p.id,
                 name: shortFullName(p.first_name, p.last_name),
                 first_name: p.first_name,
                 last_name: p.last_name,
