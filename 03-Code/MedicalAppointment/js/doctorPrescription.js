@@ -2,10 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuración de API ---
     const API_BASE_URL =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1'
+  location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api'
-    : '/api';
+    : location.hostname.includes('vercel.app')
+      ? 'https://t6-awd-medical-appointment-web-syst.vercel.app/api'
+      : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
+
 
     // --- Constantes ---
     const DOCTOR_NAME = "Dr. Juan Perez";
