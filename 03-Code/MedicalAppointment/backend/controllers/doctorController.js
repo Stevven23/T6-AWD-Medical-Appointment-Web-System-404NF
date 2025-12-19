@@ -193,7 +193,7 @@ const doctorController = {
       return res.status(404).json({ error: 'Doctor no encontrado' });
     }
 
-    // 2️⃣ Obtener pacientes DESDE las citas del doctor
+    // 2️⃣ Obtener citas activas con usuarios
     const { data: appointments, error } = await supabase
       .from('appointments')
       .select(`
@@ -213,14 +213,14 @@ const doctorController = {
 
     if (error) throw error;
 
-    // 3️⃣ Filtrar pacientes activos
-    const validPatients = (appointments || []).filter(
+    // 3️⃣ Quitar citas sin usuario o inactivos
+    const validAppointments = (appointments || []).filter(
       a => a.users && a.users.is_active
     );
 
-    // 4️⃣ Quitar duplicados
+    // 4️⃣ Quitar duplicados (un paciente puede tener varias citas)
     const uniquePatients = Object.values(
-      validPatients.reduce((acc, a) => {
+      validAppointments.reduce((acc, a) => {
         acc[a.users.id] = {
           ...a.users,
           first_appointment: a.scheduled_start
@@ -240,7 +240,6 @@ const doctorController = {
     res.status(500).json({ error: error.message });
   }
 }
-
 };
 
 console.log('DoctorController exportado con keys:', Object.keys(doctorController));
