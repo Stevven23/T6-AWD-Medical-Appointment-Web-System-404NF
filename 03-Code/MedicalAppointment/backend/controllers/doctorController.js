@@ -176,77 +176,93 @@ const doctorController = {
     },
 
     getDoctorPatients: async (req, res) => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Doctor no autenticado' });
-            }
-
-            // Get doctor_id from user_id
-            const { data: doctor, error: doctorError } = await supabase
-                .from('doctors')
-                .select('id')
-                .eq('user_id', userId)
-                .single();
-
-            if (doctorError || !doctor) {
-                return res.status(404).json({ error: 'Doctor no encontrado' });
-            }
-
-            // Get all active patients
-            const { data: allPatients, error: patientsError } = await supabase
-                .from('patients')
-                .select(`
-                    user_id,
-                    users:user_id (
-                        id,
-                        first_name,
-                        last_name,
-                        email,
-                        phone_number,
-                        cedula,
-                        is_active
-                    )
-                `)
-                .order('created_at', { ascending: false });
-
-            if (patientsError) throw patientsError;
-
-            // Get patients with active appointments for this doctor
-            const { data: appointmentPatients, error: appointmentError } = await supabase
-                .from('appointments')
-                .select('patient_user_id')
-                .eq('doctor_id', doctor.id)
-                .neq('status_id', 5); // Exclude cancelled appointments
-
-            if (appointmentError) throw appointmentError;
-
-            // Deduplicate patient_user_id values
-            const activePatientIds = new Set();
-            (appointmentPatients || []).forEach(apt => {
-                if (apt && apt.patient_user_id) activePatientIds.add(apt.patient_user_id);
-            });
-
-            // Separate into active and new patients
-            const formattedPatients = (allPatients || [])
-                .filter(p => p.users && p.users.is_active)
-                .map(p => p.users);
-
-            const activePatients = formattedPatients.filter(p => activePatientIds.has(p.id));
-            const newPatients = formattedPatients.filter(p => !activePatientIds.has(p.id));
-
-            res.json({
-                activePatients: activePatients.sort((a, b) => 
-                    `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
-                ),
-                newPatients: newPatients.sort((a, b) => 
-                    `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
-                )
-            });
-        } catch (error) {
-            console.error('Error fetching doctor patients:', error);
-            res.status(500).json({ error: error.message });
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Doctor no autenticado' });
         }
+
+        // 1️⃣ Obtener doctor_id desde user_id
+        const { data: doctor, error: doctorError } = await supabase
+            .from('doctors')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+
+        if (doctorError || !doctor) {
+            return res.status(404).json({ error: 'Doctor no encontrado' });
+        }
+
+        // 2️⃣ Obtener TODOS los pacientes activos del sistema
+        const { data: allPatients, error: patientsError } = await supabase
+            .from('patients')
+            .select(`
+                user_id,
+                users:user_id (
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    phone_number,
+                    cedula,
+                    is_active
+                )
+            `)
+            .order('created_at', { ascending: false });
+
+        if (patientsError) throw patientsError;
+
+        const formattedPatients = (allPatients || [])
+            .filter(p => p.users && p.users.is_active)
+            .map(p => p.users);
+
+        // 3️⃣ Obtener citas ACTIVAS del doctor (status_id = 1)
+        const { data: appointments, error: appointmentError } = await supabase
+            .from('appointments')
+            .select('patient_user_id, scheduled_start')
+            .eq('doctor_id', doctor.id)
+            .eq('status_id', 1);
+
+        if (appointmentError) throw appointmentError;
+
+        // 4️⃣ Mapear pacientes con cita
+        const activePatientIds = new Set();
+        const firstAppointmentMap = {};
+
+        (appointments || []).forEach(a => {
+            activePatientIds.add(a.patient_user_id);
+            if (!firstAppointmentMap[a.patient_user_id]) {
+                firstAppointmentMap[a.patient_user_id] = a.scheduled_start;
+            }
+        });
+
+        // 5️⃣ Pacientes activos (tienen cita con este doctor)
+        const activePatients = formattedPatients.filter(p =>
+            activePatientIds.has(p.id)
+        );
+
+        // 6️⃣ Pacientes nuevos (primera cita ≤ 7 días)
+        const newPatients = activePatients.filter(p => {
+            const firstDate = new Date(firstAppointmentMap[p.id]);
+            const diffDays = (Date.now() - firstDate) / (1000 * 60 * 60 * 24);
+            return diffDays <= 7;
+        });
+
+        // 7️⃣ Orden alfabético
+        const sortByName = (a, b) =>
+            `${a.first_name} ${a.last_name}`.localeCompare(
+                `${b.first_name} ${b.last_name}`
+            );
+
+        res.json({
+            activePatients: activePatients.sort(sortByName),
+            newPatients: newPatients.sort(sortByName)
+        });
+
+    } catch (error) {
+        console.error('Error fetching doctor patients:', error);
+        res.status(500).json({ error: error.message });
+    }
     }
 };
 
