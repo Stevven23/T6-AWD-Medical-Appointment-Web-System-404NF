@@ -23,9 +23,9 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
+app.options('*', cors());
 app.use(express.json());
 
-// Simple request logging for debugging (method + path)
 app.use((req, res, next) => {
   console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
