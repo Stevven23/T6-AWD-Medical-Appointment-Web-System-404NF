@@ -37,7 +37,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-app.options('*', cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
