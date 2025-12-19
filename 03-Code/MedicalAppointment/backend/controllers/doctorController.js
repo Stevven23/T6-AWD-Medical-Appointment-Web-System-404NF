@@ -176,99 +176,71 @@ const doctorController = {
     },
 
     getDoctorPatients: async (req, res) => {
-    try {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ error: 'Doctor no autenticado' });
-        }
-
-        // 1️⃣ Obtener doctor_id desde user_id
-        const { data: doctor, error: doctorError } = await supabase
-            .from('doctors')
-            .select('id')
-            .eq('user_id', userId)
-            .single();
-
-        if (doctorError || !doctor) {
-            return res.status(404).json({ error: 'Doctor no encontrado' });
-        }
-
-        // 2️⃣ Obtener TODOS los pacientes activos del sistema
-        const { data: allPatients, error: patientsError } = await supabase
-            .from('patients')
-            .select(`
-                user_id,
-                users:user_id (
-                    id,
-                    first_name,
-                    last_name,
-                    email,
-                    phone_number,
-                    cedula,
-                    is_active
-                )
-            `)
-            .order('created_at', { ascending: false });
-
-        if (patientsError) throw patientsError;
-
-        const formattedPatients = (allPatients || [])
-  .filter(p => p.users)
-  .map(p => ({
-    ...p.users,
-    user_id: p.user_id
-  }));
-
-  console.log('FORMATTED PATIENTS:', formattedPatients);
-console.log('ACTIVE PATIENT IDS:', [...activePatientIds]);
-
-        // 3️⃣ Obtener citas ACTIVAS del doctor (status_id = 1)
-        const { data: appointments, error: appointmentError } = await supabase
-            .from('appointments')
-            .select('patient_user_id, scheduled_start')
-            .eq('doctor_id', doctor.id)
-            .eq('status_id', 1);
-
-        if (appointmentError) throw appointmentError;
-
-        // 4️⃣ Mapear pacientes con cita
-        const activePatientIds = new Set();
-        const firstAppointmentMap = {};
-
-        (appointments || []).forEach(a => {
-            activePatientIds.add(a.patient_user_id);
-            if (!firstAppointmentMap[a.patient_user_id]) {
-                firstAppointmentMap[a.patient_user_id] = a.scheduled_start;
-            }
-        });
-
-        // 5️⃣ Pacientes activos (tienen cita con este doctor)
-       const activePatients = formattedPatients.filter(p =>
-  activePatientIds.has(p.user_id)
-);
-
-
-        // 6️⃣ Pacientes nuevos (primera cita ≤ 7 días)
-        const newPatients = formattedPatients.filter(p =>
-  !activePatientIds.has(p.user_id)
-);
-
-        // 7️⃣ Orden alfabético
-        const sortByName = (a, b) =>
-            `${a.first_name} ${a.last_name}`.localeCompare(
-                `${b.first_name} ${b.last_name}`
-            );
-
-        res.json({
-            activePatients: activePatients.sort(sortByName),
-            newPatients: newPatients.sort(sortByName)
-        });
-
-    } catch (error) {
-        console.error('Error fetching doctor patients:', error);
-        res.status(500).json({ error: error.message });
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Doctor no autenticado' });
     }
+
+    // 1️⃣ Obtener doctor_id
+    const { data: doctor, error: doctorError } = await supabase
+      .from('doctors')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (doctorError || !doctor) {
+      return res.status(404).json({ error: 'Doctor no encontrado' });
     }
+
+    // 2️⃣ Obtener pacientes DESDE las citas del doctor
+    const { data: appointments, error } = await supabase
+      .from('appointments')
+      .select(`
+        scheduled_start,
+        patient_user_id,
+        users:patient_user_id (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          is_active
+        )
+      `)
+      .eq('doctor_id', doctor.id)
+      .eq('status_id', 1);
+
+    if (error) throw error;
+
+    // 3️⃣ Filtrar pacientes activos
+    const validPatients = (appointments || []).filter(
+      a => a.users && a.users.is_active
+    );
+
+    // 4️⃣ Quitar duplicados
+    const uniquePatients = Object.values(
+      validPatients.reduce((acc, a) => {
+        acc[a.users.id] = {
+          ...a.users,
+          first_appointment: a.scheduled_start
+        };
+        return acc;
+      }, {})
+    );
+
+    // 5️⃣ Responder
+    res.json({
+      activePatients: uniquePatients,
+      newPatients: []
+    });
+
+  } catch (error) {
+    console.error('Error fetching doctor patients:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 };
 
 console.log('DoctorController exportado con keys:', Object.keys(doctorController));
