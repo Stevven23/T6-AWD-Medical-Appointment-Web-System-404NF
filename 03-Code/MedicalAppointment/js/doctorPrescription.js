@@ -4,9 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL =
   location.hostname === 'localhost' || location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api'
-    : location.hostname.includes('vercel.app')
-      ? 'https://t6-awd-medical-appointment-web-syst.vercel.app/api'
-      : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
+    : 'https://medical-appointment-backend-2xx0.onrender.com/api';
 
 
     // --- Constantes ---
