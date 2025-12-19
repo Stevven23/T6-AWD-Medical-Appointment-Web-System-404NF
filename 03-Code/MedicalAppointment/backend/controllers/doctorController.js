@@ -213,11 +213,14 @@ const doctorController = {
         if (patientsError) throw patientsError;
 
         const formattedPatients = (allPatients || [])
-  .filter(p => p.users && p.users.is_active)
+  .filter(p => p.users)
   .map(p => ({
     ...p.users,
     user_id: p.user_id
   }));
+
+  console.log('FORMATTED PATIENTS:', formattedPatients);
+console.log('ACTIVE PATIENT IDS:', [...activePatientIds]);
 
         // 3️⃣ Obtener citas ACTIVAS del doctor (status_id = 1)
         const { data: appointments, error: appointmentError } = await supabase
