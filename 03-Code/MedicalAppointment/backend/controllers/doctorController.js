@@ -213,8 +213,11 @@ const doctorController = {
         if (patientsError) throw patientsError;
 
         const formattedPatients = (allPatients || [])
-            .filter(p => p.users && p.users.is_active)
-            .map(p => p.users);
+  .filter(p => p.users && p.users.is_active)
+  .map(p => ({
+    ...p.users,
+    user_id: p.user_id
+  }));
 
         // 3️⃣ Obtener citas ACTIVAS del doctor (status_id = 1)
         const { data: appointments, error: appointmentError } = await supabase
@@ -237,16 +240,15 @@ const doctorController = {
         });
 
         // 5️⃣ Pacientes activos (tienen cita con este doctor)
-        const activePatients = formattedPatients.filter(p =>
-            activePatientIds.has(p.id)
-        );
+       const activePatients = formattedPatients.filter(p =>
+  activePatientIds.has(p.user_id)
+);
+
 
         // 6️⃣ Pacientes nuevos (primera cita ≤ 7 días)
-        const newPatients = activePatients.filter(p => {
-            const firstDate = new Date(firstAppointmentMap[p.id]);
-            const diffDays = (Date.now() - firstDate) / (1000 * 60 * 60 * 24);
-            return diffDays <= 7;
-        });
+        const newPatients = formattedPatients.filter(p =>
+  !activePatientIds.has(p.user_id)
+);
 
         // 7️⃣ Orden alfabético
         const sortByName = (a, b) =>
