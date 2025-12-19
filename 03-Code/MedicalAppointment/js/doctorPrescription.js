@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuración de API ---
-    const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000/api'
-        : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
+    const API_BASE_URL =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : '/api';
 
     // --- Constantes ---
     const DOCTOR_NAME = "Dr. Juan Perez";

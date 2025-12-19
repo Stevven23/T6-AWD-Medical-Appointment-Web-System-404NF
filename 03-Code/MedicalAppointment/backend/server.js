@@ -1,23 +1,9 @@
-
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    return res.sendStatus(204);
-  }
-  next();
-});
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const supabase = require('./database');
-
-
 const passport = require('./config/passport');
 
 const app = express();
@@ -39,6 +25,7 @@ app.use(cors({
 
 app.use(express.json());
 
+// Simple request logging for debugging (method + path)
 app.use((req, res, next) => {
   console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
