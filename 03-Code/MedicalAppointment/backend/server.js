@@ -48,6 +48,7 @@ const consultationRoomRoutes = require('./routes/consultationRooms');
 const reportRoutes = require('./routes/reports');
 const reminderRoutes = require('./routes/reminders');
 const billingRoutes = require('./routes/billings');
+const auditLogRoutes = require('./routes/auditLogs');
 
 
 // ========== RUTAS DE LA API ==========
@@ -64,6 +65,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/billings', billingRoutes); 
+app.use('/api/audit-logs', auditLogRoutes);
 // IMPORTANTE: /api/doctors debe ir DESPUÉS de las otras rutas porque tiene :id parametrizado
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/reminders', reminderRoutes);
