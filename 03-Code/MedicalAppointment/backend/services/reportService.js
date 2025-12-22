@@ -23,14 +23,12 @@ const reportService = {
           scheduled_end,
           reason,
           status_code,
+          patient_user_id,
           
-          patients!inner(
-            user_id,
-            users!inner(
-              first_name,
-              last_name,
-              email
-            )
+          patient:users!appointments_patient_user_id_fkey(
+            first_name,
+            last_name,
+            email
           ),
           
           doctors!inner(
@@ -61,10 +59,10 @@ const reportService = {
         reason: apt.reason,
         status_code: apt.status_code,
         status_name: apt.appointment_statuses?.name || 'Unknown',
-        patient_user_id: apt.patients?.user_id,
-        patient_first_name: apt.patients?.users?.first_name,
-        patient_last_name: apt.patients?.users?.last_name,
-        patient_email: apt.patients?.users?.email,
+        patient_user_id: apt.patient_user_id,
+        patient_first_name: apt.patient?.first_name,
+        patient_last_name: apt.patient?.last_name,
+        patient_email: apt.patient?.email,
         doctor_first_name: apt.doctors?.users?.first_name,
         doctor_last_name: apt.doctors?.users?.last_name,
         appointment_type: determineAppointmentType(apt.reason)
