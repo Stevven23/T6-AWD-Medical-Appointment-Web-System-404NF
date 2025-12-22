@@ -1,224 +1,117 @@
-// backend/services/reportService.js
-
+// services/reportService.js
 const supabase = require('../database');
 
-/**
- * Servicio para generar reportes y estadísticas del sistema
- */
 const reportService = {
-
   /**
-   * Obtiene las citas de un doctor en un rango de fechas
-   * @param {number} doctorId - ID del doctor
-   * @param {string} startDate - Fecha inicio (YYYY-MM-DD)
-   * @param {string} endDate - Fecha fin (YYYY-MM-DD)
+   * Obtiene citas por período con toda la información relacionada
    */
-  getAppointmentsByPeriod: async (doctorId, startDate, endDate) => {
+  async getAppointmentsByPeriod(doctorId, startDate, endDate, statusFilters = null) {
     try {
-      const { data: appointments, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
-          id,
-          scheduled_start,
-          scheduled_end,
-          reason,
-          status_code,
-          patient_user_id,
-          
-          patient:users!appointments_patient_user_id_fkey(
-            first_name,
-            last_name,
-            email
-          ),
-          
-          doctors!inner(
+          *,
+          users:patient_user_id (first_name, last_name, email),
+          doctors!appointments_doctor_id_fkey (
             id,
-            users!inner(
-              first_name,
-              last_name
-            )
-          ),
-          
-          appointment_statuses(
-            name,
-            code
+            users (first_name, last_name),
+            specialties (name)
           )
         `)
-        .eq('doctor_id', doctorId)
-        .gte('scheduled_start', `${startDate}T00:00:00`)
-        .lte('scheduled_start', `${endDate}T23:59:59`)
-        .order('scheduled_start', { ascending: false });
+        .gte('scheduled_start', startDate)
+        .lte('scheduled_start', endDate);
 
-      if (error) throw error;
+      // Filtrar por doctor si se proporciona
+      if (doctorId) {
+        query = query.eq('doctor_id', doctorId);
+      }
 
-      // Transform data to flatten structure
-      const transformedAppointments = appointments.map(apt => ({
-        id: apt.id,
-        scheduled_start: apt.scheduled_start,
-        scheduled_end: apt.scheduled_end,
-        reason: apt.reason,
-        status_code: apt.status_code,
-        status_name: apt.appointment_statuses?.name || 'Unknown',
-        patient_user_id: apt.patient_user_id,
-        patient_first_name: apt.patient?.first_name,
-        patient_last_name: apt.patient?.last_name,
-        patient_email: apt.patient?.email,
-        doctor_first_name: apt.doctors?.users?.first_name,
-        doctor_last_name: apt.doctors?.users?.last_name,
-        appointment_type: determineAppointmentType(apt.reason)
-      }));
+      // Filtrar por estados si se proporciona
+      if (statusFilters && statusFilters.length > 0) {
+        query = query.in('status_id', statusFilters);
+      }
 
-      return transformedAppointments;
+      const { data, error } = await query.order('scheduled_start', { ascending: false });
 
+      if (error) {
+        console.error('Error en reportService.getAppointmentsByPeriod:', error);
+        throw new Error('Error al obtener citas del período');
+      }
+
+      return data || [];
     } catch (error) {
       console.error('Error en reportService.getAppointmentsByPeriod:', error);
-      throw new Error('Error al obtener citas del período');
+      throw error;
     }
   },
 
   /**
-   * Obtiene consultas modificadas (canceladas o reprogramadas) en un período
-   * @param {number} doctorId - ID del doctor
-   * @param {string} startDate - Fecha inicio (YYYY-MM-DD)
-   * @param {string} endDate - Fecha fin (YYYY-MM-DD)
+   * Calcula estadísticas de un doctor
    */
-  getModifiedAppointments: async (doctorId, startDate, endDate) => {
+  async getDoctorStatistics(doctorId, startDate, endDate) {
     try {
-      // Get cancelled appointments
-      const { data: cancelled, error: cancelError } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          scheduled_start,
-          cancelled_at,
-          cancellation_reason,
-          
-          patients!inner(
-            users!inner(
-              first_name,
-              last_name
-            )
-          )
-        `)
-        .eq('doctor_id', doctorId)
-        .eq('status_code', 'cancelled')
-        .gte('cancelled_at', `${startDate}T00:00:00`)
-        .lte('cancelled_at', `${endDate}T23:59:59`)
-        .order('cancelled_at', { ascending: false });
+      // Obtener todas las citas del doctor en el período
+      const appointments = await this.getAppointmentsByPeriod(
+        doctorId, 
+        startDate, 
+        endDate
+      );
 
-      if (cancelError) throw cancelError;
+      const total = appointments.length;
 
-      // Get rescheduled appointments (assuming you have an audit table or modification history)
-      // If not, you'll need to create a table to track this
-      const { data: rescheduled, error: reschedError } = await supabase
-        .from('appointment_modifications')
-        .select(`
-          appointment_id,
-          original_date,
-          new_date,
-          modification_type,
-          modification_reason,
-          modified_at,
-          
-          appointments!inner(
-            doctor_id,
-            patients!inner(
-              users!inner(
-                first_name,
-                last_name
-              )
-            )
-          )
-        `)
-        .eq('appointments.doctor_id', doctorId)
-        .gte('modified_at', `${startDate}T00:00:00`)
-        .lte('modified_at', `${endDate}T23:59:59`)
-        .eq('modification_type', 'rescheduled')
-        .order('modified_at', { ascending: false });
+      if (total === 0) {
+        return {
+          totalAppointments: 0,
+          completedAppointments: 0,
+          cancelledAppointments: 0,
+          rescheduledAppointments: 0,
+          noShowAppointments: 0,
+          attendanceRate: 0,
+          averageConsultationTime: 0,
+          cancellationRatio: 0
+        };
+      }
 
-      // Note: If appointment_modifications table doesn't exist, return only cancelled
-      const rescheduledData = reschedError ? [] : rescheduled;
+      // Contar por estado
+      const completed = appointments.filter(a => a.status_id === 3).length;
+      const cancelled = appointments.filter(a => a.status_id === 4).length;
+      const rescheduled = appointments.filter(a => a.status_id === 5).length;
+      const noShow = appointments.filter(a => a.status_id === 6).length;
 
-      // Combine and transform data
-      const modifications = [
-        ...cancelled.map(apt => ({
-          type: 'cancelled',
-          original_date: apt.scheduled_start,
-          new_date: null,
-          cancelled_at: apt.cancelled_at,
-          patient_first_name: apt.patients?.users?.first_name,
-          patient_last_name: apt.patients?.users?.last_name,
-          modification_reason: `Cancelada: ${apt.cancellation_reason || 'No especificado'}`
-        })),
-        ...rescheduledData.map(mod => ({
-          type: 'rescheduled',
-          original_date: mod.original_date,
-          new_date: mod.new_date,
-          cancelled_at: null,
-          patient_first_name: mod.appointments?.patients?.users?.first_name,
-          patient_last_name: mod.appointments?.patients?.users?.last_name,
-          modification_reason: `Reprogramada: ${mod.modification_reason || 'No especificado'}`
-        }))
-      ];
+      // Calcular tasa de asistencia (AR)
+      // AR = (completadas / (total - canceladas)) * 100
+      const eligible = total - cancelled;
+      const attendanceRate = eligible > 0 ? ((completed / eligible) * 100).toFixed(2) : 0;
 
-      return modifications;
-
-    } catch (error) {
-      console.error('Error en reportService.getModifiedAppointments:', error);
-      throw new Error('Error al obtener consultas modificadas');
-    }
-  },
-
-  /**
-   * Genera estadísticas del doctor para un período
-   * @param {number} doctorId - ID del doctor
-   * @param {string} startDate - Fecha inicio (YYYY-MM-DD)
-   * @param {string} endDate - Fecha fin (YYYY-MM-DD)
-   */
-  getDoctorStatistics: async (doctorId, startDate, endDate) => {
-    try {
-      // Get all appointments in period
-      const appointments = await reportService.getAppointmentsByPeriod(doctorId, startDate, endDate);
-
-      // Calculate statistics
-      const stats = {
-        total_appointments: appointments.length,
-        by_status: {},
-        by_type: {},
-        by_day_of_week: {
-          0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0
-        },
-        unique_patients: new Set(),
-        average_appointments_per_day: 0
-      };
-
-      // Count by status
-      appointments.forEach(apt => {
-        // Status count
-        stats.by_status[apt.status_code] = (stats.by_status[apt.status_code] || 0) + 1;
-        
-        // Type count
-        stats.by_type[apt.appointment_type] = (stats.by_type[apt.appointment_type] || 0) + 1;
-        
-        // Day of week count
-        const date = new Date(apt.scheduled_start);
-        const dayOfWeek = date.getDay();
-        stats.by_day_of_week[dayOfWeek]++;
-        
-        // Unique patients
-        stats.unique_patients.add(apt.patient_user_id);
+      // Calcular tiempo promedio de consulta (ACT)
+      const completedAppointments = appointments.filter(a => a.status_id === 3);
+      let totalMinutes = 0;
+      
+      completedAppointments.forEach(apt => {
+        const start = new Date(apt.scheduled_start);
+        const end = new Date(apt.scheduled_end);
+        const minutes = (end - start) / (1000 * 60);
+        totalMinutes += minutes;
       });
 
-      // Calculate averages
-      const daysDiff = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
-      stats.average_appointments_per_day = (stats.total_appointments / daysDiff).toFixed(2);
-      
-      // Convert Set to count
-      stats.unique_patients_count = stats.unique_patients.size;
-      delete stats.unique_patients; // Remove Set object
+      const averageConsultationTime = completedAppointments.length > 0 
+        ? (totalMinutes / completedAppointments.length).toFixed(2)
+        : 0;
 
-      return stats;
+      // Calcular ratio de cancelación (CR)
+      // CR = (canceladas / total) * 100
+      const cancellationRatio = ((cancelled / total) * 100).toFixed(2);
 
+      return {
+        totalAppointments: total,
+        completedAppointments: completed,
+        cancelledAppointments: cancelled,
+        rescheduledAppointments: rescheduled,
+        noShowAppointments: noShow,
+        attendanceRate: parseFloat(attendanceRate),
+        averageConsultationTime: parseFloat(averageConsultationTime),
+        cancellationRatio: parseFloat(cancellationRatio)
+      };
     } catch (error) {
       console.error('Error en reportService.getDoctorStatistics:', error);
       throw new Error('Error al calcular estadísticas');
@@ -226,164 +119,203 @@ const reportService = {
   },
 
   /**
-   * Obtiene estadísticas globales del sistema (para admin)
-   * @param {string} startDate - Fecha inicio (YYYY-MM-DD)
-   * @param {string} endDate - Fecha fin (YYYY-MM-DD)
+   * Calcula estadísticas del sistema completo
    */
-  getSystemStatistics: async (startDate, endDate) => {
+  async getSystemStatistics(startDate, endDate) {
     try {
-      // Total appointments
-      const { count: totalAppointments, error: aptError } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .gte('scheduled_start', `${startDate}T00:00:00`)
-        .lte('scheduled_start', `${endDate}T23:59:59`);
+      // Obtener todas las citas del sistema
+      const appointments = await this.getAppointmentsByPeriod(null, startDate, endDate);
 
-      if (aptError) throw aptError;
-
-      // Active doctors
-      const { count: activeDoctors, error: docError } = await supabase
+      // Contar doctores activos
+      const { data: doctors, error: doctorsError } = await supabase
         .from('doctors')
-        .select('*', { count: 'exact', head: true })
-        .eq('active', true);
+        .select('id, active, specialties(name)', { count: 'exact' });
 
-      if (docError) throw docError;
+      if (doctorsError) throw doctorsError;
 
-      // Active patients
-      const { count: activePatients, error: patError } = await supabase
-        .from('patients')
-        .select('*', { count: 'exact', head: true });
+      const totalDoctors = doctors?.length || 0;
+      const activeDoctors = doctors?.filter(d => d.active).length || 0;
 
-      if (patError) throw patError;
+      // Contar pacientes únicos
+      const uniquePatients = new Set(appointments.map(a => a.patient_user_id)).size;
 
-      // Appointments by status
-      const { data: appointmentsByStatus, error: statusError } = await supabase
-        .from('appointments')
-        .select('status_code')
-        .gte('scheduled_start', `${startDate}T00:00:00`)
-        .lte('scheduled_start', `${endDate}T23:59:59`);
+      // Estadísticas de citas
+      const total = appointments.length;
+      const completed = appointments.filter(a => a.status_id === 3).length;
+      const cancelled = appointments.filter(a => a.status_id === 4).length;
 
-      if (statusError) throw statusError;
+      // Calcular tasa de asistencia del sistema
+      const eligible = total - cancelled;
+      const systemAttendanceRate = eligible > 0 
+        ? parseFloat(((completed / eligible) * 100).toFixed(2))
+        : 0;
 
-      const statusCounts = {};
-      appointmentsByStatus.forEach(apt => {
-        statusCounts[apt.status_code] = (statusCounts[apt.status_code] || 0) + 1;
+      // Calcular ratio de cancelación del sistema
+      const systemCancellationRatio = total > 0
+        ? parseFloat(((cancelled / total) * 100).toFixed(2))
+        : 0;
+
+      // Promedio de consultas por doctor
+      const averageConsultationsPerDoctor = activeDoctors > 0
+        ? parseFloat((completed / activeDoctors).toFixed(2))
+        : 0;
+
+      // Top especialidades
+      const specialtyCounts = {};
+      appointments.forEach(apt => {
+        if (apt.doctors?.specialties?.name) {
+          const specialty = apt.doctors.specialties.name;
+          specialtyCounts[specialty] = (specialtyCounts[specialty] || 0) + 1;
+        }
       });
 
-      // Specialties distribution
-      const { data: specialties, error: specError } = await supabase
-        .from('specialties')
-        .select(`
-          id,
-          name,
-          doctors(count)
-        `);
+      const topSpecialties = Object.entries(specialtyCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([specialty, count]) => ({
+          specialty,
+          count,
+          percentage: parseFloat(((count / total) * 100).toFixed(2))
+        }));
 
-      if (specError) throw specError;
+      // Top doctores por número de citas completadas
+      const doctorCounts = {};
+      const doctorNames = {};
+
+      appointments.filter(a => a.status_id === 3).forEach(apt => {
+        const docId = apt.doctor_id;
+        doctorCounts[docId] = (doctorCounts[docId] || 0) + 1;
+        
+        if (apt.doctors?.users) {
+          doctorNames[docId] = `Dr. ${apt.doctors.users.first_name} ${apt.doctors.users.last_name}`;
+        }
+      });
+
+      const topDoctors = Object.entries(doctorCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([doctorId, count]) => {
+          const doctorAppointments = appointments.filter(a => a.doctor_id === doctorId);
+          const doctorCompleted = doctorAppointments.filter(a => a.status_id === 3).length;
+          const completionRate = doctorAppointments.length > 0
+            ? parseFloat(((doctorCompleted / doctorAppointments.length) * 100).toFixed(2))
+            : 0;
+
+          return {
+            doctorId,
+            name: doctorNames[doctorId] || 'Desconocido',
+            appointments: count,
+            completionRate
+          };
+        });
+
+      // Calcular índice de eficiencia operacional (OEI)
+      // OEI = (AR + (100 - CR)) / 2
+      const operationalEfficiencyIndex = parseFloat(
+        ((systemAttendanceRate + (100 - systemCancellationRatio)) / 2).toFixed(2)
+      );
 
       return {
-        period: {
-          start: startDate,
-          end: endDate
-        },
-        total_appointments: totalAppointments,
-        active_doctors: activeDoctors,
-        active_patients: activePatients,
-        appointments_by_status: statusCounts,
-        specialties_distribution: specialties.map(spec => ({
-          specialty: spec.name,
-          doctor_count: spec.doctors?.length || 0
-        }))
+        totalDoctors,
+        activeDoctors,
+        totalPatients: uniquePatients,
+        totalAppointments: total,
+        completedAppointments: completed,
+        cancelledAppointments: cancelled,
+        systemAttendanceRate,
+        systemCancellationRatio,
+        averageConsultationsPerDoctor,
+        topSpecialties,
+        topDoctors,
+        operationalEfficiencyIndex
       };
-
     } catch (error) {
       console.error('Error en reportService.getSystemStatistics:', error);
-      throw new Error('Error al obtener estadísticas del sistema');
+      throw new Error('Error al calcular estadísticas del sistema');
     }
   },
 
   /**
-   * Exporta datos de citas a CSV
-   * @param {number} doctorId - ID del doctor
-   * @param {string} startDate - Fecha inicio
-   * @param {string} endDate - Fecha fin
+   * Obtiene actividad semanal
    */
-  exportAppointmentsToCSV: async (doctorId, startDate, endDate) => {
+  async getWeeklyActivity(doctorId) {
     try {
-      const appointments = await reportService.getAppointmentsByPeriod(doctorId, startDate, endDate);
+      // Calcular fecha de inicio de la semana (domingo)
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - dayOfWeek);
+      startOfWeek.setHours(0, 0, 0, 0);
 
-      // CSV Headers
-      const headers = [
-        'ID',
-        'Fecha',
-        'Hora',
-        'Paciente',
-        'Email',
-        'Tipo de Consulta',
-        'Motivo',
-        'Estado'
-      ];
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
 
-      // CSV Rows
-      const rows = appointments.map(apt => [
-        apt.id,
-        apt.scheduled_start.split('T')[0],
-        apt.scheduled_start.split('T')[1].substring(0, 5),
-        `${apt.patient_first_name} ${apt.patient_last_name}`,
-        apt.patient_email,
-        apt.appointment_type,
-        apt.reason || 'N/A',
-        apt.status_name
-      ]);
+      // Obtener citas de la semana
+      const appointments = await this.getAppointmentsByPeriod(
+        doctorId,
+        startOfWeek.toISOString(),
+        endOfWeek.toISOString()
+      );
 
-      // Build CSV string
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
+      // Contar por día
+      const activityByDay = [0, 0, 0, 0, 0, 0, 0]; // Domingo a Sábado
+      
+      appointments.forEach(apt => {
+        const aptDate = new Date(apt.scheduled_start);
+        const day = aptDate.getDay();
+        activityByDay[day]++;
+      });
 
-      return csvContent;
-
+      return {
+        activityByDay,
+        labels: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+      };
     } catch (error) {
-      console.error('Error en reportService.exportAppointmentsToCSV:', error);
-      throw new Error('Error al exportar datos a CSV');
+      console.error('Error en reportService.getWeeklyActivity:', error);
+      throw new Error('Error al obtener actividad semanal');
+    }
+  },
+
+  /**
+   * Obtiene citas modificadas (canceladas/reprogramadas)
+   */
+  async getModifiedAppointments(doctorId, startDate, endDate, statusFilter = 'all') {
+    try {
+      let statusIds = [];
+      
+      if (statusFilter === 'canceladas') {
+        statusIds = [4]; // Canceladas
+      } else if (statusFilter === 'reprogramadas') {
+        statusIds = [5]; // Reprogramadas
+      } else {
+        statusIds = [4, 5]; // Ambas
+      }
+
+      const appointments = await this.getAppointmentsByPeriod(
+        doctorId,
+        startDate,
+        endDate,
+        statusIds
+      );
+
+      const modifiedAppointments = appointments.map(apt => ({
+        fechaOriginal: new Date(apt.scheduled_start).toISOString().split('T')[0],
+        nuevaFecha: apt.status_id === 5 ? new Date(apt.updated_at).toISOString().split('T')[0] : null,
+        paciente: apt.users ? `${apt.users.first_name} ${apt.users.last_name}` : 'Desconocido',
+        motivo: apt.status_id === 4 ? 'Cancelada' : 'Reprogramada',
+        razon: apt.reason || 'No especificada'
+      }));
+
+      return {
+        modifiedAppointments,
+        total: modifiedAppointments.length
+      };
+    } catch (error) {
+      console.error('Error en reportService.getModifiedAppointments:', error);
+      throw new Error('Error al obtener citas modificadas');
     }
   }
 };
-
-/**
- * Helper function to determine appointment type based on reason
- * @param {string} reason - Appointment reason
- * @returns {string} - Appointment type
- */
-function determineAppointmentType(reason) {
-  if (!reason) return 'Consulta General';
-  
-  const reasonLower = reason.toLowerCase();
-  
-  if (reasonLower.includes('urgencia') || reasonLower.includes('emergencia')) {
-    return 'Urgencia';
-  } else if (reasonLower.includes('seguimiento') || reasonLower.includes('control')) {
-    return 'Seguimiento';
-  } else if (reasonLower.includes('revisión') || reasonLower.includes('revision')) {
-    return 'Revisión';
-  } else if (reasonLower.includes('vacuna')) {
-    return 'Vacunación';
-  } else if (reasonLower.includes('examen') || reasonLower.includes('análisis')) {
-    return 'Exámenes';
-  } else {
-    return 'Consulta General';
-  }
-}
-
-/**
- * Helper function to get day name in Spanish
- * @param {number} dayIndex - Day of week (0-6)
- * @returns {string} - Day name
- */
-function getDayName(dayIndex) {
-  const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  return days[dayIndex] || 'Unknown';
-}
 
 module.exports = reportService;
