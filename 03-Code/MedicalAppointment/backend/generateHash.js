@@ -6,5 +6,4 @@ async function generateHash(password) {
     console.log('Hash generado:', hash);
 }
 
-// Generar hash para 'admin123'
 generateHash('admin123');
