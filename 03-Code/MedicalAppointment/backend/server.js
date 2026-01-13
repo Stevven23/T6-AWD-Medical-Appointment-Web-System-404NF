@@ -9,6 +9,41 @@ const passport = require('./config/passport');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* =====================================================
+   🔥 CORS PREFLIGHT GLOBAL (DEBE IR PRIMERO)
+   ===================================================== */
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  const allowedOrigins = [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'https://medical-appointment-frontend-ten.vercel.app',
+    'https://t6-awd-medical-appointment-web-syst.vercel.app'
+  ];
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+  );
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // 🔥 RESPUESTA DIRECTA AL PREFLIGHT
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
+/* =====================================================
+   CORS NORMAL
+   ===================================================== */
 app.use(cors({
   origin: [
     'http://127.0.0.1:5500',
@@ -16,26 +51,26 @@ app.use(cors({
     'https://medical-appointment-frontend-ten.vercel.app',
     'https://t6-awd-medical-appointment-web-syst.vercel.app'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With'],
-  optionsSuccessStatus: 204
+  credentials: true
 }));
-app.options('*', cors())
 
+/* =====================================================
+   MIDDLEWARES BASE
+   ===================================================== */
 app.use(express.json());
 
-// Simple request logging for debugging (method + path)
+// Log simple de requests
 app.use((req, res, next) => {
   console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Inicializar Passport (sin sesión - stateless JWT OAuth)
+// Passport (JWT stateless)
 app.use(passport.initialize());
 
-// ========== IMPORTAR RUTAS NUEVAS ==========
+/* =====================================================
+   IMPORTACIÓN DE RUTAS
+   ===================================================== */
 const authRoutes = require('./routes/auth');
 const sessionsRoutes = require('./routes/sessions');
 const passwordResetsRoutes = require('./routes/passwordResets');
@@ -51,9 +86,10 @@ const reminderRoutes = require('./routes/reminders');
 const billingRoutes = require('./routes/billings');
 const auditLogRoutes = require('./routes/auditLogs');
 
-
-// ========== RUTAS DE LA API ==========
-// IMPORTANTE: Las rutas más específicas DEBEN ir ANTES de las parametrizadas
+/* =====================================================
+   RUTAS API
+   (orden IMPORTANTE)
+   ===================================================== */
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api/password-resets', passwordResetsRoutes);
@@ -65,30 +101,42 @@ app.use('/api/reports', reportRoutes);
 
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/billings', billingRoutes); 
+app.use('/api/billings', billingRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
-// IMPORTANTE: /api/doctors debe ir DESPUÉS de las otras rutas porque tiene :id parametrizado
+
+// ⚠️ Ruta parametrizada AL FINAL
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/reminders', reminderRoutes);
 
+/* =====================================================
+   RUTA TEST
+   ===================================================== */
 app.get('/api/test', (req, res) => {
   res.json({ mensaje: '¡El servidor funciona correctamente!' });
 });
 
-// Manejador 404 para devolver JSON en lugar de HTML (debe estar ANTES de app.listen())
+/* =====================================================
+   404 JSON
+   ===================================================== */
 app.use((req, res) => {
   console.warn('Ruta no encontrada:', req.method, req.originalUrl);
   res.status(404).json({ error: `Ruta no encontrada: ${req.originalUrl}` });
 });
 
-// Manejador de errores genérico para asegurar respuestas JSON (debe estar ANTES de app.listen())
+/* =====================================================
+   ERROR HANDLER GLOBAL
+   ===================================================== */
 app.use((err, req, res, next) => {
   console.error('Error inesperado:', err);
-  res.status(err.status || 500).json({ error: err.message || 'Error interno del servidor' });
+  res.status(err.status || 500).json({
+    error: err.message || 'Error interno del servidor'
+  });
 });
 
-// Iniciar el servidor
+/* =====================================================
+   START SERVER
+   ===================================================== */
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📝 Prueba la API en http://localhost:${PORT}/api/test`);
-});    
+  console.log(`📝 Test: http://localhost:${PORT}/api/test`);
+});
