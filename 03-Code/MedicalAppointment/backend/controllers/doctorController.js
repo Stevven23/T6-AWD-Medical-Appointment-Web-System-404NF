@@ -214,18 +214,69 @@ const doctorController = {
     console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
 
     // 4️⃣ Obtener TODOS los usuarios con rol de 'patient'
-    // Primero obtener el role_id del rol 'patient'
-    const { data: patientRole, error: roleError } = await supabase
+    // Primero obtener el role_id del rol 'patient' (case-insensitive)
+    const { data: allRoles, error: rolesError } = await supabase
       .from('roles')
-      .select('id')
-      .eq('name', 'patient')
-      .single();
+      .select('id, name, code');
 
-    if (roleError) {
-      console.warn('⚠️ No se encontró el rol patient:', roleError);
+    if (rolesError) throw rolesError;
+
+    console.log('📋 Roles disponibles:', allRoles);
+
+    // Buscar el rol patient (case-insensitive)
+    const patientRole = allRoles.find(r => 
+      r.name.toLowerCase() === 'patient' || 
+      r.code?.toLowerCase() === 'patient'
+    );
+
+    if (!patientRole) {
+      console.warn('⚠️ No se encontró el rol patient. Roles disponibles:', allRoles.map(r => ({ name: r.name, code: r.code })));
+      // Intentar obtener pacientes de la tabla patients como fallback
+      const { data: patientRecords, error: fallbackError } = await supabase
+        .from('patients')
+        .select('user_id, users!inner(id, first_name, last_name, email, phone_number, cedula, is_active)')
+        .eq('users.is_active', true);
+
+      if (fallbackError || !patientRecords || patientRecords.length === 0) {
+        console.warn('⚠️ Fallback también falló. Retornando listas vacías.');
+        return res.json({
+          activePatients: [],
+          newPatients: []
+        });
+      }
+
+      const fallbackPatientUsers = (patientRecords || [])
+        .filter(p => p.users)
+        .map(p => p.users);
+
+      const activePatients = [];
+      const newPatients = [];
+
+      (fallbackPatientUsers || []).forEach(patient => {
+        const patientObj = {
+          id: patient.id,
+          user_id: patient.id,
+          first_name: patient.first_name,
+          last_name: patient.last_name,
+          email: patient.email,
+          phone_number: patient.phone_number,
+          cedula: patient.cedula,
+          is_active: patient.is_active
+        };
+
+        if (patientsWithAppointments.has(patient.id)) {
+          activePatients.push(patientObj);
+        } else {
+          newPatients.push(patientObj);
+        }
+      });
+
+      console.log('✅ Pacientes activos (fallback):', activePatients.length);
+      console.log('🆕 Pacientes nuevos (fallback):', newPatients.length);
+
       return res.json({
-        activePatients: [],
-        newPatients: []
+        activePatients,
+        newPatients
       });
     }
 
