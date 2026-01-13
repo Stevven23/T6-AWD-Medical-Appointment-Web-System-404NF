@@ -1,23 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const specialtyController = require('../controllers/specialtyController');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
-// POST primero (crear)
-router.post('/', specialtyController.createSpecialty);
+// ============================================
+// APLICAR AUTENTICACIÓN A TODAS LAS RUTAS
+// ============================================
+router.use(authMiddleware);
 
-// RUTAS ESPECÍFICAS ANTES DE GET general
-router.get('/stats', specialtyController.getSpecialtyStats);
-router.get('/filter', specialtyController.filterSpecialties);
+// ============================================
+// RUTAS PÚBLICAS (solo autenticadas)
+// ============================================
+// Estas rutas pueden ser accedidas por cualquier usuario autenticado
 router.get('/active', specialtyController.getActiveSpecialties);
-
-// GET general (obtener todas)
 router.get('/', specialtyController.getAllSpecialties);
-
-// RUTAS CON PARÁMETRO - ÚLTIMAS
-router.get('/:id/doctors', specialtyController.getSpecialtyWithDoctors);
 router.get('/:id', specialtyController.getSpecialtyById);
-router.put('/:id', specialtyController.updateSpecialty);
-router.delete('/:id', specialtyController.deleteSpecialty);
-router.patch('/:id/status', specialtyController.updateSpecialtyStatus);
+router.get('/:id/doctors', specialtyController.getSpecialtyWithDoctors);
+
+// ============================================
+// RUTAS DE ESTADÍSTICAS (Admin/Doctor)
+// ============================================
+router.get('/stats', requireRole('admin', 'doctor'), specialtyController.getSpecialtyStats);
+router.get('/filter', requireRole('admin', 'doctor'), specialtyController.filterSpecialties);
+
+// ============================================
+// RUTAS ADMINISTRATIVAS (Solo Admin)
+// ============================================
+router.post('/', requireRole('admin'), specialtyController.createSpecialty);
+router.put('/:id', requireRole('admin'), specialtyController.updateSpecialty);
+router.delete('/:id', requireRole('admin'), specialtyController.deleteSpecialty);
+router.patch('/:id/status', requireRole('admin'), specialtyController.updateSpecialtyStatus);
 
 module.exports = router;
