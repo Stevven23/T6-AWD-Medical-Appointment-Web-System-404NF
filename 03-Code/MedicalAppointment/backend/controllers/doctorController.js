@@ -213,33 +213,33 @@ const doctorController = {
     console.log('📋 Total citas encontradas:', allAppointments.length);
     console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
 
-    // 4️⃣ Obtener TODOS los pacientes desde la tabla patients
-    const { data: patientRecords, error: patientRecordsError } = await supabase
-      .from('patients')
-      .select(`
-        user_id,
-        users:user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          cedula,
-          is_active
-        )
-      `);
+    // 4️⃣ Obtener TODOS los usuarios con rol de 'patient'
+    // Primero obtener el role_id del rol 'patient'
+    const { data: patientRole, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'patient')
+      .single();
 
-    if (patientRecordsError) throw patientRecordsError;
+    if (roleError) {
+      console.warn('⚠️ No se encontró el rol patient:', roleError);
+      return res.json({
+        activePatients: [],
+        newPatients: []
+      });
+    }
 
-    console.log('👥 Total pacientes en la tabla patients:', patientRecords.length);
-    
-    // Extraer usuarios de pacientes
-    const patientUsers = (patientRecords || [])
-      .filter(p => p.users)
-      .map(p => p.users);
-    
-    console.log('📱 Total pacientes extraídos:', patientUsers.length);
-    console.log('📋 IDs de pacientes encontrados:', patientUsers.map(p => ({ 
+    // Obtener TODOS los usuarios con rol de paciente
+    const { data: allPatientUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, email, phone_number, cedula, is_active')
+      .eq('role_id', patientRole.id)
+      .eq('is_active', true);
+
+    if (usersError) throw usersError;
+
+    console.log('👥 Total pacientes activos en la BD:', allPatientUsers.length);
+    console.log('📋 IDs de pacientes encontrados:', allPatientUsers.map(p => ({ 
       id: p.id, 
       nombre: `${p.first_name} ${p.last_name}`,
       activo: p.is_active
@@ -249,7 +249,7 @@ const doctorController = {
     const activePatients = [];
     const newPatients = [];
 
-    patientUsers.forEach(patient => {
+    (allPatientUsers || []).forEach(patient => {
       const patientObj = {
         id: patient.id,
         user_id: patient.id,
