@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Configuración de API ---
-    const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000/api'
-        : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
+    const API_BASE_URL =
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : 'https://medical-appointment-backend-2xx0.onrender.com/api';
 
     // --- Variables de estado ---
     let allCitas = [];
