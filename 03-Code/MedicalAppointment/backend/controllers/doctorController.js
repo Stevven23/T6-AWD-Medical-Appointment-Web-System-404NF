@@ -193,8 +193,8 @@ const doctorController = {
       return res.status(404).json({ error: 'Doctor no encontrado' });
     }
 
-    // 2️⃣ Obtener TODAS las citas del doctor (status_id = 1 = activas)
-    const { data: appointments, error: appointmentsError } = await supabase
+    // 2️⃣ Obtener TODAS las citas del doctor (sin filtrar por estado)
+    const { data: allAppointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select(`
         id,
@@ -210,40 +210,27 @@ const doctorController = {
           is_active
         )
       `)
-      .eq('doctor_id', doctor.id)
-      .eq('status_id', 1);
+      .eq('doctor_id', doctor.id);
 
     if (appointmentsError) throw appointmentsError;
 
-    // 3️⃣ Extraer pacientes únicos que tienen citas activas
-    const patientsWithAppointments = new Map();
-    (appointments || []).forEach(appt => {
-      if (appt.users && appt.users.is_active) {
-        if (!patientsWithAppointments.has(appt.users.id)) {
-          patientsWithAppointments.set(appt.users.id, {
-            id: appt.users.id,
-            user_id: appt.users.id,
-            first_name: appt.users.first_name,
-            last_name: appt.users.last_name,
-            email: appt.users.email,
-            phone_number: appt.users.phone_number,
-            cedula: appt.users.cedula,
-            is_active: appt.users.is_active
-          });
-        }
+    // 3️⃣ Extraer pacientes únicos que ALGUNA VEZ han tenido una cita con el doctor
+    const patientsWithAppointments = new Set();
+    (allAppointments || []).forEach(appt => {
+      if (appt.users && appt.patient_user_id) {
+        patientsWithAppointments.add(appt.patient_user_id);
       }
     });
 
-    // 4️⃣ Obtener TODOS los pacientes activos del sistema (role_id = 3 = paciente)
+    // 4️⃣ Obtener TODOS los pacientes (sin filtrar por is_active)
     const { data: allPatients, error: allPatientsError } = await supabase
       .from('users')
       .select('id, first_name, last_name, email, phone_number, cedula, is_active')
-      .eq('role_id', 3)
-      .eq('is_active', true);
+      .eq('role_id', 3);
 
     if (allPatientsError) throw allPatientsError;
 
-    // 5️⃣ Separar en activos (con citas) y nuevos (sin citas)
+    // 5️⃣ Separar en activos (con citas) y nuevos (sin citas NUNCA)
     const activePatients = [];
     const newPatients = [];
 
@@ -260,9 +247,10 @@ const doctorController = {
       };
 
       if (patientsWithAppointments.has(patient.id)) {
+        // Este paciente ya tiene citas con el doctor
         activePatients.push(patientObj);
       } else {
-        // Estos son pacientes nuevos - sin citas con el doctor
+        // Este paciente NUNCA ha tenido una cita con el doctor
         newPatients.push(patientObj);
       }
     });
