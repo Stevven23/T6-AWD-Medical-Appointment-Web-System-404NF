@@ -23,6 +23,8 @@ router.get('/stats', doctorController.getDoctorStats);
 router.get('/filter', doctorController.filterDoctors);
 router.get('/me', doctorController.getCurrentDoctor);
 router.get('/my-patients', doctorController.getDoctorPatients);
+router.get('/diagnosis/roles', doctorController.getDiagnosisRoles);
+router.get('/diagnosis/patients', doctorController.getDiagnosisPatients);
 router.get('/schedule', doctorController.getDoctorSchedules);
 router.post('/schedule', doctorController.createDoctorSchedule);
 router.get('/specialty/:specialty_id', doctorController.getDoctorsBySpecialty);

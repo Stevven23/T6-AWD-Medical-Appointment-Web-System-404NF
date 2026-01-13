@@ -213,84 +213,34 @@ const doctorController = {
     console.log('📋 Total citas encontradas:', allAppointments.length);
     console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
 
-    // 4️⃣ Obtener TODOS los usuarios con rol de 'patient'
-    // Primero obtener el role_id del rol 'patient' (case-insensitive)
-    const { data: allRoles, error: rolesError } = await supabase
-      .from('roles')
-      .select('id, name, code');
+    // 4️⃣ Obtener TODOS los pacientes desde la tabla patients con su información de usuario
+    const { data: patientRecords, error: patientRecordsError } = await supabase
+      .from('patients')
+      .select(`
+        user_id,
+        users:user_id (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          cedula,
+          is_active
+        )
+      `)
+      .eq('users.is_active', true);
 
-    if (rolesError) throw rolesError;
+    if (patientRecordsError) throw patientRecordsError;
 
-    console.log('📋 Roles disponibles:', allRoles);
-
-    // Buscar el rol patient (case-insensitive)
-    const patientRole = allRoles.find(r => 
-      r.name.toLowerCase() === 'patient' || 
-      r.code?.toLowerCase() === 'patient'
-    );
-
-    if (!patientRole) {
-      console.warn('⚠️ No se encontró el rol patient. Roles disponibles:', allRoles.map(r => ({ name: r.name, code: r.code })));
-      // Intentar obtener pacientes de la tabla patients como fallback
-      const { data: patientRecords, error: fallbackError } = await supabase
-        .from('patients')
-        .select('user_id, users!inner(id, first_name, last_name, email, phone_number, cedula, is_active)')
-        .eq('users.is_active', true);
-
-      if (fallbackError || !patientRecords || patientRecords.length === 0) {
-        console.warn('⚠️ Fallback también falló. Retornando listas vacías.');
-        return res.json({
-          activePatients: [],
-          newPatients: []
-        });
-      }
-
-      const fallbackPatientUsers = (patientRecords || [])
-        .filter(p => p.users)
-        .map(p => p.users);
-
-      const activePatients = [];
-      const newPatients = [];
-
-      (fallbackPatientUsers || []).forEach(patient => {
-        const patientObj = {
-          id: patient.id,
-          user_id: patient.id,
-          first_name: patient.first_name,
-          last_name: patient.last_name,
-          email: patient.email,
-          phone_number: patient.phone_number,
-          cedula: patient.cedula,
-          is_active: patient.is_active
-        };
-
-        if (patientsWithAppointments.has(patient.id)) {
-          activePatients.push(patientObj);
-        } else {
-          newPatients.push(patientObj);
-        }
-      });
-
-      console.log('✅ Pacientes activos (fallback):', activePatients.length);
-      console.log('🆕 Pacientes nuevos (fallback):', newPatients.length);
-
-      return res.json({
-        activePatients,
-        newPatients
-      });
-    }
-
-    // Obtener TODOS los usuarios con rol de paciente
-    const { data: allPatientUsers, error: usersError } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, email, phone_number, cedula, is_active')
-      .eq('role_id', patientRole.id)
-      .eq('is_active', true);
-
-    if (usersError) throw usersError;
-
-    console.log('👥 Total pacientes activos en la BD:', allPatientUsers.length);
-    console.log('📋 IDs de pacientes encontrados:', allPatientUsers.map(p => ({ 
+    console.log('👥 Total registros en tabla patients:', patientRecords.length);
+    
+    // Extraer usuarios de pacientes
+    const patientUsers = (patientRecords || [])
+      .filter(p => p.users)
+      .map(p => p.users);
+    
+    console.log('📱 Total pacientes extraídos:', patientUsers.length);
+    console.log('📋 IDs de pacientes encontrados:', patientUsers.map(p => ({ 
       id: p.id, 
       nombre: `${p.first_name} ${p.last_name}`,
       activo: p.is_active
@@ -300,7 +250,7 @@ const doctorController = {
     const activePatients = [];
     const newPatients = [];
 
-    (allPatientUsers || []).forEach(patient => {
+    (patientUsers || []).forEach(patient => {
       const patientObj = {
         id: patient.id,
         user_id: patient.id,
@@ -334,7 +284,58 @@ const doctorController = {
     console.error('Error fetching doctor patients:', error);
     res.status(500).json({ error: error.message });
   }
-}
+},
+
+    getDiagnosisRoles: async (req, res) => {
+      try {
+        const { data: allRoles, error } = await supabase
+          .from('roles')
+          .select('*');
+
+        if (error) throw error;
+
+        res.json({
+          message: 'Roles en la base de datos',
+          total: allRoles.length,
+          roles: allRoles
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    },
+
+    getDiagnosisPatients: async (req, res) => {
+      try {
+        const { data: allUsers, error } = await supabase
+          .from('users')
+          .select('id, first_name, last_name, email, role_id, is_active')
+          .limit(100);
+
+        if (error) throw error;
+
+        const { data: allRoles, error: rolesError } = await supabase
+          .from('roles')
+          .select('id, name');
+
+        if (rolesError) throw rolesError;
+
+        const usersWithRoles = allUsers.map(user => {
+          const role = allRoles.find(r => r.id === user.role_id);
+          return {
+            ...user,
+            roleName: role?.name || 'UNKNOWN'
+          };
+        });
+
+        res.json({
+          message: 'Usuarios en la base de datos',
+          total: allUsers.length,
+          users: usersWithRoles
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    }
 };
 
 console.log('DoctorController exportado con keys:', Object.keys(doctorController));
