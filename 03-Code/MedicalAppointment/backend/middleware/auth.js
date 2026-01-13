@@ -3,19 +3,29 @@ const supabase = require('../database');
 
 // Middleware principal de autenticación
 const authMiddleware = async (req, res, next) => {
+
+  // 🔥 PERMITIR PREFLIGHT CORS
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
     // Verificar JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_secreto_temporal');
-    
-    // Obtener usuario completo desde Supabase (usar decoded.id o decoded.userId)
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'tu_secreto_temporal'
+    );
+
+    // Obtener usuario desde Supabase
     const userId = decoded.id || decoded.userId;
-    
+
     const { data: user, error } = await supabase
       .from('users')
       .select(`
@@ -57,18 +67,16 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Middleware para verificar roles específicos
+// Middleware para verificar roles
 const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'No autenticado' });
     }
 
-    const userRoleCode = req.user.roleCode;
-    
-    if (!allowedRoles.includes(userRoleCode)) {
-      return res.status(403).json({ 
-        error: 'No tienes permisos para realizar esta acción' 
+    if (!allowedRoles.includes(req.user.roleCode)) {
+      return res.status(403).json({
+        error: 'No tienes permisos para realizar esta acción'
       });
     }
 
