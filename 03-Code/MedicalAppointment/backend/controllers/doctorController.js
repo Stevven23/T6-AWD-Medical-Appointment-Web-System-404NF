@@ -196,20 +196,7 @@ const doctorController = {
     // 2️⃣ Obtener TODAS las citas del doctor (sin filtrar por estado)
     const { data: allAppointments, error: appointmentsError } = await supabase
       .from('appointments')
-      .select(`
-        id,
-        scheduled_start,
-        patient_user_id,
-        users:patient_user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          cedula,
-          is_active
-        )
-      `)
+      .select('id, patient_user_id')
       .eq('doctor_id', doctor.id);
 
     if (appointmentsError) throw appointmentsError;
@@ -217,18 +204,24 @@ const doctorController = {
     // 3️⃣ Extraer pacientes únicos que ALGUNA VEZ han tenido una cita con el doctor
     const patientsWithAppointments = new Set();
     (allAppointments || []).forEach(appt => {
-      if (appt.users && appt.patient_user_id) {
+      if (appt.patient_user_id) {
         patientsWithAppointments.add(appt.patient_user_id);
       }
     });
 
+    console.log('📊 Doctor ID:', doctor.id);
+    console.log('📋 Total citas encontradas:', allAppointments.length);
+    console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
+
     // 4️⃣ Obtener TODOS los pacientes (sin filtrar por is_active)
     const { data: allPatients, error: allPatientsError } = await supabase
       .from('users')
-      .select('id, first_name, last_name, email, phone_number, cedula, is_active')
+      .select('id, first_name, last_name, email, phone_number, cedula, is_active, role_id')
       .eq('role_id', 3);
 
     if (allPatientsError) throw allPatientsError;
+
+    console.log('📱 Total pacientes en el sistema (role_id=3):', allPatients.length);
 
     // 5️⃣ Separar en activos (con citas) y nuevos (sin citas NUNCA)
     const activePatients = [];
@@ -254,6 +247,9 @@ const doctorController = {
         newPatients.push(patientObj);
       }
     });
+
+    console.log('✅ Pacientes activos (con citas):', activePatients.length);
+    console.log('🆕 Pacientes nuevos (sin citas):', newPatients.length);
 
     // 6️⃣ Responder
     res.json({
