@@ -213,21 +213,43 @@ const doctorController = {
     console.log('📋 Total citas encontradas:', allAppointments.length);
     console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
 
-    // 4️⃣ Obtener TODOS los pacientes (sin filtrar por is_active)
-    const { data: allPatients, error: allPatientsError } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, email, phone_number, cedula, is_active, role_id')
-      .eq('role_id', 3);
+    // 4️⃣ Obtener TODOS los pacientes desde la tabla patients
+    const { data: patientRecords, error: patientRecordsError } = await supabase
+      .from('patients')
+      .select(`
+        user_id,
+        users:user_id (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          cedula,
+          is_active
+        )
+      `);
 
-    if (allPatientsError) throw allPatientsError;
+    if (patientRecordsError) throw patientRecordsError;
 
-    console.log('📱 Total pacientes en el sistema (role_id=3):', allPatients.length);
+    console.log('👥 Total pacientes en la tabla patients:', patientRecords.length);
+    
+    // Extraer usuarios de pacientes
+    const patientUsers = (patientRecords || [])
+      .filter(p => p.users)
+      .map(p => p.users);
+    
+    console.log('📱 Total pacientes extraídos:', patientUsers.length);
+    console.log('📋 IDs de pacientes encontrados:', patientUsers.map(p => ({ 
+      id: p.id, 
+      nombre: `${p.first_name} ${p.last_name}`,
+      activo: p.is_active
+    })));
 
     // 5️⃣ Separar en activos (con citas) y nuevos (sin citas NUNCA)
     const activePatients = [];
     const newPatients = [];
 
-    (allPatients || []).forEach(patient => {
+    patientUsers.forEach(patient => {
       const patientObj = {
         id: patient.id,
         user_id: patient.id,
