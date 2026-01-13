@@ -193,10 +193,11 @@ const doctorController = {
       return res.status(404).json({ error: 'Doctor no encontrado' });
     }
 
-    // 2️⃣ Obtener citas activas con usuarios
-    const { data: appointments, error } = await supabase
+    // 2️⃣ Obtener TODAS las citas del doctor (status_id = 1 = activas)
+    const { data: appointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select(`
+        id,
         scheduled_start,
         patient_user_id,
         users:patient_user_id (
@@ -205,34 +206,71 @@ const doctorController = {
           last_name,
           email,
           phone_number,
+          cedula,
           is_active
         )
       `)
       .eq('doctor_id', doctor.id)
       .eq('status_id', 1);
 
-    if (error) throw error;
+    if (appointmentsError) throw appointmentsError;
 
-    // 3️⃣ Quitar citas sin usuario o inactivos
-    const validAppointments = (appointments || []).filter(
-      a => a.users && a.users.is_active
-    );
+    // 3️⃣ Extraer pacientes únicos que tienen citas activas
+    const patientsWithAppointments = new Map();
+    (appointments || []).forEach(appt => {
+      if (appt.users && appt.users.is_active) {
+        if (!patientsWithAppointments.has(appt.users.id)) {
+          patientsWithAppointments.set(appt.users.id, {
+            id: appt.users.id,
+            user_id: appt.users.id,
+            first_name: appt.users.first_name,
+            last_name: appt.users.last_name,
+            email: appt.users.email,
+            phone_number: appt.users.phone_number,
+            cedula: appt.users.cedula,
+            is_active: appt.users.is_active
+          });
+        }
+      }
+    });
 
-    // 4️⃣ Quitar duplicados (un paciente puede tener varias citas)
-    const uniquePatients = Object.values(
-      validAppointments.reduce((acc, a) => {
-        acc[a.users.id] = {
-          ...a.users,
-          first_appointment: a.scheduled_start
-        };
-        return acc;
-      }, {})
-    );
+    // 4️⃣ Obtener TODOS los pacientes activos del sistema (role_id = 3 = paciente)
+    const { data: allPatients, error: allPatientsError } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, email, phone_number, cedula, is_active')
+      .eq('role_id', 3)
+      .eq('is_active', true);
 
-    // 5️⃣ Responder
+    if (allPatientsError) throw allPatientsError;
+
+    // 5️⃣ Separar en activos (con citas) y nuevos (sin citas)
+    const activePatients = [];
+    const newPatients = [];
+
+    (allPatients || []).forEach(patient => {
+      const patientObj = {
+        id: patient.id,
+        user_id: patient.id,
+        first_name: patient.first_name,
+        last_name: patient.last_name,
+        email: patient.email,
+        phone_number: patient.phone_number,
+        cedula: patient.cedula,
+        is_active: patient.is_active
+      };
+
+      if (patientsWithAppointments.has(patient.id)) {
+        activePatients.push(patientObj);
+      } else {
+        // Estos son pacientes nuevos - sin citas con el doctor
+        newPatients.push(patientObj);
+      }
+    });
+
+    // 6️⃣ Responder
     res.json({
-      activePatients: uniquePatients,
-      newPatients: []
+      activePatients,
+      newPatients
     });
 
   } catch (error) {
