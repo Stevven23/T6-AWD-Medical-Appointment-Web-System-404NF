@@ -227,19 +227,18 @@ const doctorController = {
           cedula,
           is_active
         )
-      `)
-      .eq('users.is_active', true);
+      `);
 
     if (patientRecordsError) throw patientRecordsError;
 
     console.log('👥 Total registros en tabla patients:', patientRecords.length);
     
-    // Extraer usuarios de pacientes
+    // Extraer usuarios de pacientes (solo activos)
     const patientUsers = (patientRecords || [])
-      .filter(p => p.users)
+      .filter(p => p.users && p.users.is_active)
       .map(p => p.users);
     
-    console.log('📱 Total pacientes extraídos:', patientUsers.length);
+    console.log('📱 Total pacientes activos extraídos:', patientUsers.length);
     console.log('📋 IDs de pacientes encontrados:', patientUsers.map(p => ({ 
       id: p.id, 
       nombre: `${p.first_name} ${p.last_name}`,
