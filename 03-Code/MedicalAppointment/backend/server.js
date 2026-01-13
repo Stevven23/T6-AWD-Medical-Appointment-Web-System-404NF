@@ -22,6 +22,7 @@ app.use(cors({
   exposedHeaders: ['Content-Length', 'X-Requested-With'],
   optionsSuccessStatus: 204
 }));
+app.options('*', cors())
 
 app.use(express.json());
 
