@@ -20,10 +20,12 @@ import AdminLogs from './pages/admin/AdminLogs';
 // Patient pages
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientAppointments from './pages/patient/PatientAppointments';
+import NewAppointment from './pages/patient/NewAppointment';
 import MedicalRecord from './pages/patient/MedicalRecord';
 import PatientHistory from './pages/patient/PatientHistory';
 import PatientLab from './pages/patient/PatientLab';
 import PatientPrescriptions from './pages/patient/PatientPrescriptions';
+import PatientMessages from './pages/patient/PatientMessages';
 import PatientProfile from './pages/patient/PatientProfile';
 
 // Doctor pages
@@ -153,6 +155,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/patient/new-appointment"
+        element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <NewAppointment />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/patient/medical-record"
         element={
           <ProtectedRoute allowedRoles={['patient']}>
@@ -181,6 +191,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['patient']}>
             <PatientPrescriptions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/messages"
+        element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <PatientMessages />
           </ProtectedRoute>
         }
       />

@@ -156,7 +156,7 @@ export default function PatientAppointments() {
               </p>
             </div>
             <Link
-              to="/patient/appointments/new"
+              to="/patient/new-appointment"
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <PlusIcon className="h-5 w-5" />
@@ -311,7 +311,7 @@ export default function PatientAppointments() {
                   No se encontraron citas con los filtros aplicados
                 </p>
                 <Link
-                  to="/patient/appointments/new"
+                  to="/patient/new-appointment"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   <PlusIcon className="h-5 w-5" />

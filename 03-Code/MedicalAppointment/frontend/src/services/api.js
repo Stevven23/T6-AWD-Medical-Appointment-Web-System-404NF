@@ -271,6 +271,27 @@ export const prescriptionAPI = {
     api.delete(`/prescriptions/${id}`),
 };
 
+// ========== MESSAGES ==========
+export const messageAPI = {
+  getAll: () => 
+    api.get('/messages'),
+  
+  getConversations: () => 
+    api.get('/messages/conversations'),
+  
+  getConversation: (userId) => 
+    api.get(`/messages/conversations/${userId}`),
+  
+  send: (data) => 
+    api.post('/messages', data),
+  
+  markAsRead: (messageId) => 
+    api.patch(`/messages/${messageId}/read`),
+  
+  delete: (messageId) => 
+    api.delete(`/messages/${messageId}`),
+};
+
 // ========== REMINDERS ==========
 export const reminderAPI = {
   schedule: (data) => 

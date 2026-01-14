@@ -88,7 +88,7 @@ export default function PatientLayout({ children }) {
                   />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white">MediCare</h1>
+              <h1 className="text-2xl font-bold text-white">Clinica San Miguel</h1>
             </div>
           </div>
 
