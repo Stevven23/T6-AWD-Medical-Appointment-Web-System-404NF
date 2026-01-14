@@ -226,28 +226,28 @@ export const appointmentAPI = {
 // ========== MEDICAL RECORDS ==========
 export const medicalRecordAPI = {
   get: () => 
-    api.get('/medical-record'),
+    api.get('/medical-records'),
   
   getConsultationNotes: () => 
-    api.get('/medical-record/consultation-notes'),
+    api.get('/medical-records/consultation-notes'),
   
   getConsultationNoteByAppointment: (appointmentId) => 
-    api.get(`/medical-record/consultation-notes/${appointmentId}`),
+    api.get(`/medical-records/consultation-notes/${appointmentId}`),
   
   getSummary: () => 
-    api.get('/medical-record/summary'),
+    api.get('/medical-records/summary'),
   
   getLabReports: () => 
-    api.get('/medical-record/lab-reports'),
+    api.get('/medical-records/lab-reports'),
   
   getPatientHistory: () => 
-    api.get('/medical-record/consultation-notes'),
+    api.get('/medical-records/consultation-notes'),
   
   getRecentHistory: () => 
-    api.get('/medical-record/consultation-notes'),
+    api.get('/medical-records/consultation-notes'),
   
   getHealthSummary: () => 
-    api.get('/medical-record/summary'),
+    api.get('/medical-records/summary'),
 };
 
 // ========== LAB RESULTS ==========
@@ -270,6 +270,11 @@ export const labAPI = {
 
 // ========== PRESCRIPTIONS ==========
 export const prescriptionAPI = {
+  // Patient endpoints
+  getPatientPrescriptions: () => 
+    api.get('/prescriptions/patient'),
+  
+  // Doctor endpoints
   getAll: () => 
     api.get('/prescriptions'),
   

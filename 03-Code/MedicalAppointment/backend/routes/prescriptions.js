@@ -8,6 +8,9 @@ const { authMiddleware } = require('../middleware/auth');
 // Función para validar si el ID es un UUID válido
 const isUUID = (id) => /^[0-9a-fA-F-]{36}$/.test(id);
 
+// GET /api/prescriptions/patient - Obtener recetas del paciente logueado
+router.get('/patient', authMiddleware, prescriptionController.getPatientPrescriptions);
+
 // GET /api/doctors/prescriptions o /api/prescriptions - Obtener todas las recetas
 // Esta ruta debe ser ANTES de la ruta /:id para evitar conflictos de routing
 router.get('/', authMiddleware, prescriptionController.getAllPrescriptions);

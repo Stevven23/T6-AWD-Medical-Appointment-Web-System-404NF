@@ -257,6 +257,59 @@ const prescriptionController = {
             console.error('Error en deletePrescription:', error.message);
             res.status(500).json({ error: error.message });
         }
+    },
+
+    /**
+     * GET /api/prescriptions/patient
+     * Obtiene todas las recetas del paciente logueado
+     */
+    getPatientPrescriptions: async (req, res) => {
+        try {
+            const patientUserId = req.user?.id;
+            if (!patientUserId) {
+                return res.status(401).json({ error: 'Usuario no autenticado' });
+            }
+
+            const { data: prescriptions, error } = await supabase
+                .from('prescriptions')
+                .select(`
+                    id,
+                    diagnosis,
+                    medications,
+                    instructions,
+                    duration,
+                    created_at,
+                    updated_at,
+                    doctors!inner (
+                        id,
+                        users!inner (
+                            first_name,
+                            last_name
+                        ),
+                        specialties (
+                            name
+                        )
+                    )
+                `)
+                .eq('patient_user_id', patientUserId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            // Formatear respuesta con datos del doctor
+            const formattedPrescriptions = prescriptions?.map(p => ({
+                ...p,
+                doctor_first_name: p.doctors?.users?.first_name,
+                doctor_last_name: p.doctors?.users?.last_name,
+                specialty_name: p.doctors?.specialties?.name,
+                doctors: undefined // Remover objeto anidado
+            })) || [];
+
+            res.status(200).json(formattedPrescriptions);
+        } catch (error) {
+            console.error('Error en getPatientPrescriptions:', error.message);
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 
