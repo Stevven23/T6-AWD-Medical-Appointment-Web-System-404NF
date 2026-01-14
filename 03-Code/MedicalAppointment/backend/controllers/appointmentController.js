@@ -437,58 +437,71 @@ const appointmentController = {
       const { id } = req.params;
       const patientUserId = req.user.id;
 
-      console.log(`[CANCEL] Attempting to cancel appointment ${id} for user ${patientUserId}`);
+      console.log(`[CANCEL] User ${patientUserId} attempting to cancel appointment ${id}`);
 
       // Verificar que la cita existe y pertenece al paciente
       const { data: appointment, error: checkError } = await supabase
         .from('appointments')
-        .select('scheduled_start, status_id')
+        .select('id, scheduled_start, status_id, patient_user_id')
         .eq('id', id)
-        .eq('patient_user_id', patientUserId)
         .single();
 
       if (checkError) {
-        console.error('[CANCEL] Check error:', checkError);
-        return res.status(404).json({ error: 'Cita no encontrada' });
+        console.error('[CANCEL] Database error checking appointment:', checkError);
+        return res.status(500).json({ 
+          error: 'Error al verificar la cita',
+          details: checkError.message 
+        });
       }
 
       if (!appointment) {
-        console.error('[CANCEL] Appointment not found or does not belong to user');
+        console.error('[CANCEL] Appointment not found');
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
-      // Verificar que la cita sea futura
-      const appointmentDate = new Date(appointment.scheduled_start);
-      const now = new Date();
-
-      if (appointmentDate <= now) {
-        console.error('[CANCEL] Cannot cancel past appointment');
-        return res.status(400).json({ error: 'No se puede cancelar una cita pasada' });
+      if (appointment.patient_user_id !== patientUserId) {
+        console.error('[CANCEL] User does not own this appointment');
+        return res.status(403).json({ error: 'No tienes permiso para cancelar esta cita' });
       }
 
       // Actualizar estado a cancelled (status_id = 5)
+      console.log('[CANCEL] Updating appointment status to cancelled (5)');
       const { data: updatedData, error: updateError } = await supabase
         .from('appointments')
         .update({ 
-          status_id: 5, // cancelled
+          status_id: 5,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('patient_user_id', patientUserId)
         .select();
 
       if (updateError) {
-        console.error('[CANCEL] Update error:', updateError);
-        throw updateError;
+        console.error('[CANCEL] Database error updating appointment:', updateError);
+        return res.status(500).json({ 
+          error: 'Error al cancelar la cita',
+          details: updateError.message,
+          code: updateError.code
+        });
       }
 
-      console.log('[CANCEL] Success:', updatedData);
-      res.json({ message: 'Cita cancelada exitosamente', appointment: updatedData[0] });
+      if (!updatedData || updatedData.length === 0) {
+        console.error('[CANCEL] No rows updated');
+        return res.status(500).json({ error: 'No se pudo actualizar la cita' });
+      }
+
+      console.log('[CANCEL] Successfully cancelled appointment:', updatedData[0].id);
+      res.json({ 
+        message: 'Cita cancelada exitosamente', 
+        appointment: updatedData[0] 
+      });
 
     } catch (error) {
-      console.error('[CANCEL] Error al cancelar cita:', error);
+      console.error('[CANCEL] Unexpected error:', error);
       res.status(500).json({ 
         error: 'Error al cancelar la cita',
-        details: error.message 
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   },
