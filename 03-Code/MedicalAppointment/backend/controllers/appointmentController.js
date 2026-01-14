@@ -437,6 +437,8 @@ const appointmentController = {
       const { id } = req.params;
       const patientUserId = req.user.id;
 
+      console.log(`[CANCEL] Attempting to cancel appointment ${id} for user ${patientUserId}`);
+
       // Verificar que la cita existe y pertenece al paciente
       const { data: appointment, error: checkError } = await supabase
         .from('appointments')
@@ -445,7 +447,13 @@ const appointmentController = {
         .eq('patient_user_id', patientUserId)
         .single();
 
-      if (checkError || !appointment) {
+      if (checkError) {
+        console.error('[CANCEL] Check error:', checkError);
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (!appointment) {
+        console.error('[CANCEL] Appointment not found or does not belong to user');
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
@@ -454,25 +462,34 @@ const appointmentController = {
       const now = new Date();
 
       if (appointmentDate <= now) {
+        console.error('[CANCEL] Cannot cancel past appointment');
         return res.status(400).json({ error: 'No se puede cancelar una cita pasada' });
       }
 
       // Actualizar estado a cancelled (status_id = 5)
-      const { error: updateError } = await supabase
+      const { data: updatedData, error: updateError } = await supabase
         .from('appointments')
         .update({ 
           status_id: 5, // cancelled
           updated_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[CANCEL] Update error:', updateError);
+        throw updateError;
+      }
 
-      res.json({ message: 'Cita cancelada exitosamente' });
+      console.log('[CANCEL] Success:', updatedData);
+      res.json({ message: 'Cita cancelada exitosamente', appointment: updatedData[0] });
 
     } catch (error) {
-      console.error('Error al cancelar cita:', error);
-      res.status(500).json({ error: 'Error al cancelar la cita' });
+      console.error('[CANCEL] Error al cancelar cita:', error);
+      res.status(500).json({ 
+        error: 'Error al cancelar la cita',
+        details: error.message 
+      });
     }
   },
 
@@ -534,6 +551,8 @@ const appointmentController = {
       const patientUserId = req.user.id;
       const { new_scheduled_start, duration_minutes = 30 } = req.body;
 
+      console.log(`[RESCHEDULE] Attempting to reschedule appointment ${id} for user ${patientUserId}`);
+
       if (!new_scheduled_start) {
         return res.status(400).json({ error: 'La nueva fecha es requerida' });
       }
@@ -546,12 +565,19 @@ const appointmentController = {
         .eq('patient_user_id', patientUserId)
         .single();
 
-      if (checkError || !appointment) {
+      if (checkError) {
+        console.error('[RESCHEDULE] Check error:', checkError);
+        return res.status(404).json({ error: 'Cita no encontrada' });
+      }
+
+      if (!appointment) {
+        console.error('[RESCHEDULE] Appointment not found or does not belong to user');
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
       // Verificar que esté en estado válido (scheduled o confirmed)
       if (![1, 2].includes(appointment.status_id)) {
+        console.error('[RESCHEDULE] Invalid status:', appointment.status_id);
         return res.status(400).json({ 
           error: 'Solo se pueden reagendar citas programadas o confirmadas' 
         });
@@ -562,8 +588,10 @@ const appointmentController = {
       const endDate = new Date(startDate.getTime() + duration_minutes * 60000);
       const new_scheduled_end = endDate.toISOString();
 
+      console.log('[RESCHEDULE] New times:', { new_scheduled_start, new_scheduled_end });
+
       // Verificar disponibilidad
-      const { data: conflicts } = await supabase
+      const { data: conflicts, error: conflictError } = await supabase
         .from('appointments')
         .select('id')
         .eq('doctor_id', appointment.doctor_id)
@@ -571,33 +599,48 @@ const appointmentController = {
         .in('status_id', [1, 2])
         .or(`and(scheduled_start.lte.${new_scheduled_start},scheduled_end.gt.${new_scheduled_start}),and(scheduled_start.lt.${new_scheduled_end},scheduled_end.gte.${new_scheduled_end})`);
 
+      if (conflictError) {
+        console.error('[RESCHEDULE] Conflict check error:', conflictError);
+        throw conflictError;
+      }
+
       if (conflicts && conflicts.length > 0) {
+        console.error('[RESCHEDULE] Time slot conflict detected');
         return res.status(409).json({ 
           error: 'El nuevo horario no está disponible' 
         });
       }
 
       // Actualizar cita
-      const { error: updateError } = await supabase
+      const { data: updatedData, error: updateError } = await supabase
         .from('appointments')
         .update({
           scheduled_start: new_scheduled_start,
           scheduled_end: new_scheduled_end,
           updated_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[RESCHEDULE] Update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('[RESCHEDULE] Success:', updatedData);
       res.json({
         message: 'Cita reagendada exitosamente',
+        appointment: updatedData[0],
         new_scheduled_start,
         new_scheduled_end
       });
 
     } catch (error) {
-      console.error('Error al reagendar cita:', error);
-      res.status(500).json({ error: 'Error al reagendar la cita' });
+      console.error('[RESCHEDULE] Error al reagendar cita:', error);
+      res.status(500).json({ 
+        error: 'Error al reagendar la cita',
+        details: error.message 
+      });
     }
   },
 
