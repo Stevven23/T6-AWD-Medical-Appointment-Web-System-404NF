@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // Proxy /api requests to the LOCAL backend during development
       '/api': {
-        target: 'http://localhost:3000' || 'https://medical-appointment-backend-2xx0.onrender.com',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
@@ -20,4 +20,8 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  define: {
+    // Expose env variables to the app
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL)
+  }
 });
