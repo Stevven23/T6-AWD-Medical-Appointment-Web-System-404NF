@@ -238,6 +238,21 @@ export const medicalRecordAPI = {
     api.get('/medical-record/lab-reports'),
 };
 
+// ========== LAB RESULTS ==========
+export const labAPI = {
+  getAll: () => 
+    api.get('/medical-record/lab-reports'),
+  
+  getById: (id) => 
+    api.get(`/medical-record/lab-reports/${id}`),
+  
+  download: (id) => 
+    api.get(`/medical-record/lab-reports/${id}/download`, { responseType: 'blob' }),
+  
+  downloadAll: () => 
+    api.get('/medical-record/lab-reports/download-all', { responseType: 'blob' }),
+};
+
 // ========== PRESCRIPTIONS ==========
 export const prescriptionAPI = {
   getAll: () => 
