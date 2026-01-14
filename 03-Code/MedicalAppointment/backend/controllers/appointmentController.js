@@ -464,12 +464,12 @@ const appointmentController = {
         return res.status(403).json({ error: 'No tienes permiso para cancelar esta cita' });
       }
 
-      // Actualizar estado a cancelled (status_id = 5)
-      console.log('[CANCEL] Updating appointment status to cancelled (5)');
+      // Actualizar estado a cancelled (status_id = 3)
+      console.log('[CANCEL] Updating appointment status to cancelled (3)');
       const { data: updatedData, error: updateError } = await supabase
         .from('appointments')
         .update({ 
-          status_id: 5,
+          status_id: 3,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)

@@ -195,9 +195,9 @@ const medicalRecordController = {
       if (aptError) throw aptError;
 
       const summary = {
-        total_completed: appointments.filter(a => a.status_id === 4).length,
-        upcoming: appointments.filter(a => a.status_id === 1 || a.status_id === 2).length,
-        cancelled: appointments.filter(a => a.status_id === 5).length
+        total_completed: appointments.filter(a => a.status_id === 2).length,
+        upcoming: appointments.filter(a => a.status_id === 1).length,
+        cancelled: appointments.filter(a => a.status_id === 3).length
       };
 
       // Última consulta completada

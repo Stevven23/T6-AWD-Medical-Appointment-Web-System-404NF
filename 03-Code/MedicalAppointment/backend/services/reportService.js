@@ -73,10 +73,10 @@ const reportService = {
       }
 
       // Contar por estado
-      const completed = appointments.filter(a => a.status_id === 3).length;
-      const cancelled = appointments.filter(a => a.status_id === 4).length;
-      const rescheduled = appointments.filter(a => a.status_id === 5).length;
-      const noShow = appointments.filter(a => a.status_id === 6).length;
+      const completed = appointments.filter(a => a.status_id === 2).length;
+      const cancelled = appointments.filter(a => a.status_id === 3).length;
+      const rescheduled = 0; // No hay estado de reagendada en la BD
+      const noShow = appointments.filter(a => a.status_id === 4).length;
 
       // Calcular tasa de asistencia (AR)
       // AR = (completadas / (total - canceladas)) * 100
@@ -301,9 +301,9 @@ const reportService = {
 
       const modifiedAppointments = appointments.map(apt => ({
         fechaOriginal: new Date(apt.scheduled_start).toISOString().split('T')[0],
-        nuevaFecha: apt.status_id === 5 ? new Date(apt.updated_at).toISOString().split('T')[0] : null,
+        nuevaFecha: apt.updated_at ? new Date(apt.updated_at).toISOString().split('T')[0] : null,
         paciente: apt.users ? `${apt.users.first_name} ${apt.users.last_name}` : 'Desconocido',
-        motivo: apt.status_id === 4 ? 'Cancelada' : 'Reprogramada',
+        motivo: apt.status_id === 3 ? 'Cancelada' : 'Reprogramada',
         razon: apt.reason || 'No especificada'
       }));
 
