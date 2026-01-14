@@ -73,12 +73,16 @@ export default function NewAppointment() {
   const loadAvailableSlots = async () => {
     try {
       setLoading(true);
-      const response = await appointmentAPI.getAvailableSlots({
-        doctor_id: searchParams.doctor_id,
-        date: searchParams.date,
-      });
-      setAvailableSlots(response.data);
+      const response = await appointmentAPI.getAvailableSlots(
+        searchParams.doctor_id,
+        searchParams.date
+      );
+      // El backend devuelve { slots: [...] }
+      const slots = response.data.slots || response.data || [];
+      console.log('Available slots:', slots);
+      setAvailableSlots(Array.isArray(slots) ? slots : []);
     } catch (error) {
+      console.error('Error loading slots:', error);
       showNotification('Error al cargar horarios disponibles', 'error');
       setAvailableSlots([]);
     } finally {
@@ -116,16 +120,28 @@ export default function NewAppointment() {
 
     try {
       setLoading(true);
-      await appointmentAPI.create({
+      
+      // Construir scheduled_start combinando fecha y hora
+      const scheduledStart = `${searchParams.date}T${selectedSlot.start}:00`;
+      
+      console.log('Creating appointment with:', {
         doctor_id: searchParams.doctor_id,
-        specialty_id: searchParams.specialty_id,
-        date: selectedSlot.datetime,
+        scheduled_start: scheduledStart,
         reason: appointmentDetails.reason,
         notes: appointmentDetails.notes,
       });
+      
+      await appointmentAPI.create({
+        doctor_id: searchParams.doctor_id,
+        scheduled_start: scheduledStart,
+        reason: appointmentDetails.reason,
+        notes: appointmentDetails.notes,
+      });
+      
       showNotification('Cita agendada exitosamente', 'success');
       setTimeout(() => navigate('/patient/appointments'), 2000);
     } catch (error) {
+      console.error('Error creating appointment:', error);
       showNotification(
         error.response?.data?.error || 'Error al agendar la cita',
         'error'
@@ -318,7 +334,7 @@ export default function NewAppointment() {
                           className="px-4 py-3 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all font-medium text-center"
                         >
                           <ClockIcon className="h-5 w-5 mx-auto mb-1" />
-                          {formatTime(slot.time)}
+                          {formatTime(slot.start)}
                         </button>
                       ))}
                     </div>
@@ -367,7 +383,7 @@ export default function NewAppointment() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Hora</p>
                       <p className="font-semibold text-gray-900">
-                        {selectedSlot && formatTime(selectedSlot.time)}
+                        {selectedSlot && formatTime(selectedSlot.start)}
                       </p>
                     </div>
                   </div>

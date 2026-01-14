@@ -36,33 +36,36 @@ export default function PatientDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [appointmentsRes, statsRes, historyRes, healthRes] = await Promise.all([
-        appointmentAPI.getPatientAppointments(),
-        appointmentAPI.getPatientStats(),
-        medicalRecordAPI.getRecentHistory(),
-        medicalRecordAPI.getHealthSummary(),
-      ]);
+      // Solo cargar las citas, el resto calcular desde ellas o dejar vacío
+      const appointmentsRes = await appointmentAPI.getPatientAppointments();
+      
+      const appointments = appointmentsRes.data || [];
+      const now = new Date();
 
-      const upcoming = appointmentsRes.data.filter(
-        (apt) => new Date(apt.date) >= new Date() && apt.status !== 'cancelled'
-      );
-      const completed = appointmentsRes.data.filter(
-        (apt) => apt.status === 'completed'
+      const upcoming = appointments
+        .filter(
+          (apt) => new Date(apt.scheduled_start) >= now && apt.status_code !== 'cancelled'
+        )
+        .sort((a, b) => new Date(a.scheduled_start) - new Date(b.scheduled_start));
+
+      const completed = appointments.filter(
+        (apt) => apt.status_code === 'completed'
       );
 
       setStats({
         upcomingAppointments: upcoming.length,
         completedAppointments: completed.length,
-        pendingResults: statsRes.data.pendingResults || 0,
-        activePrescriptions: statsRes.data.activePrescriptions || 0,
+        pendingResults: 0,
+        activePrescriptions: 0,
       });
 
       if (upcoming.length > 0) {
         setNextAppointment(upcoming[0]);
       }
 
-      setRecentHistory(historyRes.data.slice(0, 1));
-      setHealthSummary(healthRes.data);
+      // Dejar history vacío por ahora
+      setRecentHistory([]);
+      setHealthSummary(null);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -163,19 +166,19 @@ export default function PatientDashboard() {
                   <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-600">
                     <p className="text-sm text-gray-600 mb-2">📅 Fecha y Hora</p>
                     <p className="font-bold text-gray-900 text-lg">
-                      {formatDateTime(nextAppointment.date)}
+                      {formatDateTime(nextAppointment.scheduled_start)}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4">
                       <p className="text-xs text-gray-600 mb-1">Doctor</p>
                       <p className="font-semibold text-gray-900">
-                        Dr. {nextAppointment.doctor?.first_name} {nextAppointment.doctor?.last_name}
+                        Dr. {nextAppointment.doctor_first_name} {nextAppointment.doctor_last_name}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <p className="text-xs text-gray-600 mb-1">Especialidad</p>
-                      <p className="font-semibold text-gray-900">{nextAppointment.specialty?.name}</p>
+                      <p className="font-semibold text-gray-900">{nextAppointment.specialty_name}</p>
                     </div>
                   </div>
                   {nextAppointment.reason && (

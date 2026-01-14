@@ -6,17 +6,15 @@ import {
   CalendarIcon,
   ClockIcon,
   XMarkIcon,
-  PencilIcon,
   PlusIcon,
-  FunnelIcon,
-  CheckCircleIcon,
-  XCircleIcon,
+  MapPinIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline';
 
 export default function PatientAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -30,7 +28,7 @@ export default function PatientAppointments() {
     try {
       setLoading(true);
       const response = await appointmentAPI.getPatientAppointments();
-      setAppointments(response.data);
+      setAppointments(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       showNotification('Error al cargar las citas', 'error');
       console.error('Error loading appointments:', error);
@@ -66,11 +64,11 @@ export default function PatientAppointments() {
 
   const getStatusBadge = (status) => {
     const styles = {
-      scheduled: 'bg-blue-100 text-blue-800',
-      confirmed: 'bg-green-100 text-green-800',
-      completed: 'bg-gray-100 text-gray-800',
-      cancelled: 'bg-red-100 text-red-800',
-      pending: 'bg-yellow-100 text-yellow-800',
+      scheduled: 'bg-blue-500 text-white',
+      confirmed: 'bg-green-500 text-white',
+      completed: 'bg-gray-500 text-white',
+      cancelled: 'bg-red-500 text-white',
+      pending: 'bg-yellow-500 text-white',
     };
 
     const labels = {
@@ -83,8 +81,8 @@ export default function PatientAppointments() {
 
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-          styles[status] || 'bg-gray-100 text-gray-800'
+        className={`px-3 py-1 rounded-md text-xs font-bold ${
+          styles[status] || 'bg-gray-500 text-white'
         }`}
       >
         {labels[status] || status}
@@ -92,35 +90,70 @@ export default function PatientAppointments() {
     );
   };
 
-  const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString('es-EC', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return {
+      day: date.getDate(),
+      month: date.toLocaleString('es-EC', { month: 'short' }).toUpperCase(),
+      time: date.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' }),
+      fullDate: date.toLocaleDateString('es-EC', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+    };
   };
 
-  const filteredAppointments = appointments.filter((apt) => {
-    const matchesStatus = !statusFilter || apt.status === statusFilter;
-    const matchesSearch =
-      !searchTerm ||
-      `${apt.doctor?.first_name} ${apt.doctor?.last_name}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      apt.specialty?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const filterAppointments = () => {
+    const now = new Date();
+    let filtered = appointments;
 
-  const upcomingAppointments = filteredAppointments.filter(
-    (apt) => new Date(apt.date) >= new Date() && apt.status !== 'cancelled'
-  );
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (apt) =>
+          `${apt.doctor_first_name} ${apt.doctor_last_name}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          apt.specialty_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
 
-  const pastAppointments = filteredAppointments.filter(
-    (apt) => new Date(apt.date) < new Date() || apt.status === 'cancelled'
-  );
+    // Filter by tab
+    switch (activeTab) {
+      case 'upcoming':
+        filtered = filtered.filter(
+          (apt) => new Date(apt.scheduled_start) >= now && apt.status_code !== 'cancelled'
+        );
+        break;
+      case 'past':
+        filtered = filtered.filter(
+          (apt) => new Date(apt.scheduled_start) < now && apt.status_code !== 'cancelled'
+        );
+        break;
+      case 'cancelled':
+        filtered = filtered.filter((apt) => apt.status_code === 'cancelled');
+        break;
+      default:
+        break;
+    }
+
+    // Sort by date: newest first for 'all' tab, oldest first for others
+    if (activeTab === 'all') {
+      return filtered.sort((a, b) => new Date(b.scheduled_start) - new Date(a.scheduled_start));
+    }
+    return filtered.sort((a, b) => new Date(a.scheduled_start) - new Date(b.scheduled_start));
+  };
+
+  const filteredAppointments = filterAppointments();
+
+  const tabs = [
+    { id: 'all', label: 'Todas' },
+    { id: 'upcoming', label: 'Próximas' },
+    { id: 'past', label: 'Pasadas' },
+    { id: 'cancelled', label: 'Canceladas' },
+  ];
 
   if (loading) {
     return (
@@ -147,188 +180,195 @@ export default function PatientAppointments() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mis Citas</h1>
-              <p className="text-gray-600 mt-1">
-                Gestiona tus citas médicas programadas
-              </p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Mis Citas</h1>
+                <p className="text-gray-600 mt-1">Gestiona tus citas médicas programadas</p>
+              </div>
+              <Link
+                to="/patient/new-appointment"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                <PlusIcon className="h-5 w-5" />
+                Nueva Cita
+              </Link>
             </div>
-            <Link
-              to="/patient/new-appointment"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              <PlusIcon className="h-5 w-5" />
-              Nueva Cita
-            </Link>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Buscar por doctor o especialidad..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          {/* Tabs Navigation */}
+          <div className="border-b border-gray-200 bg-gray-50">
+            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`${
+                    activeTab === tab.id
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition-colors`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Search Bar */}
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                placeholder="Buscar por doctor o especialidad..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
-                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              </div>
+              </svg>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todos los Estados</option>
-              <option value="scheduled">Programada</option>
-              <option value="confirmed">Confirmada</option>
-              <option value="completed">Completada</option>
-              <option value="cancelled">Cancelada</option>
-              <option value="pending">Pendiente</option>
-            </select>
           </div>
 
-          <div className="space-y-6">
-            {upcomingAppointments.length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Próximas Citas
-                </h2>
-                <div className="space-y-4">
-                  {upcomingAppointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-blue-50"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                Dr. {appointment.doctor?.first_name}{' '}
-                                {appointment.doctor?.last_name}
-                              </h3>
-                              <p className="text-gray-600 text-sm">
-                                {appointment.specialty?.name}
-                              </p>
-                            </div>
-                            {getStatusBadge(appointment.status)}
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <CalendarIcon className="h-5 w-5 text-blue-600" />
-                              <span className="text-sm">
-                                {formatDateTime(appointment.date)}
-                              </span>
-                            </div>
-                            {appointment.reason && (
-                              <div className="flex items-center gap-2 text-gray-700">
-                                <ClockIcon className="h-5 w-5 text-blue-600" />
-                                <span className="text-sm">
-                                  {appointment.reason}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {appointment.status !== 'cancelled' &&
-                            appointment.status !== 'completed' && (
-                              <button
-                                onClick={() => openCancelModal(appointment)}
-                                className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm"
-                              >
-                                Cancelar
-                              </button>
-                            )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {pastAppointments.length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Historial de Citas
-                </h2>
-                <div className="space-y-4">
-                  {pastAppointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gray-50"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                Dr. {appointment.doctor?.first_name}{' '}
-                                {appointment.doctor?.last_name}
-                              </h3>
-                              <p className="text-gray-600 text-sm">
-                                {appointment.specialty?.name}
-                              </p>
-                            </div>
-                            {getStatusBadge(appointment.status)}
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <CalendarIcon className="h-5 w-5 text-gray-600" />
-                              <span className="text-sm">
-                                {formatDateTime(appointment.date)}
-                              </span>
-                            </div>
-                            {appointment.reason && (
-                              <div className="flex items-center gap-2 text-gray-700">
-                                <ClockIcon className="h-5 w-5 text-gray-600" />
-                                <span className="text-sm">
-                                  {appointment.reason}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {filteredAppointments.length === 0 && (
+          {/* Appointments List */}
+          <div className="p-6">
+            {filteredAppointments.length === 0 ? (
               <div className="text-center py-12">
                 <CalendarIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No hay citas
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay citas</h3>
                 <p className="text-gray-600 mb-6">
-                  No se encontraron citas con los filtros aplicados
+                  {activeTab === 'all'
+                    ? 'No tienes citas programadas'
+                    : `No hay citas ${tabs.find((t) => t.id === activeTab)?.label.toLowerCase()}`}
                 </p>
                 <Link
                   to="/patient/new-appointment"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
                   <PlusIcon className="h-5 w-5" />
                   Agendar Nueva Cita
                 </Link>
               </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAppointments.map((appointment) => {
+                  const dateInfo = formatDate(appointment.scheduled_start);
+                  const isPast = new Date(appointment.scheduled_start) < new Date();
+
+                  return (
+                    <div
+                      key={appointment.id}
+                      className="border border-gray-200 rounded-xl hover:shadow-md transition-all overflow-hidden bg-white"
+                    >
+                      <div className="flex flex-col md:flex-row">
+                        {/* Calendar Date Box */}
+                        <div className={`flex-shrink-0 w-full md:w-32 flex md:flex-col items-center justify-center p-6 md:border-r border-gray-200 ${
+                          isPast ? 'bg-gray-100' : 'bg-gradient-to-br from-green-100 to-green-200'
+                        }`}>
+                          <div className="text-center">
+                            <div className={`text-5xl font-bold ${isPast ? 'text-gray-600' : 'text-green-700'}`}>
+                              {dateInfo.day}
+                            </div>
+                            <div className={`text-sm font-semibold mt-1 ${isPast ? 'text-gray-500' : 'text-green-600'}`}>
+                              {dateInfo.month}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Appointment Details */}
+                        <div className="flex-1 p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-gray-100 p-2 rounded-full">
+                                <UserIcon className="h-6 w-6 text-gray-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900">
+                                  Dr. {appointment.doctor_first_name} {appointment.doctor_last_name}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {appointment.specialty_name}
+                                </p>
+                              </div>
+                            </div>
+                            {getStatusBadge(appointment.status_code)}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <div className="bg-blue-100 p-2 rounded-lg">
+                                <ClockIcon className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Hora</p>
+                                <p className="font-semibold text-sm">{dateInfo.time}</p>
+                              </div>
+                            </div>
+
+                            {appointment.location && (
+                              <div className="flex items-center gap-2 text-gray-700">
+                                <div className="bg-purple-100 p-2 rounded-lg">
+                                  <MapPinIcon className="h-4 w-4 text-purple-600" />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Consultorio</p>
+                                  <p className="font-semibold text-sm">{appointment.location}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {appointment.reason && (
+                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                              <p className="text-xs text-gray-600 mb-1">
+                                <span className="font-semibold">Motivo:</span>
+                              </p>
+                              <p className="text-sm text-gray-800">{appointment.reason}</p>
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          {appointment.status_code !== 'cancelled' &&
+                            appointment.status_code !== 'completed' &&
+                            !isPast && (
+                              <div className="mt-4 flex gap-3">
+                                <button
+                                  onClick={() => openCancelModal(appointment)}
+                                  className="px-4 py-2 border-2 border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-semibold text-sm"
+                                >
+                                  Cancelar Cita
+                                </button>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
 
+        {/* Cancel Modal */}
         {showCancelModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl max-w-md w-full p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Confirmar Cancelación
-                </h3>
+                <h3 className="text-xl font-bold text-gray-900">Confirmar Cancelación</h3>
                 <button
                   onClick={() => setShowCancelModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -339,12 +379,8 @@ export default function PatientAppointments() {
               <p className="text-gray-600 mb-6">
                 ¿Está seguro que desea cancelar la cita con{' '}
                 <strong>
-                  Dr. {selectedAppointment?.doctor?.first_name}{' '}
-                  {selectedAppointment?.doctor?.last_name}
-                </strong>{' '}
-                programada para el{' '}
-                <strong>
-                  {selectedAppointment && formatDateTime(selectedAppointment.date)}
+                  Dr. {selectedAppointment?.doctor_first_name}{' '}
+                  {selectedAppointment?.doctor_last_name}
                 </strong>
                 ?
               </p>
@@ -353,13 +389,13 @@ export default function PatientAppointments() {
                   onClick={() => setShowCancelModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
                 >
-                  No, mantener cita
+                  No, mantener
                 </button>
                 <button
                   onClick={handleCancelAppointment}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                 >
-                  Sí, cancelar cita
+                  Sí, cancelar
                 </button>
               </div>
             </div>

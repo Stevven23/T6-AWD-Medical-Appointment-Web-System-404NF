@@ -174,6 +174,9 @@ export const appointmentAPI = {
   getPatientAppointments: () => 
     api.get('/appointments/patient'),
   
+  getPatientStats: () => 
+    api.get('/appointments/patient/stats'),
+  
   getById: (id) => 
     api.get(`/appointments/patient/${id}`),
   
@@ -236,11 +239,23 @@ export const medicalRecordAPI = {
   
   getLabReports: () => 
     api.get('/medical-record/lab-reports'),
+  
+  getPatientHistory: () => 
+    api.get('/medical-record/consultation-notes'),
+  
+  getRecentHistory: () => 
+    api.get('/medical-record/consultation-notes'),
+  
+  getHealthSummary: () => 
+    api.get('/medical-record/summary'),
 };
 
 // ========== LAB RESULTS ==========
 export const labAPI = {
   getAll: () => 
+    api.get('/medical-record/lab-reports'),
+  
+  getPatientResults: () => 
     api.get('/medical-record/lab-reports'),
   
   getById: (id) => 
@@ -256,6 +271,9 @@ export const labAPI = {
 // ========== PRESCRIPTIONS ==========
 export const prescriptionAPI = {
   getAll: () => 
+    api.get('/prescriptions'),
+  
+  getPatientPrescriptions: () => 
     api.get('/prescriptions'),
   
   create: (data) => 
@@ -274,6 +292,9 @@ export const prescriptionAPI = {
 // ========== MESSAGES ==========
 export const messageAPI = {
   getAll: () => 
+    api.get('/messages'),
+  
+  getPatientMessages: () => 
     api.get('/messages'),
   
   getConversations: () => 

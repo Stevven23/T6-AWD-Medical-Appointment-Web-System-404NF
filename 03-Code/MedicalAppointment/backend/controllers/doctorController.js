@@ -45,7 +45,69 @@ const doctorController = {
     },
 
     getDoctorsBySpecialty: async (req, res) => {
-        res.json([]);
+        try {
+            const { specialty_id } = req.params;
+
+            if (!specialty_id) {
+                return res.status(400).json({ error: 'ID de especialidad requerido' });
+            }
+
+            const { data, error } = await supabase
+                .from('doctors')
+                .select(`
+                    id,
+                    professional_id,
+                    specialty_id,
+                    user_id,
+                    bio,
+                    active,
+                    users!inner (
+                        id,
+                        first_name,
+                        last_name,
+                        email,
+                        phone_number,
+                        is_active
+                    ),
+                    specialties (
+                        id,
+                        name
+                    )
+                `)
+                .eq('specialty_id', specialty_id)
+                .eq('users.is_active', true)
+                .eq('active', true);
+
+            if (error) {
+                console.error('Error fetching doctors by specialty:', error);
+                return res.status(500).json({ error: 'Error al obtener doctores', details: error.message });
+            }
+
+            if (!data || data.length === 0) {
+                return res.json([]);
+            }
+
+            // Formatear respuesta
+            const doctors = data.map(doc => ({
+                id: doc.id,
+                professional_id: doc.professional_id,
+                user_id: doc.user_id,
+                first_name: doc.users.first_name,
+                last_name: doc.users.last_name,
+                email: doc.users.email,
+                phone_number: doc.users.phone_number,
+                specialty_id: doc.specialty_id,
+                specialty_name: doc.specialties?.name || '',
+                bio: doc.bio,
+                active: doc.active,
+                is_active: doc.users.is_active
+            }));
+
+            res.json(doctors);
+        } catch (error) {
+            console.error('Error in getDoctorsBySpecialty:', error);
+            res.status(500).json({ error: 'Error al obtener doctores', details: error.message });
+        }
     },
 
     updateDoctorStatus: async (req, res) => {

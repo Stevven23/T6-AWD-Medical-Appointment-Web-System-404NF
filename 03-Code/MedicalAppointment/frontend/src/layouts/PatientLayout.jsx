@@ -70,25 +70,14 @@ export default function PatientLayout({ children }) {
       {/* Sidebar para Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-gradient-to-b from-blue-600 to-blue-700 pt-5 pb-4 overflow-y-auto">
-          {/* Logo */}
+          {/* Logo con Imagen - MÁS GRANDE */}
           <div className="flex items-center justify-center flex-shrink-0 px-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-xl shadow-lg">
-                <svg
-                  className="h-8 w-8 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-white">Clinica San Miguel</h1>
+            <div className="bg-white p-5 rounded-2xl shadow-lg w-full">
+              <img 
+                src="/logo.png" 
+                alt="Clínica San Miguel" 
+                className="h-20 w-full object-contain"
+              />
             </div>
           </div>
 
@@ -156,22 +145,11 @@ export default function PatientLayout({ children }) {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white shadow-sm">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <svg
-                className="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">MediCare</h1>
+            <img 
+              src="/logo.png" 
+              alt="Clínica San Miguel" 
+              className="h-10 object-contain"
+            />
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -195,6 +173,17 @@ export default function PatientLayout({ children }) {
           />
           <aside className="fixed inset-y-0 left-0 flex w-64 flex-col z-50 lg:hidden">
             <div className="flex flex-col flex-grow bg-gradient-to-b from-blue-600 to-blue-700 pt-20 pb-4 overflow-y-auto">
+              {/* Logo con Imagen en Mobile - MÁS GRANDE */}
+              <div className="flex items-center justify-center flex-shrink-0 px-4 mb-6">
+                <div className="bg-white p-4 rounded-2xl shadow-lg w-full">
+                  <img 
+                    src="/logo.png" 
+                    alt="Clínica San Miguel" 
+                    className="h-16 w-full object-contain"
+                  />
+                </div>
+              </div>
+
               {/* User Info */}
               <div className="flex items-center px-4 mb-6">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 w-full border border-white/30">
