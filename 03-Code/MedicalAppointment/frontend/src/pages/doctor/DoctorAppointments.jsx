@@ -22,11 +22,23 @@ export default function DoctorAppointments() {
       setLoading(true);
       const response = await appointmentAPI.getDoctorAppointments();
       const appointmentsData = Array.isArray(response) ? response : response.data || [];
-      setAppointments(appointmentsData);
-
-      // Buscar la próxima cita más cercana
+      
+      // Filtrar citas con el mismo criterio que "Citas Agendadas Recientemente"
+      // Próximas 7 días + últimas 24h
       const now = new Date();
-      const upcomingAppointments = appointmentsData
+      const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      const filteredAppointments = appointmentsData.filter(apt => {
+        const aptDate = new Date(apt.scheduled_start);
+        return (aptDate >= now && aptDate <= sevenDaysFromNow) || 
+               (aptDate >= oneDayAgo && aptDate < now);
+      });
+      
+      setAppointments(filteredAppointments);
+
+      // Buscar la próxima cita más cercana para ir a esa semana
+      const upcomingAppointments = filteredAppointments
         .filter(apt => new Date(apt.scheduled_start) >= now)
         .sort((a, b) => new Date(a.scheduled_start) - new Date(b.scheduled_start));
 
@@ -85,6 +97,7 @@ export default function DoctorAppointments() {
     return new Date(dateTime).toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false, // Forzar formato 24 horas
     });
   };
 
@@ -100,7 +113,7 @@ export default function DoctorAppointments() {
   const weekStart = weekDays[0];
   const weekEnd = weekDays[6];
 
-  const workingHours = Array.from({ length: 12 }, (_, i) => i + 7); // 7 AM to 6 PM
+  const workingHours = Array.from({ length: 10 }, (_, i) => i + 8); // 8 AM to 5 PM
 
   return (
     <DoctorLayout>

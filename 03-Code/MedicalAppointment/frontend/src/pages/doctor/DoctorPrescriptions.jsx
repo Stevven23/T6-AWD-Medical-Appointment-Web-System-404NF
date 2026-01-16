@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import { doctorAPI, prescriptionAPI } from '../../services/api';
-import { TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 export default function DoctorPrescriptions() {
   const [patients, setPatients] = useState([]);
@@ -31,26 +31,47 @@ export default function DoctorPrescriptions() {
       
       // Función para calcular edad
       const calculateAge = (dateOfBirth) => {
-        if (!dateOfBirth) return null;
-        const today = new Date();
-        const birthDate = new Date(dateOfBirth);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
+        if (!dateOfBirth) {
+          console.warn('No date_of_birth provided');
+          return null;
         }
-        return age;
+        try {
+          const today = new Date();
+          const birthDate = new Date(dateOfBirth);
+          
+          // Validar que la fecha sea válida
+          if (isNaN(birthDate.getTime())) {
+            console.warn('Invalid date format:', dateOfBirth);
+            return null;
+          }
+          
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          console.log(`Calculated age for ${dateOfBirth}: ${age}`);
+          return age;
+        } catch (err) {
+          console.error('Error calculating age:', err);
+          return null;
+        }
       };
       
       // Mapear el formato de respuesta a lo que espera el componente
-      const mappedPatients = allPatients.map(p => ({
-        patient_id: p.id || p.user_id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        cedula: p.cedula,
-        age: calculateAge(p.date_of_birth)
-      }));
+      const mappedPatients = allPatients.map(p => {
+        const age = calculateAge(p.date_of_birth);
+        return {
+          patient_id: p.id || p.user_id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          cedula: p.cedula,
+          age: age,
+          date_of_birth: p.date_of_birth
+        };
+      });
       
+      console.log('Mapped patients:', mappedPatients);
       setPatients(mappedPatients);
     } catch (err) {
       console.error('Error fetching patients:', err);
@@ -119,6 +140,201 @@ export default function DoctorPrescriptions() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const downloadPrescriptionPDF = async (prescription) => {
+    try {
+      // Cargar jsPDF desde CDN
+      if (!window.jspdf) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => generatePDF(prescription);
+        document.body.appendChild(script);
+      } else {
+        generatePDF(prescription);
+      }
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      showNotification('Error al generar PDF', 'error');
+    }
+  };
+
+  const generatePDF = (prescription) => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 20;
+
+    // Colores corporativos
+    const primaryColor = [41, 128, 185]; // Azul
+    const secondaryColor = [52, 73, 94]; // Gris oscuro
+    const accentColor = [46, 204, 113]; // Verde
+
+    // Encabezado con fondo
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 45, 'F');
+
+    // Logo/Nombre de la clínica
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(24);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('CLÍNICA SAN MIGUEL', margin, 20);
+    
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text('Centro Médico Especializado', margin, 28);
+    pdf.text('Tel: (02) 2XXX-XXXX | Email: info@clinicasanmiguel.ec', margin, 34);
+
+    // Título del documento
+    y = 55;
+    pdf.setTextColor(...secondaryColor);
+    pdf.setFontSize(18);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('RECETA MÉDICA', margin, y);
+    
+    // Línea decorativa
+    y += 3;
+    pdf.setDrawColor(...accentColor);
+    pdf.setLineWidth(1);
+    pdf.line(margin, y, pageWidth - margin, y);
+
+    // Información del paciente
+    y += 12;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
+    
+    y += 8;
+    pdf.setTextColor(...secondaryColor);
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DATOS DEL PACIENTE', margin + 5, y);
+    
+    y += 7;
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Paciente: ${selectedPatient.first_name} ${selectedPatient.last_name}`, margin + 5, y);
+    
+    y += 6;
+    pdf.text(`Cédula: ${selectedPatient.cedula || 'N/A'}`, margin + 5, y);
+
+    // Información del médico
+    y += 12;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(margin, y, pageWidth - 2 * margin, 20, 'F');
+    
+    y += 8;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DATOS DEL MÉDICO', margin + 5, y);
+    
+    y += 6;
+    pdf.setFont(undefined, 'normal');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    pdf.text(`Médico: Dr. ${user.first_name} ${user.last_name}`, margin + 5, y);
+
+    // Contenido de la receta
+    y += 15;
+    
+    // Diagnóstico
+    if (prescription.diagnosis) {
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(...primaryColor);
+      pdf.text('DIAGNÓSTICO', margin, y);
+      y += 7;
+      
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const diagLines = pdf.splitTextToSize(prescription.diagnosis, pageWidth - 2 * margin - 10);
+      diagLines.forEach(line => {
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(line, margin + 5, y);
+        y += 6;
+      });
+      y += 5;
+    }
+
+    // Medicamentos
+    if (prescription.medications) {
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(...primaryColor);
+      pdf.text('MEDICAMENTOS PRESCRITOS', margin, y);
+      y += 7;
+      
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const medLines = pdf.splitTextToSize(prescription.medications, pageWidth - 2 * margin - 10);
+      medLines.forEach(line => {
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(line, margin + 5, y);
+        y += 6;
+      });
+      y += 5;
+    }
+
+    // Instrucciones
+    if (prescription.instructions) {
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(...primaryColor);
+      pdf.text('INSTRUCCIONES', margin, y);
+      y += 7;
+      
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const instLines = pdf.splitTextToSize(prescription.instructions, pageWidth - 2 * margin - 10);
+      instLines.forEach(line => {
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(line, margin + 5, y);
+        y += 6;
+      });
+      y += 5;
+    }
+
+    // Duración
+    if (prescription.duration) {
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(...primaryColor);
+      pdf.text('DURACIÓN DEL TRATAMIENTO', margin, y);
+      y += 7;
+      
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(prescription.duration, margin + 5, y);
+      y += 6;
+    }
+
+    // Pie de página
+    y = pdf.internal.pageSize.getHeight() - 30;
+    pdf.setTextColor(150, 150, 150);
+    pdf.setFontSize(9);
+    pdf.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, margin, y);
+    pdf.text('Receta válida por 30 días a partir de la fecha de emisión', margin, y + 6);
+
+    // Descargar PDF
+    const filename = `Receta_${selectedPatient.first_name}_${selectedPatient.last_name}_${new Date().getTime()}.pdf`;
+    pdf.save(filename);
+    showNotification('PDF descargado exitosamente', 'success');
+  };
+
   return (
     <DoctorLayout>
       <div className="space-y-6">
@@ -156,7 +372,9 @@ export default function DoctorPrescriptions() {
                       {patient.first_name} {patient.last_name}
                     </h4>
                     <p className="text-sm text-gray-600">{patient.cedula}</p>
-                    <p className="text-xs text-gray-500 mt-2">{patient.age || 0} años</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {patient.age !== null && patient.age !== undefined ? `${patient.age} años` : 'Edad no registrada'}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -212,12 +430,21 @@ export default function DoctorPrescriptions() {
                           <button
                             onClick={() => setSelectedPrescription(prescription)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Ver detalles"
                           >
                             <EyeIcon className="w-5 h-5" />
                           </button>
                           <button
+                            onClick={() => downloadPrescriptionPDF(prescription)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                            title="Descargar PDF"
+                          >
+                            <ArrowDownTrayIcon className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => deletePrescription(prescription.prescription_id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Eliminar"
                           >
                             <TrashIcon className="w-5 h-5" />
                           </button>
@@ -229,8 +456,7 @@ export default function DoctorPrescriptions() {
               </div>
             ) : showForm ? (
               /* New Prescription Form */
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Nueva Receta Médica</h3>
+              <div className="bg-white rounded-lg shadow-md p-6">                <h3 className="text-lg font-semibold text-gray-800 mb-4">Nueva Receta Médica</h3>
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -353,13 +579,6 @@ export default function DoctorPrescriptions() {
                       </div>
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => window.print()}
-                    className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Imprimir Receta
-                  </button>
                 </div>
               </div>
             )}

@@ -723,6 +723,13 @@ const appointmentController = {
         return res.status(404).json({ error: 'Doctor no encontrado' });
       }
 
+      // Traer citas de los últimos 3 meses y próximos 3 meses para mostrar completo
+      const pastDate = new Date();
+      pastDate.setMonth(pastDate.getMonth() - 3);
+      
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + 3);
+
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -751,7 +758,8 @@ const appointmentController = {
           )
         `)
         .eq('doctor_id', doctor.id)
-        .gte('scheduled_start', new Date().toISOString())
+        .gte('scheduled_start', pastDate.toISOString())
+        .lte('scheduled_start', futureDate.toISOString())
         .order('scheduled_start', { ascending: true });
 
       if (error) throw error;
