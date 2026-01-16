@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const supabase = require('./database');
 const passport = require('./config/passport');
+const emailService = require('./services/emailService');
+const reminderScheduler = require('./services/reminderScheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -148,7 +150,13 @@ app.use((err, req, res, next) => {
 /* =====================================================
    START SERVER
    ===================================================== */
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📝 Test: http://localhost:${PORT}/api/test`);
+  
+  // Verificar conexión SMTP
+  await emailService.verifyConnection();
+  
+  // Iniciar scheduler de recordatorios
+  reminderScheduler.start();
 });

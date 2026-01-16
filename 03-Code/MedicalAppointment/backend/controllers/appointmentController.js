@@ -1,5 +1,36 @@
 const supabase = require('../database');
 const availabilityService = require('../services/availabilityService');
+const emailService = require('../services/emailService');
+
+/**
+ * Crear recordatorio de cita 24 horas antes
+ */
+async function createAppointmentReminder(appointmentId, appointmentDate, patientEmail) {
+  try {
+    // Calcular fecha de envío (24 horas antes de la cita)
+    const appointmentDateTime = new Date(appointmentDate);
+    const reminderTime = new Date(appointmentDateTime.getTime() - (24 * 60 * 60 * 1000));
+
+    const { data, error } = await supabase
+      .from('reminders')
+      .insert([{
+        appointment_id: appointmentId,
+        reminder_type: 'appointment_reminder',
+        scheduled_send_time: reminderTime.toISOString(),
+        recipient_email: patientEmail,
+        send_status: 'pending'
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    console.log(`✅ Recordatorio creado para cita ${appointmentId}`);
+    return data;
+  } catch (error) {
+    console.error('Error creando recordatorio:', error);
+    // No lanzar error para no bloquear la creación de la cita
+  }
+}
 
 const appointmentController = {
   // Obtener slots disponibles de un doctor
@@ -153,6 +184,18 @@ const appointmentController = {
         .single();
 
       if (createError) throw createError;
+
+      // Obtener email del paciente para crear recordatorio
+      const { data: patientData } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', patientUserId)
+        .single();
+
+      // Crear recordatorio automático (24 horas antes)
+      if (patientData?.email) {
+        await createAppointmentReminder(appointment.id, scheduled_start, patientData.email);
+      }
 
       res.status(201).json({
         message: 'Cita creada exitosamente',
@@ -508,6 +551,83 @@ const appointmentController = {
       }
 
       console.log('[CANCEL] Successfully cancelled appointment:', updatedData[0].id);
+      
+      // Enviar correo de cancelación al paciente
+      try {
+        console.log('[CANCEL] Fetching appointment details for email...');
+        const { data: fullAppointment, error: fetchError } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patient:patient_user_id (first_name, last_name, email),
+            doctors!appointments_doctor_id_fkey (
+              users (first_name, last_name),
+              specialties (name)
+            )
+          `)
+          .eq('id', id)
+          .single();
+
+        if (fetchError) {
+          console.error('[CANCEL] Error fetching appointment details:', fetchError);
+          throw fetchError;
+        }
+
+        console.log('[CANCEL] Appointment details fetched:', {
+          hasPatient: !!fullAppointment?.patient,
+          hasDoctor: !!fullAppointment?.doctors
+        });
+
+        if (fullAppointment) {
+          const patient = fullAppointment.patient;
+          const doctor = fullAppointment.doctors?.users;
+          const specialty = fullAppointment.doctors?.specialties?.name;
+
+          console.log('[CANCEL] Email data:', {
+            patientEmail: patient?.email,
+            patientName: patient ? `${patient.first_name} ${patient.last_name}` : 'N/A',
+            doctorName: doctor ? `${doctor.first_name} ${doctor.last_name}` : 'N/A'
+          });
+
+          if (patient && doctor) {
+            console.log('[CANCEL] Sending cancellation email...');
+            const appointmentDate = new Date(fullAppointment.scheduled_start);
+            await emailService.sendAppointmentCancellation({
+              patientEmail: patient.email,
+              patientName: `${patient.first_name} ${patient.last_name}`,
+              doctorName: `Dr(a). ${doctor.first_name} ${doctor.last_name}`,
+              specialty: specialty || 'Consulta General',
+              date: appointmentDate.toLocaleDateString('es-EC', { dateStyle: 'full' }),
+              time: fullAppointment.scheduled_start.split('T')[1].substring(0, 5),
+              cancellationReason: 'Cancelado por el paciente'
+            });
+            console.log('[CANCEL] ✅ Cancellation email sent successfully');
+          } else {
+            console.warn('[CANCEL] ⚠️ Missing patient or doctor data, email not sent');
+          }
+        } else {
+          console.warn('[CANCEL] ⚠️ No appointment data returned');
+        }
+
+        // Cancelar recordatorio pendiente
+        console.log('[CANCEL] Cancelling reminder...');
+        const { error: reminderError } = await supabase
+          .from('reminders')
+          .update({ send_status: 'cancelled' })
+          .eq('appointment_id', id)
+          .eq('send_status', 'pending');
+        
+        if (reminderError) {
+          console.error('[CANCEL] Error cancelling reminder:', reminderError);
+        } else {
+          console.log('[CANCEL] Reminder cancelled');
+        }
+      } catch (emailError) {
+        console.error('[CANCEL] ❌ Error in email process:', emailError);
+        console.error('[CANCEL] Error stack:', emailError.stack);
+        // No fallar la cancelación si el email falla
+      }
+
       res.json({ 
         message: 'Cita cancelada exitosamente', 
         appointment: updatedData[0] 
@@ -888,16 +1008,64 @@ const appointmentController = {
   updateAppointmentStatus: async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, cancellation_reason, reschedule_reason } = req.body;
 
+      // Obtener datos de la cita antes de actualizar
+      const { data: oldAppointment } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients:patient_user_id (
+            users (first_name, last_name, email)
+          ),
+          doctors (
+            users (first_name, last_name),
+            specialties (name)
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      // Actualizar estado
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status_id: status, updated_at: new Date().toISOString() })
+        .update({ 
+          status_id: status, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Enviar notificación de cancelación si status es 5 (cancelled)
+      if (status === 5 && oldAppointment) {
+        const patient = oldAppointment.patients?.users;
+        const doctor = oldAppointment.doctors?.users;
+        const specialty = oldAppointment.doctors?.specialties?.name;
+
+        if (patient && doctor) {
+          const appointmentDate = new Date(oldAppointment.scheduled_start);
+          await emailService.sendAppointmentCancellation({
+            patientEmail: patient.email,
+            patientName: `${patient.first_name} ${patient.last_name}`,
+            doctorName: `Dr(a). ${doctor.first_name} ${doctor.last_name}`,
+            specialty: specialty || 'Consulta General',
+            date: appointmentDate.toLocaleDateString('es-EC', { dateStyle: 'full' }),
+            time: oldAppointment.scheduled_start.split('T')[1].substring(0, 5),
+            cancellationReason: cancellation_reason || 'No especificado'
+          });
+        }
+
+        // Cancelar recordatorio pendiente
+        await supabase
+          .from('reminders')
+          .update({ send_status: 'cancelled' })
+          .eq('appointment_id', id)
+          .eq('send_status', 'pending');
+      }
+
       res.json(data);
     } catch (error) {
       console.error('Error updating appointment:', error);
@@ -962,11 +1130,11 @@ const appointmentController = {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      const { scheduled_start, scheduled_end, room_id, reason, notes } = req.body;
+      const { scheduled_start, scheduled_end, room_id, reason, notes, reschedule_reason } = req.body;
 
       const { data: doctor } = await supabase
         .from('doctors')
-        .select('id')
+        .select('id, users(first_name, last_name), specialties(name)')
         .eq('user_id', userId)
         .single();
 
@@ -974,17 +1142,21 @@ const appointmentController = {
         return res.status(404).json({ error: 'Doctor no encontrado' });
       }
 
-      const { data: appointment, error: checkError } = await supabase
+      // Obtener datos actuales de la cita
+      const { data: oldAppointment, error: checkError } = await supabase
         .from('appointments')
-        .select('doctor_id')
+        .select(`
+          *,
+          patients:patient_user_id (users (first_name, last_name, email))
+        `)
         .eq('id', id)
         .single();
 
-      if (checkError || !appointment) {
+      if (checkError || !oldAppointment) {
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
-      if (appointment.doctor_id !== doctor.id) {
+      if (oldAppointment.doctor_id !== doctor.id) {
         return res.status(403).json({ 
           error: 'No tienes permiso para modificar esta cita' 
         });
@@ -993,6 +1165,9 @@ const appointmentController = {
       const updateData = {
         updated_at: new Date().toISOString()
       };
+
+      // Detectar si hay reprogramación
+      const isReschedule = scheduled_start && scheduled_start !== oldAppointment.scheduled_start;
 
       if (scheduled_start) updateData.scheduled_start = scheduled_start;
       if (scheduled_end) updateData.scheduled_end = scheduled_end;
@@ -1008,6 +1183,37 @@ const appointmentController = {
         .single();
 
       if (error) throw error;
+
+      // Si hay reprogramación, enviar notificación
+      if (isReschedule && oldAppointment.patients?.users) {
+        const patient = oldAppointment.patients.users;
+        const doctorUser = doctor.users;
+        const specialty = doctor.specialties?.name;
+
+        const oldDate = new Date(oldAppointment.scheduled_start);
+        const newDate = new Date(scheduled_start);
+
+        await emailService.sendAppointmentReschedule({
+          patientEmail: patient.email,
+          patientName: `${patient.first_name} ${patient.last_name}`,
+          doctorName: `Dr(a). ${doctorUser.first_name} ${doctorUser.last_name}`,
+          specialty: specialty || 'Consulta General',
+          oldDate: oldDate.toLocaleDateString('es-EC', { dateStyle: 'full' }),
+          oldTime: oldAppointment.scheduled_start.split('T')[1].substring(0, 5),
+          newDate: newDate.toLocaleDateString('es-EC', { dateStyle: 'full' }),
+          newTime: scheduled_start.split('T')[1].substring(0, 5),
+          rescheduleReason: reschedule_reason || 'Ajuste de agenda'
+        });
+
+        // Actualizar/crear nuevo recordatorio
+        await supabase
+          .from('reminders')
+          .update({ send_status: 'cancelled' })
+          .eq('appointment_id', id)
+          .eq('send_status', 'pending');
+
+        await createAppointmentReminder(id, scheduled_start, patient.email);
+      }
 
       res.json({
         message: 'Cita actualizada exitosamente',
