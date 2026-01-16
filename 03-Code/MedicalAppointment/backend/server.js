@@ -10,13 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =====================================================
-   🔥 CORS PREFLIGHT GLOBAL (DEBE IR PRIMERO)
+   🔥 CORS GLOBAL + PREFLIGHT (DEBE IR PRIMERO)
    ===================================================== */
-
-/* =====================================================
-   CORS NORMAL
-   ===================================================== */
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (
       !origin ||
@@ -31,8 +27,10 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
 
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // 🔥 CLAVE PARA PREFLIGHT
 
 /* =====================================================
    MIDDLEWARES BASE
@@ -68,7 +66,6 @@ const auditLogRoutes = require('./routes/auditLogs');
 
 /* =====================================================
    RUTAS API
-   (orden IMPORTANTE)
    ===================================================== */
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionsRoutes);
@@ -78,13 +75,12 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/specialties', specialtyRoutes);
 app.use('/api/consultation-rooms', consultationRoomRoutes);
 app.use('/api/reports', reportRoutes);
-
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/billings', billingRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 
-// ⚠️ Ruta parametrizada AL FINAL
+// ⚠️ Rutas parametrizadas al final
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/reminders', reminderRoutes);
 
