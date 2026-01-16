@@ -27,9 +27,19 @@ api.interceptors.request.use(
 
 // Interceptor para manejar errores
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API Response:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
+    console.error('❌ API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data
+    });
+    
     if (error.response?.status === 401) {
+      console.warn('⚠️ 401 Unauthorized - Limpiando sesión y redirigiendo a login');
       // Solo redirigir si no estamos ya en login
       if (!window.location.pathname.includes('/login')) {
         localStorage.removeItem('token');

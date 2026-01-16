@@ -86,6 +86,9 @@ export default function PatientProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🚀 Iniciando actualización de perfil...');
+    console.log('👤 Usuario actual:', user);
+    console.log('📝 FormData:', formData);
 
     if (formData.cedula && (formData.cedula.length !== 10 || !/^\d+$/.test(formData.cedula))) {
       showNotification('La cédula debe tener 10 dígitos numéricos', 'error');
@@ -99,16 +102,36 @@ export default function PatientProfile() {
 
     try {
       setLoading(true);
-      await patientAPI.updateProfile(formData);
-      updateUser(formData);
+      console.log('📡 Llamando a patientAPI.updateProfile...');
+      const response = await patientAPI.updateProfile(formData);
+      console.log('✅ Respuesta del servidor:', response);
+      
+      // IMPORTANTE: Solo actualizar los campos que cambiaste, mantener id y role intactos
+      const updatedUserData = {
+        id: user.id,           // NUNCA cambiar el id
+        role: user.role,       // NUNCA cambiar el role
+        email: formData.email || user.email,
+        first_name: formData.first_name || user.first_name,
+        last_name: formData.last_name || user.last_name,
+        phone_number: formData.phone_number || user.phone_number,
+        cedula: formData.cedula || user.cedula
+      };
+      
+      console.log('🔄 Actualizando usuario en contexto:', updatedUserData);
+      updateUser(updatedUserData);
+      console.log('✅ Usuario actualizado en contexto');
+      
       showNotification('Perfil actualizado exitosamente', 'success');
     } catch (error) {
+      console.error('❌ Error al actualizar perfil:', error);
+      console.error('Error response:', error.response);
       showNotification(
         error.response?.data?.error || 'Error al actualizar el perfil',
         'error'
       );
     } finally {
       setLoading(false);
+      console.log('✅ Finalizado handleSubmit');
     }
   };
 

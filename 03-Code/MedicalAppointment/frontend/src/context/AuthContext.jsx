@@ -21,31 +21,52 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
+    console.log('🔍 Verificando sesión almacenada...');
+    console.log('Token:', storedToken ? 'Existe' : 'No existe');
+    console.log('User:', storedUser ? 'Existe' : 'No existe');
+
     const tryRestore = async () => {
       if (storedToken && storedUser) {
         setToken(storedToken);
         try {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          console.log('✅ Usuario parseado correctamente:', parsedUser);
+          
+          // Validar estructura mínima del usuario
+          if (parsedUser && parsedUser.id && parsedUser.role) {
+            setUser(parsedUser);
+            console.log('✅ Sesión restaurada exitosamente');
+          } else {
+            console.error('❌ Usuario con estructura inválida, limpiando sesión');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setToken(null);
+          }
         } catch (error) {
-          console.error('Error parsing stored user:', error);
+          console.error('❌ Error parsing stored user:', error);
+          localStorage.removeItem('token');
           localStorage.removeItem('user');
+          setToken(null);
         }
       } else if (storedToken && !storedUser) {
+        console.log('⚠️ Token existe pero no hay user, intentando obtener desde API...');
         // If we have token but no user in storage, try to fetch it
         try {
           const resp = await authAPI.me();
           const userData = resp.data?.user || resp.data?.user || resp.data;
-          if (userData) {
+          if (userData && userData.id && userData.role) {
             setToken(storedToken);
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
+            console.log('✅ Usuario obtenido desde API y guardado');
           } else {
             // If cannot get user, clear token
+            console.error('❌ No se pudo obtener usuario válido desde API');
             localStorage.removeItem('token');
             setToken(null);
           }
         } catch (err) {
-          console.error('Error fetching current user:', err);
+          console.error('❌ Error fetching current user:', err);
           localStorage.removeItem('token');
           setToken(null);
         }
@@ -102,8 +123,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    console.log('🔄 Actualizando usuario en AuthContext:', userData);
+    
+    // Validar que userData tiene las propiedades básicas necesarias
+    if (!userData || !userData.id || !userData.role) {
+      console.error('❌ userData inválido, no se actualizará:', userData);
+      return;
+    }
+    
+    try {
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('✅ Usuario actualizado correctamente en localStorage');
+    } catch (error) {
+      console.error('❌ Error al guardar usuario en localStorage:', error);
+    }
   };
 
   const value = {

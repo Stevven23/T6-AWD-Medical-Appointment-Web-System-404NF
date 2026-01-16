@@ -55,6 +55,8 @@ const patientController = {
   updateProfile: async (req, res) => {
       try {
           const userId = req.user.id;
+          console.log('📝 Actualizando perfil para usuario:', userId);
+          console.log('📦 Datos recibidos:', JSON.stringify(req.body, null, 2));
 
           // 1. Campos permitidos en la tabla 'users'
           const userFields = ['first_name', 'last_name', 'phone_number'];
@@ -86,6 +88,9 @@ const patientController = {
               }
           }
 
+          console.log('🔄 UserUpdates:', userUpdates);
+          console.log('🔄 PatientUpdates:', patientUpdates);
+
           // 4. Ejecutar actualizaciones
           if (Object.keys(userUpdates).length > 0) {
               userUpdates.updated_at = new Date().toISOString();
@@ -93,19 +98,27 @@ const patientController = {
                   .from('users')
                   .update(userUpdates)
                   .eq('id', userId);
-              if (userError) throw userError;
+              if (userError) {
+                  console.error('❌ Error actualizando users:', userError);
+                  throw userError;
+              }
+              console.log('✅ Users actualizado');
           }
 
           if (Object.keys(patientUpdates).length > 0) {
               patientUpdates.updated_at = new Date().toISOString();
               const { error: patientError } = await supabase
                   .from('patients')
-                  .update(patientUpdates) // <-- Ahora SÍ incluye blood_type, etc.
+                  .update(patientUpdates)
                   .eq('user_id', userId);
-              if (patientError) throw patientError;
+              if (patientError) {
+                  console.error('❌ Error actualizando patients:', patientError);
+                  throw patientError;
+              }
+              console.log('✅ Patients actualizado');
           }
 
-          // 5. Devolver respuesta (usando tu patrón original, que es más seguro)
+          // 5. Devolver respuesta
           const { data: updatedUser } = await supabase
               .from('users')
               .select('*')
@@ -118,9 +131,10 @@ const patientController = {
               .eq('user_id', userId)
               .single();
 
-          res.json({
+          console.log('✅ Perfil actualizado exitosamente');
+          
+          res.status(200).json({
               message: 'Perfil actualizado exitosamente',
-              // El frontend espera un objeto 'profile' combinado
               profile: { 
                   ...updatedUser,
                   ...updatedPatient
@@ -128,8 +142,7 @@ const patientController = {
           });
 
       } catch (error) {
-          console.error('Error al actualizar perfil:', error);
-          // Devolvemos el mensaje de error real
+          console.error('❌ Error al actualizar perfil:', error);
           res.status(500).json({ error: error.message || 'Error al actualizar perfil' });
       }
     },
