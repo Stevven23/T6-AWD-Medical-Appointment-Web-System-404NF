@@ -7,6 +7,7 @@ import Home from './pages/public/Home';
 import Login from './pages/public/login.jsx';
 import Register from './pages/public/Register';
 import CompleteProfile from './pages/public/CompleteProfile';
+import VerifyPrescription from './pages/VerifyPrescription';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
@@ -84,6 +85,7 @@ function AppRoutes() {
         element={user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Register />} 
       />
       <Route path="/complete-profile" element={<CompleteProfile />} />
+      <Route path="/verify-prescription/:id" element={<VerifyPrescription />} />
 
       {/* Admin Routes */}
       <Route

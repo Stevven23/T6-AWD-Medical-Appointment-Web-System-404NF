@@ -151,4 +151,12 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📝 Test: http://localhost:${PORT}/api/test`);
+  console.log(`📋 Available routes:`);
+  console.log(`   GET /api/prescriptions/verify/:id (PUBLIC - sin autenticación)`);
+  console.log(`   GET /api/prescriptions (autenticado)`);
+  console.log(`   POST /api/prescriptions (autenticado)`);
+  console.log(`   GET /api/prescriptions/patient (autenticado)`);
+  console.log(`   GET /api/prescriptions/:id (autenticado)`);
+  console.log(`   PUT /api/prescriptions/:id (autenticado)`);
+  console.log(`   DELETE /api/prescriptions/:id (autenticado)`);
 });

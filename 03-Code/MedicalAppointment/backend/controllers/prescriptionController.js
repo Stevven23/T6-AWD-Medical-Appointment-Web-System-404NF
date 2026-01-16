@@ -310,6 +310,131 @@ const prescriptionController = {
             console.error('Error en getPatientPrescriptions:', error.message);
             res.status(500).json({ error: error.message });
         }
+    },
+
+    /**
+     * GET /api/prescriptions/verify/:id
+     * Verifica una receta médica por ID (sin autenticación requerida)
+     * Usado por las farmacias para validar recetas escaneadas desde QR
+     */
+    verifyPrescription: async (req, res) => {
+        try {
+            const { id } = req.params;
+            console.log('🔍 Verifying prescription ID:', id);
+
+            // Obtener la receta
+            const { data: prescription, error } = await supabase
+                .from('prescriptions')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !prescription) {
+                console.error('❌ Prescription not found:', error);
+                return res.status(404).json({ error: 'Receta no encontrada' });
+            }
+
+            console.log('✅ Found prescription:', prescription);
+
+            // Obtener datos del paciente
+            let patientName = 'No disponible';
+            let cedula = 'No disponible';
+
+            if (prescription.patient_user_id) {
+                console.log('🔍 Fetching patient with user_id:', prescription.patient_user_id);
+                const { data: patient, error: patientError } = await supabase
+                    .from('users')
+                    .select('first_name, last_name, cedula')
+                    .eq('id', prescription.patient_user_id)
+                    .single();
+
+                if (patientError) {
+                    console.error('❌ Error fetching patient:', patientError);
+                } else if (patient) {
+                    console.log('✅ Found patient:', patient);
+                    patientName = `${patient.first_name} ${patient.last_name}`;
+                    cedula = patient.cedula || 'No disponible';
+                } else {
+                    console.warn('⚠️ No patient data returned');
+                }
+            }
+
+            // Obtener datos del doctor
+            let doctorName = 'No disponible';
+            let specialty = 'No disponible';
+
+            if (prescription.doctor_id) {
+                console.log('🔍 Fetching doctor with id:', prescription.doctor_id);
+                // Primero obtener el doctor
+                const { data: doctor, error: doctorError } = await supabase
+                    .from('doctors')
+                    .select('user_id, specialty_id')
+                    .eq('id', prescription.doctor_id)
+                    .single();
+
+                if (doctorError) {
+                    console.error('❌ Error fetching doctor:', doctorError);
+                } else if (doctor) {
+                    console.log('✅ Found doctor:', doctor);
+                    
+                    if (doctor.user_id) {
+                        console.log('🔍 Fetching doctor user with id:', doctor.user_id);
+                        // Obtener datos del usuario doctor
+                        const { data: doctorUser, error: doctorUserError } = await supabase
+                            .from('users')
+                            .select('first_name, last_name')
+                            .eq('id', doctor.user_id)
+                            .single();
+
+                        if (doctorUserError) {
+                            console.error('❌ Error fetching doctor user:', doctorUserError);
+                        } else if (doctorUser) {
+                            console.log('✅ Found doctor user:', doctorUser);
+                            doctorName = `${doctorUser.first_name} ${doctorUser.last_name}`;
+                        }
+                    }
+
+                    // Obtener especialidad si existe
+                    if (doctor.specialty_id) {
+                        console.log('🔍 Fetching specialty with id:', doctor.specialty_id);
+                        const { data: spec, error: specError } = await supabase
+                            .from('specialties')
+                            .select('name')
+                            .eq('id', doctor.specialty_id)
+                            .single();
+
+                        if (specError) {
+                            console.error('❌ Error fetching specialty:', specError);
+                        } else if (spec) {
+                            console.log('✅ Found specialty:', spec);
+                            specialty = spec.name;
+                        }
+                    }
+                } else {
+                    console.warn('⚠️ No doctor data returned');
+                }
+            }
+
+            // Formatear respuesta
+            const response = {
+                prescription_id: prescription.id,
+                patient_name: patientName,
+                cedula: cedula,
+                doctor_name: doctorName,
+                specialty: specialty,
+                diagnosis: prescription.diagnosis,
+                medications: prescription.medications,
+                instructions: prescription.instructions,
+                duration: prescription.duration,
+                created_at: prescription.created_at
+            };
+
+            console.log('📤 Returning response:', response);
+            res.status(200).json(response);
+        } catch (error) {
+            console.error('❌ Error en verifyPrescription:', error.message);
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 
