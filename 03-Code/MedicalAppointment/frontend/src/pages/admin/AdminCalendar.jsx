@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
+import api, { doctorAPI, specialtyAPI, appointmentAPI } from '../../services/api';
 
-function getMonthDays(year, month) {
+const getMonthDays = (year, month) => {
   const date = new Date(year, month, 1);
   const days = [];
   const firstDayIndex = date.getDay();
@@ -11,12 +12,6 @@ function getMonthDays(year, month) {
     date.setDate(date.getDate() + 1);
   }
   return days;
-}
-
-const getApiBaseUrl = () => {
-  return window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api'
-    : 'https://t6-awd-medical-appointment-web-system.onrender.com/api';
 };
 
 export default function AdminCalendar() {
@@ -35,25 +30,23 @@ export default function AdminCalendar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchDoctors = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const resp = await fetch(`${getApiBaseUrl()}/doctors`, { headers: { Authorization: token ? `Bearer ${token}` : undefined } });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      setDoctors(data || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchDoctors = async () => {
+  try {
+    console.log('Llamando a doctorAPI.getAll()...');
+    const response = await doctorAPI.getAll();
+    console.log('Respuesta doctors:', response);
+    setDoctors(response.data || []);
+  } catch (err) {
+    console.error('ERROR completo doctors:', err);
+    console.error('Respuesta del servidor:', err.response);
+    setDoctors([]);
+  }
+};
 
   const fetchSpecialties = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const resp = await fetch(`${getApiBaseUrl()}/specialty/active`, { headers: { Authorization: token ? `Bearer ${token}` : undefined } });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      setSpecialties(data || []);
+      const response = await specialtyAPI.getActive();
+      setSpecialties(response.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -63,12 +56,8 @@ export default function AdminCalendar() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams({ ...extraParams });
-      const resp = await fetch(`${getApiBaseUrl()}/appointments?${params.toString()}`, { headers: { Authorization: token ? `Bearer ${token}` : undefined } });
-      if (!resp.ok) throw new Error('Error al cargar citas');
-      const data = await resp.json();
-      setAppointments(data || []);
+      const response = await api.get('/appointments', { params: extraParams });
+      setAppointments(response.data || []);
     } catch (err) {
       setError(err.message || 'Error cargando citas');
     } finally {
