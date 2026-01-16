@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       
-      const [generalRes, appointmentRes, doctorRes] = await Promise.all([
+      const [generalRes, appointmentRes, doctorRes, advancedRes] = await Promise.all([
         appointmentAPI.getGeneralStats(),
         appointmentAPI.getAppointmentStats(),
         appointmentAPI.getDoctorStats(),
