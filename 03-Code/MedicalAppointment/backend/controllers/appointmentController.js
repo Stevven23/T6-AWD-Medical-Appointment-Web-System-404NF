@@ -1352,6 +1352,238 @@ getGeneralStats: async (req, res) => {
     console.error('Error getting general stats:', error);
     res.status(500).json({ error: error.message });
   }
+},
+
+getAdvancedStats: async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    // Obtener todas las citas con información completa
+    let query = supabase
+      .from('appointments')
+      .select(`
+        id,
+        scheduled_start,
+        scheduled_end,
+        status_id,
+        doctor_id,
+        created_at,
+        appointment_status (code, label),
+        doctors!appointments_doctor_id_fkey (
+          id,
+          users (first_name, last_name),
+          specialties (name)
+        )
+      `);
+
+    if (startDate) query = query.gte('scheduled_start', startDate);
+    if (endDate) query = query.lte('scheduled_start', endDate);
+
+    const { data: appointments, error } = await query;
+    if (error) throw error;
+
+    // Inicializar estadísticas
+    const stats = {
+      totalAppointments: appointments.length,
+      averageDailyAppointments: 0,
+      averageAppointmentsPerDoctor: 0,
+      cancellationRate: 0,
+      completionRate: 0,
+      noShowRate: 0,
+      peakHours: {},
+      doctorPerformance: {},
+      specialtyPerformance: {},
+      timeMetrics: {
+        averageAdvanceBooking: 0, // Días promedio de anticipación
+        averageDuration: 0, // Duración promedio en minutos
+      },
+      trends: {
+        weekOverWeek: 0, // Cambio porcentual semana a semana
+        monthOverMonth: 0, // Cambio porcentual mes a mes
+      }
+    };
+
+    if (appointments.length === 0) {
+      return res.json(stats);
+    }
+
+    // Calcular tasas de estado
+    const statusCounts = {
+      scheduled: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+      noShow: 0
+    };
+
+    const doctorAppointments = {};
+    const specialtyAppointments = {};
+    const hourCounts = {};
+    let totalAdvanceDays = 0;
+    let totalDuration = 0;
+
+    appointments.forEach(apt => {
+      const statusCode = apt.appointment_status?.code;
+      const doctorId = apt.doctor_id;
+      const doctorName = apt.doctors?.users 
+        ? `${apt.doctors.users.first_name} ${apt.doctors.users.last_name}`
+        : 'Desconocido';
+      const specialtyName = apt.doctors?.specialties?.name || 'Sin especialidad';
+      
+      // Contar por estado
+      if (statusCode === 'scheduled') statusCounts.scheduled++;
+      else if (statusCode === 'confirmed') statusCounts.confirmed++;
+      else if (statusCode === 'completed') statusCounts.completed++;
+      else if (statusCode === 'cancelled' || statusCode === 'canceled') statusCounts.cancelled++;
+      else if (statusCode === 'no-show') statusCounts.noShow++;
+
+      // Horas pico
+      const hour = new Date(apt.scheduled_start).getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+
+      // Citas por doctor
+      if (!doctorAppointments[doctorId]) {
+        doctorAppointments[doctorId] = {
+          name: doctorName,
+          total: 0,
+          completed: 0,
+          cancelled: 0,
+          noShow: 0
+        };
+      }
+      doctorAppointments[doctorId].total++;
+      if (statusCode === 'completed') doctorAppointments[doctorId].completed++;
+      if (statusCode === 'cancelled' || statusCode === 'canceled') doctorAppointments[doctorId].cancelled++;
+      if (statusCode === 'no-show') doctorAppointments[doctorId].noShow++;
+
+      // Citas por especialidad
+      if (!specialtyAppointments[specialtyName]) {
+        specialtyAppointments[specialtyName] = {
+          total: 0,
+          completed: 0,
+          avgDuration: 0,
+          durations: []
+        };
+      }
+      specialtyAppointments[specialtyName].total++;
+      if (statusCode === 'completed') specialtyAppointments[specialtyName].completed++;
+
+      // Duración de cita
+      const start = new Date(apt.scheduled_start);
+      const end = new Date(apt.scheduled_end);
+      const duration = (end - start) / (1000 * 60); // minutos
+      totalDuration += duration;
+      specialtyAppointments[specialtyName].durations.push(duration);
+
+      // Anticipación de reserva
+      const created = new Date(apt.created_at);
+      const scheduled = new Date(apt.scheduled_start);
+      const advanceDays = (scheduled - created) / (1000 * 60 * 60 * 24);
+      totalAdvanceDays += advanceDays;
+    });
+
+    // Calcular promedios y tasas
+    const totalActive = statusCounts.scheduled + statusCounts.confirmed;
+    const total = appointments.length;
+
+    stats.cancellationRate = total > 0 ? ((statusCounts.cancelled / total) * 100).toFixed(2) : 0;
+    stats.completionRate = total > 0 ? ((statusCounts.completed / total) * 100).toFixed(2) : 0;
+    stats.noShowRate = total > 0 ? ((statusCounts.noShow / total) * 100).toFixed(2) : 0;
+
+    // Promedio de citas por doctor
+    const doctorCount = Object.keys(doctorAppointments).length;
+    stats.averageAppointmentsPerDoctor = doctorCount > 0 
+      ? (total / doctorCount).toFixed(2) 
+      : 0;
+
+    // Calcular días únicos con citas
+    const uniqueDays = new Set(
+      appointments.map(apt => new Date(apt.scheduled_start).toDateString())
+    );
+    stats.averageDailyAppointments = uniqueDays.size > 0 
+      ? (total / uniqueDays.size).toFixed(2) 
+      : 0;
+
+    // Horas pico (top 3)
+    const sortedHours = Object.entries(hourCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3);
+    stats.peakHours = Object.fromEntries(
+      sortedHours.map(([hour, count]) => [
+        `${hour}:00 - ${parseInt(hour) + 1}:00`,
+        count
+      ])
+    );
+
+    // Performance por doctor (calcular tasa de eficiencia)
+    stats.doctorPerformance = Object.entries(doctorAppointments).map(([id, data]) => ({
+      doctorId: id,
+      doctorName: data.name,
+      totalAppointments: data.total,
+      completedAppointments: data.completed,
+      cancelledAppointments: data.cancelled,
+      noShowAppointments: data.noShow,
+      completionRate: data.total > 0 ? ((data.completed / data.total) * 100).toFixed(2) : 0,
+      efficiencyScore: data.total > 0 
+        ? (((data.completed * 2 - data.cancelled - data.noShow * 1.5) / data.total) * 50).toFixed(2)
+        : 0
+    })).sort((a, b) => b.efficiencyScore - a.efficiencyScore);
+
+    // Performance por especialidad
+    stats.specialtyPerformance = Object.entries(specialtyAppointments).map(([name, data]) => {
+      const avgDuration = data.durations.length > 0
+        ? (data.durations.reduce((a, b) => a + b, 0) / data.durations.length).toFixed(2)
+        : 0;
+      
+      return {
+        specialtyName: name,
+        totalAppointments: data.total,
+        completedAppointments: data.completed,
+        averageDuration: parseFloat(avgDuration),
+        completionRate: data.total > 0 ? ((data.completed / data.total) * 100).toFixed(2) : 0,
+        demandScore: data.total // Puntuación de demanda basada en cantidad
+      };
+    }).sort((a, b) => b.demandScore - a.demandScore);
+
+    // Métricas de tiempo
+    stats.timeMetrics.averageAdvanceBooking = appointments.length > 0
+      ? (totalAdvanceDays / appointments.length).toFixed(2)
+      : 0;
+    
+    stats.timeMetrics.averageDuration = appointments.length > 0
+      ? (totalDuration / appointments.length).toFixed(2)
+      : 0;
+
+    // Calcular tendencias (comparar con períodos anteriores)
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const periodDays = (end - start) / (1000 * 60 * 60 * 24);
+
+      // Período anterior (misma duración)
+      const prevEnd = new Date(start);
+      const prevStart = new Date(start.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+      const { data: prevAppointments } = await supabase
+        .from('appointments')
+        .select('id')
+        .gte('scheduled_start', prevStart.toISOString())
+        .lte('scheduled_start', prevEnd.toISOString());
+
+      const currentCount = appointments.length;
+      const previousCount = prevAppointments?.length || 0;
+
+      if (previousCount > 0) {
+        const change = ((currentCount - previousCount) / previousCount) * 100;
+        stats.trends.periodComparison = change.toFixed(2);
+      }
+    }
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting advanced stats:', error);
+    res.status(500).json({ error: error.message });
+  }
 }
 };
 

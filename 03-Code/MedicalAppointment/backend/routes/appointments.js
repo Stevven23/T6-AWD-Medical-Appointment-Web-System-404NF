@@ -8,6 +8,7 @@ router.use(authMiddleware);
 router.get('/stats/appointments', requireRole('admin'), appointmentController.getAppointmentStats);
 router.get('/stats/doctors', requireRole('admin'), appointmentController.getDoctorStats);
 router.get('/stats/general', requireRole('admin'), appointmentController.getGeneralStats);
+router.get('/stats/advanced', requireRole('admin'), appointmentController.getAdvancedStats);
 
 // Rutas públicas (authenticated users)
 router.get('/doctors/:doctorId/available-slots', appointmentController.getAvailableSlots);
