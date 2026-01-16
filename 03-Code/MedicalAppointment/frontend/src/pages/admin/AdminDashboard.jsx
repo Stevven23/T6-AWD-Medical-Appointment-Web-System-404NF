@@ -313,8 +313,7 @@ export default function AdminDashboard() {
         />
         <QuickStatCard
           title="Especialidades"
-          value={generalStats.activeSpecialties || generalStats.totalSpecialties}
-          total={generalStats.totalSpecialties}
+          value={Object.keys(doctorStats.bySpecialty || {}).length || 0}
           icon={BeakerIcon}
           color="green"
         />
@@ -594,7 +593,7 @@ export default function AdminDashboard() {
         {/* Horas Pico */}
         {Object.keys(advancedStats.peakHours || {}).length > 0 && (
           <div className="bg-gradient-to-br from-red-500 to-orange-500 text-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">🔥 Horas Pico de Mayor Demanda</h3>
+            <h3 className="text-xl font-bold mb-4"> Horas Pico de Mayor Demanda</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.entries(advancedStats.peakHours || {}).map(([hour, count], idx) => (
                 <div key={hour} className="bg-white/20 backdrop-blur rounded-lg p-4">
