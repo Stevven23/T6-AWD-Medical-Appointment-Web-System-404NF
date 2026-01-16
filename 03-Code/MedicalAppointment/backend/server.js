@@ -23,8 +23,10 @@ app.use((req, res, next) => {
     'https://t6-awd-medical-appointment-web-syst.vercel.app',
     'https://fronttemporalappointments.vercel.app',
     'https://medical-appointment-web-system.vercel.app',
+    'https://medical-appointment-web-system-stevven23s-projects.vercel.app',
     'https://medical-appointment-web-system-l0utuvg37-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app'
+    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app',
+    'https://medical-appointment-web-system-nsgnxey6v-stevven23s-projects.vercel.app'
   ];
 
   if (allowedOrigins.includes(origin)) {
@@ -58,7 +60,8 @@ app.use(cors({
     'https://t6-awd-medical-appointment-web-syst.vercel.app',
     'https://medical-appointment-web-system.vercel.app',
     'https://medical-appointment-web-system-l0utuvg37-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app'
+    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app',
+    'https://medical-appointment-web-system-stevven23s-projects.vercel.app'
   ],
   credentials: true
 }));
