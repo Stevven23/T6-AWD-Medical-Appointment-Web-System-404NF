@@ -241,6 +241,8 @@ export const appointmentAPI = {
   getAppointmentStats: (params) => api.get('/appointments/stats/appointments', { params }),
   getDoctorStats: () => api.get('/appointments/stats/doctors'),
   getGeneralStats: () => api.get('/appointments/stats/general'),
+  getAdvancedStats: (params) => api.get('/appointments/stats/advanced', { params }),
+
 };
 
 // ========== MEDICAL RECORDS ==========

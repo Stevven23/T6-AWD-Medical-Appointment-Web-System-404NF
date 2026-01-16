@@ -142,18 +142,14 @@ export default function DoctorPrescriptions() {
 
   const downloadPrescriptionPDF = async (prescription) => {
     try {
-      console.log('Prescription object:', prescription); // Debug log
       // Cargar jsPDF desde CDN
       if (!window.jspdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        script.onload = () => generatePDF(prescription).catch(err => {
-          console.error('Error downloading PDF:', err);
-          showNotification('Error al generar PDF', 'error');
-        });
+        script.onload = () => generatePDF(prescription);
         document.body.appendChild(script);
       } else {
-        await generatePDF(prescription);
+        generatePDF(prescription);
       }
     } catch (err) {
       console.error('Error downloading PDF:', err);
@@ -161,152 +157,69 @@ export default function DoctorPrescriptions() {
     }
   };
 
-  const generatePDF = async (prescription) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const { jsPDF } = window.jspdf;
-        
-        // Cargar librería de QR desde múltiples fuentes
-        const loadQRCode = () => {
-          if (!window.QRCode) {
-            // Intentar con davidshimjs/qrcodejs (más popular y confiable)
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-            script.onload = () => {
-              continueGeneratingPDF(prescription, resolve, reject);
-            };
-            script.onerror = () => {
-              // Fallback a jsDelivr
-              const script2 = document.createElement('script');
-              script2.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-              script2.onload = () => {
-                continueGeneratingPDF(prescription, resolve, reject);
-              };
-              script2.onerror = () => {
-                // Fallback a unpkg
-                const script3 = document.createElement('script');
-                script3.src = 'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';
-                script3.onload = () => {
-                  continueGeneratingPDF(prescription, resolve, reject);
-                };
-                script3.onerror = () => {
-                  console.warn('No se pudo cargar librería QR, generando PDF sin QR');
-                  continueGeneratingPDF(prescription, resolve, reject);
-                };
-                document.head.appendChild(script3);
-              };
-              document.head.appendChild(script2);
-            };
-            document.head.appendChild(script);
-          } else {
-            continueGeneratingPDF(prescription, resolve, reject);
-          }
-        };
-        
-        loadQRCode();
-      } catch (error) {
-        console.error('Error en generatePDF:', error);
-        reject(error);
-      }
+  const generatePDF = (prescription) => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
-  };
 
-  const continueGeneratingPDF = (prescription, resolve, reject) => {
-    try {
-      const { jsPDF } = window.jspdf;
-      
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 20;
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      let y = 20;
+    // Colores corporativos
+    const primaryColor = [41, 128, 185]; // Azul
+    const secondaryColor = [52, 73, 94]; // Gris oscuro
+    const accentColor = [46, 204, 113]; // Verde
 
-      // Colores corporativos
-      const primaryColor = [41, 128, 185]; // Azul
-      const secondaryColor = [52, 73, 94]; // Gris oscuro
-      const accentColor = [46, 204, 113]; // Verde
+    // Encabezado con fondo
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 45, 'F');
 
-      // Función para generar QR fallback (visual simple)
-      const generateFallbackQR = (text) => {
-        const canvas = document.createElement('canvas');
-        const size = 128;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        
-        // Llenar con blanco
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, size, size);
-        
-        // Crear patrón simple basado en el hash del texto
-        const hash = text.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0);
-        const seed = Math.abs(hash);
-        
-        ctx.fillStyle = '#000000';
-        const moduleSize = size / 17;
-        
-        for (let i = 0; i < 17; i++) {
-          for (let j = 0; j < 17; j++) {
-            const bit = (seed ^ (i * 17 + j)) % 2;
-            if (bit === 1) {
-              ctx.fillRect(i * moduleSize, j * moduleSize, moduleSize, moduleSize);
-            }
-          }
-        }
-        
-        return canvas.toDataURL('image/png');
-      };
+    // Logo/Nombre de la clínica
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(24);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('CLÍNICA SAN MIGUEL', margin, 20);
+    
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text('Centro Médico Especializado', margin, 28);
+    pdf.text('Tel: (02) 2XXX-XXXX | Email: info@clinicasanmiguel.ec', margin, 34);
 
-      // Encabezado con fondo
-      pdf.setFillColor(...primaryColor);
-      pdf.rect(0, 0, pageWidth, 45, 'F');
+    // Título del documento
+    y = 55;
+    pdf.setTextColor(...secondaryColor);
+    pdf.setFontSize(18);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('RECETA MÉDICA', margin, y);
+    
+    // Línea decorativa
+    y += 3;
+    pdf.setDrawColor(...accentColor);
+    pdf.setLineWidth(1);
+    pdf.line(margin, y, pageWidth - margin, y);
 
-      // Logo/Nombre de la clínica
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(24);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('CLÍNICA SAN MIGUEL', margin, 20);
-      
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.text('Centro Médico Especializado', margin, 28);
-      pdf.text('Tel: (02) 2XXX-XXXX | Email: info@clinicasanmiguel.ec', margin, 34);
-
-      // Título del documento
-      y = 55;
-      pdf.setTextColor(...secondaryColor);
-      pdf.setFontSize(18);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('RECETA MÉDICA', margin, y);
-      
-      // Línea decorativa
-      y += 3;
-      pdf.setDrawColor(...accentColor);
-      pdf.setLineWidth(1);
-      pdf.line(margin, y, pageWidth - margin, y);
-
-      // Información del paciente
-      y += 12;
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
-      
-      y += 8;
-      pdf.setTextColor(...secondaryColor);
-      pdf.setFontSize(11);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('DATOS DEL PACIENTE', margin + 5, y);
-      
-      y += 7;
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Paciente: ${selectedPatient.first_name} ${selectedPatient.last_name}`, margin + 5, y);
-
-      y += 6;
-      pdf.text(`Cédula: ${selectedPatient.cedula || 'N/A'}`, margin + 5, y);
+    // Información del paciente
+    y += 12;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
+    
+    y += 8;
+    pdf.setTextColor(...secondaryColor);
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DATOS DEL PACIENTE', margin + 5, y);
+    
+    y += 7;
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Paciente: ${selectedPatient.first_name} ${selectedPatient.last_name}`, margin + 5, y);
+    
+    y += 6;
+    pdf.text(`Cédula: ${selectedPatient.cedula || 'N/A'}`, margin + 5, y);
 
     // Información del médico
     y += 12;
@@ -409,119 +322,17 @@ export default function DoctorPrescriptions() {
       y += 6;
     }
 
-    // Generar QR con datos de la receta (si está disponible)
-    const addQRToPDF = () => {
-      // Usar prescription_id, id, o cualquier otra propiedad que sea el identificador
-      const prescriptionId = prescription.prescription_id || prescription.id || prescription.ID;
-      
-      console.log('Generating QR with prescription ID:', prescriptionId); // Debug
-      
-      if (!prescriptionId) {
-        console.warn('No prescription ID found, prescription object:', prescription);
-        finalizarPDF();
-        return;
-      }
+    // Pie de página
+    y = pdf.internal.pageSize.getHeight() - 30;
+    pdf.setTextColor(150, 150, 150);
+    pdf.setFontSize(9);
+    pdf.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, margin, y);
+    pdf.text('Receta válida por 30 días a partir de la fecha de emisión', margin, y + 6);
 
-      // Generar URL de validación - el QR contendrá la URL completa para que sea escaneable
-      const verifyURL = `${import.meta.env.VITE_FRONTEND_URL}/verify-prescription/${prescriptionId}`;
-      console.log('Generated QR URL:', verifyURL); // Debug
-      const qrData = verifyURL;
-      let qrImage = null;
-
-      // Definir esta función primero
-      const addQRToPage = () => {
-        if (qrImage) {
-          try {
-            const qrSize = 40; // mm
-            const qrX = pageWidth - margin - qrSize;
-            const qrY = pdf.internal.pageSize.getHeight() - margin - qrSize;
-            
-            pdf.addImage(qrImage, 'PNG', qrX, qrY, qrSize, qrSize);
-
-            // Etiqueta "Válido para farmacia" bajo el QR
-            pdf.setTextColor(...accentColor);
-            pdf.setFontSize(8);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Escanear para', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
-            pdf.text('validar', qrX + qrSize / 2, qrY + qrSize + 10, { align: 'center' });
-          } catch (err) {
-            console.warn('Error agregando QR al PDF:', err);
-          }
-        }
-        
-        finalizarPDF();
-      };
-
-      if (window.QRCode) {
-        // Usar librería QRCode si está disponible
-        try {
-          const qrContainer = document.createElement('div');
-          qrContainer.style.display = 'none';
-          qrContainer.id = 'qr-temp-' + Date.now();
-          document.body.appendChild(qrContainer);
-
-          new window.QRCode(qrContainer, {
-            text: qrData,
-            width: 128,
-            height: 128,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: window.QRCode.CorrectLevel.H
-          });
-
-          setTimeout(() => {
-            try {
-              const canvas = qrContainer.querySelector('canvas');
-              if (canvas) {
-                qrImage = canvas.toDataURL('image/png');
-              }
-            } catch (err) {
-              console.warn('Error extrayendo canvas QR:', err);
-            }
-            
-            try {
-              const el = document.getElementById(qrContainer.id);
-              if (el && el.parentNode) {
-                el.parentNode.removeChild(el);
-              }
-            } catch (e) {}
-            
-            addQRToPage();
-          }, 250);
-        } catch (err) {
-          console.warn('Error con QRCode, usando fallback:', err);
-          qrImage = generateFallbackQR(qrData);
-          addQRToPage();
-        }
-      } else {
-        // Usar fallback si no hay librería
-        qrImage = generateFallbackQR(qrData);
-        addQRToPage();
-      }
-    };
-
-    const finalizarPDF = () => {
-      // Pie de página
-      let footerY = pdf.internal.pageSize.getHeight() - 15;
-      pdf.setTextColor(150, 150, 150);
-      pdf.setFontSize(9);
-      pdf.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, margin, footerY);
-      pdf.text('Receta válida por 30 días a partir de la fecha de emisión', margin, footerY + 6);
-
-      // Descargar PDF
-      const filename = `Receta_${selectedPatient.first_name}_${selectedPatient.last_name}_${new Date().getTime()}.pdf`;
-      pdf.save(filename);
-      showNotification('PDF descargado exitosamente', 'success');
-      resolve();
-    };
-
-    // Iniciar proceso de QR
-    addQRToPDF();
-    } catch (error) {
-      console.error('Error en generatePDF:', error);
-      showNotification('Error generando PDF', 'error');
-      reject(error);
-    }
+    // Descargar PDF
+    const filename = `Receta_${selectedPatient.first_name}_${selectedPatient.last_name}_${new Date().getTime()}.pdf`;
+    pdf.save(filename);
+    showNotification('PDF descargado exitosamente', 'success');
   };
 
   return (

@@ -54,6 +54,20 @@ export default function AdminDashboard() {
     inactive: 0,
     bySpecialty: {},
   });
+  const [advancedStats, setAdvancedStats] = useState({
+    averageDailyAppointments: 0,
+    averageAppointmentsPerDoctor: 0,
+    cancellationRate: 0,
+    completionRate: 0,
+    noShowRate: 0,
+    peakHours: {},
+    doctorPerformance: [],
+    specialtyPerformance: [],
+    timeMetrics: {
+      averageAdvanceBooking: 0,
+      averageDuration: 0,
+    },
+  });
 
   useEffect(() => {
     loadDashboardData();
@@ -67,11 +81,13 @@ export default function AdminDashboard() {
         appointmentAPI.getGeneralStats(),
         appointmentAPI.getAppointmentStats(),
         appointmentAPI.getDoctorStats(),
+        appointmentAPI.getAdvancedStats(),
       ]);
 
       setGeneralStats(generalRes.data || {});
       setAppointmentStats(appointmentRes.data || {});
       setDoctorStats(doctorRes.data || {});
+      setAdvancedStats(advancedRes.data || {});
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -80,47 +96,69 @@ export default function AdminDashboard() {
   };
 
   const downloadReport = () => {
-    const report = {
-      fecha_generacion: new Date().toLocaleString('es-EC'),
-      estadisticas_generales: generalStats,
-      estadisticas_citas: appointmentStats,
-      estadisticas_doctores: doctorStats,
-    };
+  const csvHeader = 'Categoría,Métrica,Valor\n';
+  const csvRows = [
+    '=== ESTADÍSTICAS GENERALES ===',
+    `General,Total Doctores,${generalStats.totalDoctors}`,
+    `General,Doctores Activos,${generalStats.activeDoctors}`,
+    `General,Total Especialidades,${generalStats.totalSpecialties}`,
+    `General,Próximas Citas,${generalStats.upcomingAppointments}`,
+    '',
+    '=== ESTADÍSTICAS DE CITAS ===',
+    `Citas,Total,${appointmentStats.total}`,
+    '',
+    'Citas por Estado,Estado,Cantidad',
+    ...Object.entries(appointmentStats.byStatus || {}).map(([status, count]) => 
+      `Citas por Estado,${status},${count}`
+    ),
+    '',
+    'Citas por Mes,Mes,Cantidad',
+    ...Object.entries(appointmentStats.byMonth || {}).map(([month, count]) => 
+      `Citas por Mes,${month},${count}`
+    ),
+    '',
+    '=== MÉTRICAS AVANZADAS ===',
+    `Promedios,Citas Diarias Promedio,${advancedStats.averageDailyAppointments}`,
+    `Promedios,Citas por Doctor Promedio,${advancedStats.averageAppointmentsPerDoctor}`,
+    `Promedios,Duración Promedio (min),${advancedStats.timeMetrics?.averageDuration}`,
+    `Promedios,Anticipación Promedio (días),${advancedStats.timeMetrics?.averageAdvanceBooking}`,
+    '',
+    '=== TASAS DE RENDIMIENTO ===',
+    `Tasas,Tasa de Cancelación (%),${advancedStats.cancellationRate}`,
+    `Tasas,Tasa de Completitud (%),${advancedStats.completionRate}`,
+    `Tasas,Tasa de No Show (%),${advancedStats.noShowRate}`,
+    '',
+    '=== HORAS PICO ===',
+    ...Object.entries(advancedStats.peakHours || {}).map(([hour, count]) => 
+      `Horas Pico,${hour},${count} citas`
+    ),
+    '',
+    '=== PERFORMANCE POR DOCTOR ===',
+    'Doctor,Total Citas,Completadas,Canceladas,No Show,Tasa Completitud (%),Score Eficiencia',
+    ...(advancedStats.doctorPerformance || []).map(d => 
+      `${d.doctorName},${d.totalAppointments},${d.completedAppointments},${d.cancelledAppointments},${d.noShowAppointments},${d.completionRate},${d.efficiencyScore}`
+    ),
+    '',
+    '=== PERFORMANCE POR ESPECIALIDAD ===',
+    'Especialidad,Total Citas,Completadas,Duración Promedio (min),Tasa Completitud (%),Score Demanda',
+    ...(advancedStats.specialtyPerformance || []).map(s => 
+      `${s.specialtyName},${s.totalAppointments},${s.completedAppointments},${s.averageDuration},${s.completionRate},${s.demandScore}`
+    ),
+    '',
+    '=== DOCTORES POR ESPECIALIDAD ===',
+    'Especialidad,Total,Activos,Inactivos',
+    ...Object.entries(doctorStats.bySpecialty || {}).map(([specialty, data]) => 
+      `${specialty},${data.total},${data.active},${data.inactive}`
+    ),
+  ].join('\n');
 
-    const csvHeader = 'Categoría,Métrica,Valor\n';
-    const csvRows = [
-      // Estadísticas Generales
-      `Estadísticas Generales,Total Doctores,${generalStats.totalDoctors}`,
-      `Estadísticas Generales,Doctores Activos,${generalStats.activeDoctors}`,
-      `Estadísticas Generales,Total Especialidades,${generalStats.totalSpecialties}`,
-      `Estadísticas Generales,Próximas Citas,${generalStats.upcomingAppointments}`,
-      '',
-      // Citas por Estado
-      'Citas por Estado,Estado,Cantidad',
-      ...Object.entries(appointmentStats.byStatus || {}).map(([status, count]) => 
-        `Citas por Estado,${status},${count}`
-      ),
-      '',
-      // Citas por Mes
-      'Citas por Mes,Mes,Cantidad',
-      ...Object.entries(appointmentStats.byMonth || {}).map(([month, count]) => 
-        `Citas por Mes,${month},${count}`
-      ),
-      '',
-      // Doctores por Especialidad
-      'Doctores por Especialidad,Especialidad,Total,Activos,Inactivos',
-      ...Object.entries(doctorStats.bySpecialty || {}).map(([specialty, data]) => 
-        `Doctores por Especialidad,${specialty},${data.total},${data.active},${data.inactive}`
-      ),
-    ].join('\n');
-
-    const csv = csvHeader + csvRows;
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `reporte-dashboard-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-  };
+  const csv = csvHeader + csvRows;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `reporte-completo-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+};
 
   // Chart: Citas por Estado (Pie)
   const statusChartData = {
@@ -318,9 +356,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Charts Section */}
+    {/* Charts Section */}
       <div className="space-y-8">
-        {/* Citas por Estado y Mes */}
+        {/* Citas por Estado y Performance por Doctor */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -347,6 +385,44 @@ export default function AdminDashboard() {
 
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                <UserGroupIcon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-800">
+                  Top 5 Doctores - Score de Eficiencia
+                </h4>
+                <p className="text-sm text-gray-600">Basado en completitud y cancelaciones</p>
+              </div>
+            </div>
+            <div className="h-80">
+              {(advancedStats.doctorPerformance || []).length > 0 ? (
+                <Bar 
+                  data={{
+                    labels: (advancedStats.doctorPerformance || []).slice(0, 5).map(d => d.doctorName),
+                    datasets: [{
+                      label: 'Score de Eficiencia',
+                      data: (advancedStats.doctorPerformance || []).slice(0, 5).map(d => parseFloat(d.efficiencyScore)),
+                      backgroundColor: 'rgba(153, 102, 255, 0.8)',
+                      borderColor: 'rgba(153, 102, 255, 1)',
+                      borderWidth: 2,
+                    }],
+                  }} 
+                  options={barChartOptions} 
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  No hay datos disponibles
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Citas por Mes y Tasas de Rendimiento */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                 <ChartBarIcon className="w-6 h-6 text-white" />
               </div>
@@ -354,7 +430,7 @@ export default function AdminDashboard() {
                 <h4 className="text-lg font-semibold text-gray-800">
                   Citas por Mes
                 </h4>
-                <p className="text-sm text-gray-600">Tendencia mensual</p>
+                <p className="text-sm text-gray-600">Tendencia mensual ordenada cronológicamente</p>
               </div>
             </div>
             <div className="h-80">
@@ -367,10 +443,100 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                <ChartPieIcon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-800">
+                  Tasas de Rendimiento
+                </h4>
+                <p className="text-sm text-gray-600">Completitud, cancelación y no-show</p>
+              </div>
+            </div>
+            <div className="h-80">
+              {advancedStats.completionRate || advancedStats.cancellationRate || advancedStats.noShowRate ? (
+                <Doughnut 
+                  data={{
+                    labels: ['Completadas', 'Canceladas', 'No Show'],
+                    datasets: [{
+                      data: [
+                        parseFloat(advancedStats.completionRate || 0),
+                        parseFloat(advancedStats.cancellationRate || 0),
+                        parseFloat(advancedStats.noShowRate || 0),
+                      ],
+                      backgroundColor: [
+                        'rgba(106, 165, 103, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                      ],
+                      borderColor: [
+                        'rgba(106, 165, 103, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)',
+                      ],
+                      borderWidth: 2,
+                    }],
+                  }} 
+                  options={pieChartOptions} 
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  No hay datos disponibles
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Citas por Día de Semana y Doctores por Especialidad */}
+        {/* Performance por Especialidad y Citas por Día de Semana */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center">
+                <BeakerIcon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-800">
+                  Performance por Especialidad
+                </h4>
+                <p className="text-sm text-gray-600">Total de citas y duración promedio</p>
+              </div>
+            </div>
+            <div className="h-80">
+              {(advancedStats.specialtyPerformance || []).length > 0 ? (
+                <Bar 
+                  data={{
+                    labels: (advancedStats.specialtyPerformance || []).map(s => s.specialtyName),
+                    datasets: [
+                      {
+                        label: 'Total Citas',
+                        data: (advancedStats.specialtyPerformance || []).map(s => s.totalAppointments),
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                      },
+                      {
+                        label: 'Duración Prom. (min)',
+                        data: (advancedStats.specialtyPerformance || []).map(s => s.averageDuration),
+                        backgroundColor: 'rgba(212, 175, 55, 0.8)',
+                        borderColor: 'rgba(212, 175, 55, 1)',
+                        borderWidth: 2,
+                      },
+                    ],
+                  }} 
+                  options={barChartOptions} 
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  No hay datos disponibles
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
@@ -393,35 +559,124 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                <UserGroupIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800">
-                  Doctores por Especialidad
-                </h4>
-                <p className="text-sm text-gray-600">Total y activos</p>
-              </div>
-            </div>
-            <div className="h-80">
-              {Object.keys(doctorStats.bySpecialty || {}).length > 0 ? (
-                <Bar data={specialtyChartData} options={barChartOptions} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  No hay datos disponibles
+        {/* Métricas Calculadas en Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6">
+            <div className="text-sm opacity-90 mb-2">Promedio Citas/Día</div>
+            <div className="text-3xl font-bold">{advancedStats.averageDailyAppointments || 0}</div>
+            <div className="text-xs opacity-75 mt-2">Calculado sobre días activos</div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6">
+            <div className="text-sm opacity-90 mb-2">Promedio por Doctor</div>
+            <div className="text-3xl font-bold">{advancedStats.averageAppointmentsPerDoctor || 0}</div>
+            <div className="text-xs opacity-75 mt-2">Citas por doctor</div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-6">
+            <div className="text-sm opacity-90 mb-2">Duración Promedio</div>
+            <div className="text-3xl font-bold">{advancedStats.timeMetrics?.averageDuration || 0} min</div>
+            <div className="text-xs opacity-75 mt-2">Tiempo por cita</div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-xl shadow-lg p-6">
+            <div className="text-sm opacity-90 mb-2">Anticipación Promedio</div>
+            <div className="text-3xl font-bold">{advancedStats.timeMetrics?.averageAdvanceBooking || 0} días</div>
+            <div className="text-xs opacity-75 mt-2">Días de antelación</div>
+          </div>
+        </div>
+
+        {/* Horas Pico */}
+        {Object.keys(advancedStats.peakHours || {}).length > 0 && (
+          <div className="bg-gradient-to-br from-red-500 to-orange-500 text-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-bold mb-4">🔥 Horas Pico de Mayor Demanda</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Object.entries(advancedStats.peakHours || {}).map(([hour, count], idx) => (
+                <div key={hour} className="bg-white/20 backdrop-blur rounded-lg p-4">
+                  <div className="text-2xl font-bold">#{idx + 1}</div>
+                  <div className="text-lg font-semibold">{hour}</div>
+                  <div className="text-sm opacity-90">{count} citas programadas</div>
                 </div>
-              )}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tablas Detalladas de Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Tabla Performance Doctores */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Performance por Doctor (Top 10)
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Completadas</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {(advancedStats.doctorPerformance || []).slice(0, 10).map((doctor) => (
+                    <tr key={doctor.doctorId} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 text-sm font-medium text-gray-900">{doctor.doctorName}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{doctor.totalAppointments}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{doctor.completedAppointments}</td>
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          parseFloat(doctor.efficiencyScore) >= 80 ? 'bg-green-100 text-green-800' :
+                          parseFloat(doctor.efficiencyScore) >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {doctor.efficiencyScore}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Tabla Performance Especialidades */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Métricas por Especialidad
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Especialidad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Citas</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duración Prom.</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tasa Compl.</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {(advancedStats.specialtyPerformance || []).map((specialty) => (
+                    <tr key={specialty.specialtyName} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 text-sm font-medium text-gray-900">{specialty.specialtyName}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{specialty.totalAppointments}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{specialty.averageDuration} min</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{specialty.completionRate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        {/* Resumen en Tabla */}
+        {/* Tabla Doctores por Especialidad (Original) */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Resumen Detallado por Especialidad
+            Resumen Detallado de Doctores por Especialidad
           </h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
