@@ -270,6 +270,8 @@ const prescriptionController = {
                 return res.status(401).json({ error: 'Usuario no autenticado' });
             }
 
+            console.log('🔍 Getting prescriptions for patient:', patientUserId);
+
             const { data: prescriptions, error } = await supabase
                 .from('prescriptions')
                 .select(`
@@ -293,6 +295,9 @@ const prescriptionController = {
                 `)
                 .eq('patient_user_id', patientUserId)
                 .order('created_at', { ascending: false });
+
+            console.log('📋 Prescriptions found:', prescriptions?.length || 0);
+            console.log('❌ Query error:', error);
 
             if (error) throw error;
 

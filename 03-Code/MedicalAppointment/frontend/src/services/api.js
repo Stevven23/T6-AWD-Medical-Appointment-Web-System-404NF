@@ -300,9 +300,6 @@ export const prescriptionAPI = {
   getAll: () => 
     api.get('/prescriptions'),
   
-  getPatientPrescriptions: () => 
-    api.get('/prescriptions'),
-  
   create: (data) => 
     api.post('/prescriptions', data),
   
