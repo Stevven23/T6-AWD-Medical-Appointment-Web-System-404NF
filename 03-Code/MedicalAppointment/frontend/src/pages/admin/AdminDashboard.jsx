@@ -84,12 +84,15 @@ export default function AdminDashboard() {
         appointmentAPI.getAdvancedStats(),
       ]);
 
+      console.log('Advanced Stats Response:', advancedRes.data); // Para debug
+
       setGeneralStats(generalRes.data || {});
       setAppointmentStats(appointmentRes.data || {});
       setDoctorStats(doctorRes.data || {});
       setAdvancedStats(advancedRes.data || {});
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      console.error('Error details:', error.response?.data); // Para ver más detalles
     } finally {
       setLoading(false);
     }
