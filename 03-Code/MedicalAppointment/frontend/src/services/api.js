@@ -145,6 +145,7 @@ export const doctorAPI = {
   
   getReports: (reportType = 'appointments', dateRange = 'week') => 
     api.get('/doctors/reports', { params: { reportType, dateRange } }),
+  getStats: () => api.get('/appointments/stats/doctors'),
 };
 
 // ========== SPECIALTIES ==========
@@ -236,6 +237,10 @@ export const appointmentAPI = {
   
   forceDelete: (id) => 
     api.delete(`/appointments/${id}/force`),
+
+  getAppointmentStats: (params) => api.get('/appointments/stats/appointments', { params }),
+  getDoctorStats: () => api.get('/appointments/stats/doctors'),
+  getGeneralStats: () => api.get('/appointments/stats/general'),
 };
 
 // ========== MEDICAL RECORDS ==========

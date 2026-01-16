@@ -1223,6 +1223,135 @@ forceDeleteAppointment: async (req, res) => {
     console.error('Error deleting appointment:', error);
     res.status(500).json({ error: error.message });
   }
+},
+
+getAppointmentStats: async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let query = supabase
+      .from('appointments')
+      .select(`
+        id,
+        scheduled_start,
+        status_id,
+        appointment_status (code, label)
+      `);
+
+    if (startDate) query = query.gte('scheduled_start', startDate);
+    if (endDate) query = query.lte('scheduled_start', endDate);
+
+    const { data: appointments, error } = await query;
+    if (error) throw error;
+
+    // Calcular estadísticas
+    const stats = {
+      total: appointments.length,
+      byStatus: {},
+      byMonth: {},
+      byDayOfWeek: {}
+    };
+
+    const statusLabels = {
+      1: 'Programada',
+      2: 'Confirmada',
+      3: 'Completada',
+      4: 'No Show',
+      5: 'Cancelada'
+    };
+
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    appointments.forEach(apt => {
+      const date = new Date(apt.scheduled_start);
+      const statusLabel = apt.appointment_status?.label || statusLabels[apt.status_id] || 'Desconocido';
+      const month = monthNames[date.getMonth()];
+      const dayOfWeek = dayNames[date.getDay()];
+
+      // Por estado
+      stats.byStatus[statusLabel] = (stats.byStatus[statusLabel] || 0) + 1;
+
+      // Por mes
+      stats.byMonth[month] = (stats.byMonth[month] || 0) + 1;
+
+      // Por día de la semana
+      stats.byDayOfWeek[dayOfWeek] = (stats.byDayOfWeek[dayOfWeek] || 0) + 1;
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting appointment stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
+
+getDoctorStats: async (req, res) => {
+  try {
+    const { data: doctors, error } = await supabase
+      .from('doctors')
+      .select(`
+        id,
+        active,
+        specialty_id,
+        users (first_name, last_name),
+        specialties (name)
+      `);
+
+    if (error) throw error;
+
+    const stats = {
+      total: doctors.length,
+      active: doctors.filter(d => d.active).length,
+      inactive: doctors.filter(d => !d.active).length,
+      bySpecialty: {}
+    };
+
+    doctors.forEach(doctor => {
+      const specialtyName = doctor.specialties?.name || 'Sin especialidad';
+      if (!stats.bySpecialty[specialtyName]) {
+        stats.bySpecialty[specialtyName] = { total: 0, active: 0, inactive: 0 };
+      }
+      stats.bySpecialty[specialtyName].total++;
+      if (doctor.active) {
+        stats.bySpecialty[specialtyName].active++;
+      } else {
+        stats.bySpecialty[specialtyName].inactive++;
+      }
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting doctor stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
+
+getGeneralStats: async (req, res) => {
+  try {
+    const [doctorsRes, specialtiesRes, appointmentsRes] = await Promise.all([
+      supabase.from('doctors').select('id, active'),
+      supabase.from('specialties').select('id, is_active'),
+      supabase
+        .from('appointments')
+        .select('id, scheduled_start, status_id')
+        .gte('scheduled_start', new Date().toISOString())
+        .in('status_id', [1, 2])
+    ]);
+
+    const stats = {
+      totalDoctors: doctorsRes.data?.length || 0,
+      activeDoctors: doctorsRes.data?.filter(d => d.active).length || 0,
+      totalSpecialties: specialtiesRes.data?.length || 0,
+      activeSpecialties: specialtiesRes.data?.filter(s => s.is_active).length || 0,
+      upcomingAppointments: appointmentsRes.data?.length || 0
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting general stats:', error);
+    res.status(500).json({ error: error.message });
+  }
 }
 };
 

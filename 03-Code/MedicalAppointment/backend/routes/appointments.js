@@ -4,6 +4,10 @@ const appointmentController = require('../controllers/appointmentController');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 
 router.use(authMiddleware);
+// Rutas de estadísticas (Admin)
+router.get('/stats/appointments', requireRole('admin'), appointmentController.getAppointmentStats);
+router.get('/stats/doctors', requireRole('admin'), appointmentController.getDoctorStats);
+router.get('/stats/general', requireRole('admin'), appointmentController.getGeneralStats);
 
 // Rutas públicas (authenticated users)
 router.get('/doctors/:doctorId/available-slots', appointmentController.getAvailableSlots);

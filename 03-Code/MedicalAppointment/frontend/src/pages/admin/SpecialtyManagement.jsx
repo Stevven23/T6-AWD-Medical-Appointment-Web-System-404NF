@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { specialtyAPI } from '../../services/api';
+import { doctorAPI, specialtyAPI } from '../../services/api';
 import { 
   PlusIcon, 
   PencilIcon, 
