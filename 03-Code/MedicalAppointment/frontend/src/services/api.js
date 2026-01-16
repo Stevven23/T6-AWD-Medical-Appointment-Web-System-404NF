@@ -130,6 +130,21 @@ export const doctorAPI = {
   
   updateStatus: (id, status) => 
     api.patch(`/doctors/${id}/status`, { status }),
+  
+  getMyPatients: () => 
+    api.get('/doctors/my-patients'),
+  
+  getAllPatients: () => 
+    api.get('/doctors/patients'),
+  
+  getProfile: () => 
+    api.get('/doctors/me'),
+  
+  updateProfile: (data) => 
+    api.put('/doctors/profile', data),
+  
+  getReports: (reportType = 'appointments', dateRange = 'week') => 
+    api.get('/doctors/reports', { params: { reportType, dateRange } }),
 };
 
 // ========== SPECIALTIES ==========

@@ -435,14 +435,15 @@ const appointmentController = {
   cancelAppointment: async (req, res) => {
     try {
       const { id } = req.params;
-      const patientUserId = req.user.id;
+      const userId = req.user.id;
+      const userRole = req.user.role;
 
-      console.log(`[CANCEL] User ${patientUserId} attempting to cancel appointment ${id}`);
+      console.log(`[CANCEL] User ${userId} (role: ${userRole}) attempting to cancel appointment ${id}`);
 
-      // Verificar que la cita existe y pertenece al paciente
+      // Obtener cita con información completa
       const { data: appointment, error: checkError } = await supabase
         .from('appointments')
-        .select('id, scheduled_start, status_id, patient_user_id')
+        .select('id, scheduled_start, status_id, patient_user_id, doctor_id')
         .eq('id', id)
         .single();
 
@@ -459,8 +460,25 @@ const appointmentController = {
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
-      if (appointment.patient_user_id !== patientUserId) {
-        console.error('[CANCEL] User does not own this appointment');
+      // Validar que el usuario tenga permiso (paciente dueño o doctor asignado)
+      let hasPermission = false;
+      if (userRole === 'patient' && appointment.patient_user_id === userId) {
+        hasPermission = true;
+      } else if (userRole === 'doctor') {
+        // Verificar que el doctor sea el asignado a esta cita
+        const { data: doctor } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (doctor && doctor.id === appointment.doctor_id) {
+          hasPermission = true;
+        }
+      }
+
+      if (!hasPermission) {
+        console.error('[CANCEL] User does not have permission to cancel this appointment');
         return res.status(403).json({ error: 'No tienes permiso para cancelar esta cita' });
       }
 
@@ -473,7 +491,6 @@ const appointmentController = {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .eq('patient_user_id', patientUserId)
         .select();
 
       if (updateError) {
@@ -561,31 +578,61 @@ const appointmentController = {
   rescheduleAppointment: async (req, res) => {
     try {
       const { id } = req.params;
-      const patientUserId = req.user.id;
-      const { new_scheduled_start, duration_minutes = 30 } = req.body;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+      const userRoleCode = req.user.roleCode;
+      const { scheduled_start, new_scheduled_start, duration_minutes = 30 } = req.body;
 
-      console.log(`[RESCHEDULE] Attempting to reschedule appointment ${id} for user ${patientUserId}`);
+      console.log(`[RESCHEDULE] Attempting to reschedule appointment ${id} for user ${userId} (role: ${userRole}, roleCode: ${userRoleCode})`);
+      console.log(`[RESCHEDULE] Request body:`, req.body);
 
-      if (!new_scheduled_start) {
+      // Usar scheduled_start si new_scheduled_start no está definido (compatibilidad)
+      const finalStartTime = new_scheduled_start || scheduled_start;
+
+      if (!finalStartTime) {
         return res.status(400).json({ error: 'La nueva fecha es requerida' });
       }
 
-      // Verificar cita existente
+      // Obtener cita con información del doctor
       const { data: appointment, error: checkError } = await supabase
         .from('appointments')
-        .select('doctor_id, status_id')
+        .select('id, doctor_id, patient_user_id, status_id')
         .eq('id', id)
-        .eq('patient_user_id', patientUserId)
         .single();
 
-      if (checkError) {
-        console.error('[RESCHEDULE] Check error:', checkError);
+      if (checkError || !appointment) {
+        console.error('[RESCHEDULE] Appointment not found');
         return res.status(404).json({ error: 'Cita no encontrada' });
       }
 
-      if (!appointment) {
-        console.error('[RESCHEDULE] Appointment not found or does not belong to user');
-        return res.status(404).json({ error: 'Cita no encontrada' });
+      // Validar que el usuario tenga permiso (paciente dueño o doctor asignado)
+      let hasPermission = false;
+      if (userRole === 'patient' && appointment.patient_user_id === userId) {
+        hasPermission = true;
+      } else if (userRole === 'doctor') {
+        // Verificar que el doctor sea el asignado a esta cita
+        const { data: doctor, error: doctorError } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        console.log(`[RESCHEDULE] Doctor lookup for user ${userId}: doctor=${JSON.stringify(doctor)}, error=${JSON.stringify(doctorError)}`);
+        console.log(`[RESCHEDULE] Comparing doctor.id=${doctor?.id} with appointment.doctor_id=${appointment.doctor_id}`);
+        
+        if (doctor && doctor.id === appointment.doctor_id) {
+          hasPermission = true;
+        } else if (!doctor) {
+          console.error('[RESCHEDULE] No doctor record found for user', userId);
+        } else {
+          console.error(`[RESCHEDULE] Doctor ID mismatch: ${doctor.id} !== ${appointment.doctor_id}`);
+        }
+      }
+
+      if (!hasPermission) {
+        console.error('[RESCHEDULE] User does not have permission to reschedule this appointment. Role:', userRole, 'userId:', userId);
+        console.error('[RESCHEDULE] Appointment details:', { patient_user_id: appointment.patient_user_id, doctor_id: appointment.doctor_id });
+        return res.status(403).json({ error: 'No tiene permiso para reagendar esta cita' });
       }
 
       // Verificar que esté en estado válido (scheduled o confirmed)
@@ -597,11 +644,11 @@ const appointmentController = {
       }
 
       // Calcular nuevo scheduled_end
-      const startDate = new Date(new_scheduled_start);
+      const startDate = new Date(finalStartTime);
       const endDate = new Date(startDate.getTime() + duration_minutes * 60000);
       const new_scheduled_end = endDate.toISOString();
 
-      console.log('[RESCHEDULE] New times:', { new_scheduled_start, new_scheduled_end });
+      console.log('[RESCHEDULE] New times:', { finalStartTime, new_scheduled_end });
 
       // Verificar disponibilidad
       const { data: conflicts, error: conflictError } = await supabase
@@ -610,7 +657,7 @@ const appointmentController = {
         .eq('doctor_id', appointment.doctor_id)
         .neq('id', id)
         .in('status_id', [1, 2])
-        .or(`and(scheduled_start.lte.${new_scheduled_start},scheduled_end.gt.${new_scheduled_start}),and(scheduled_start.lt.${new_scheduled_end},scheduled_end.gte.${new_scheduled_end})`);
+        .or(`and(scheduled_start.lte.${finalStartTime},scheduled_end.gt.${finalStartTime}),and(scheduled_start.lt.${new_scheduled_end},scheduled_end.gte.${new_scheduled_end})`);
 
       if (conflictError) {
         console.error('[RESCHEDULE] Conflict check error:', conflictError);
@@ -628,7 +675,7 @@ const appointmentController = {
       const { data: updatedData, error: updateError } = await supabase
         .from('appointments')
         .update({
-          scheduled_start: new_scheduled_start,
+          scheduled_start: finalStartTime,
           scheduled_end: new_scheduled_end,
           updated_at: new Date().toISOString()
         })
@@ -644,7 +691,7 @@ const appointmentController = {
       res.json({
         message: 'Cita reagendada exitosamente',
         appointment: updatedData[0],
-        new_scheduled_start,
+        new_scheduled_start: finalStartTime,
         new_scheduled_end
       });
 

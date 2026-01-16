@@ -22,72 +22,109 @@ function calculateAge(dobString) {
 
 /**
  * Obtiene la lista base de pacientes con su última visita.
- * (Consulta PostgREST limpia y correcta)
  */
 async function getPatientsList(doctorId = null) {
     try {
-        let patientQuery = supabase
-            .from('patients')
-            .select(`
-                date_of_birth,
-                allergies,
-                medical_conditions,
-                
-                users(
-                    id, 
-                    first_name, 
-                    last_name, 
-                    cedula, 
-                    phone_number, 
-                    email
-                )
-            `);
+        console.log('[PATIENTS] Starting getPatientsList...');
+        
+        // Obtener todos los usuarios activos
+        console.log('[PATIENTS] Fetching all active users...');
+        const { data: allUsers, error: allUsersError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('is_active', true);
 
-        const { data: patientsData, error: patientsError } = await patientQuery;
-        if (patientsError) throw patientsError;
+        if (allUsersError) {
+            console.error('[PATIENTS] Error fetching users:', allUsersError);
+            throw allUsersError;
+        }
 
-        // Procesamos la lista para obtener la última cita de cada paciente
-        const patientsWithDetails = await Promise.all(patientsData.map(async (patient) => {
-            
-            // Accedemos a los datos de usuario a través de patient.users
-            const patientUserId = patient.users.id;
-            
-            // Sub-consulta para la última cita
-            const { data: lastAppointment } = await supabase
-                .from('appointments')
-                .select('scheduled_start')
-                .eq('patient_user_id', patientUserId)
-                .order('scheduled_start', { ascending: false })
-                .limit(1);
+        console.log(`[PATIENTS] Found ${allUsers?.length || 0} active users`);
 
-            const lastVisit = (lastAppointment && lastAppointment.length > 0) 
-                ? lastAppointment[0].scheduled_start 
-                : null;
-            
-            // Retornamos el objeto con el formato final
-            return {
-                user_id: patientUserId,
+        if (!allUsers || allUsers.length === 0) {
+            console.log('[PATIENTS] ✅ No patients found, returning empty list');
+            return [];
+        }
+
+        // Procesar usuarios y obtener sus últimas citas y datos adicionales
+        const patientsWithDetails = await Promise.all(allUsers.map(async (user) => {
+            try {
+                // Obtener última cita para este usuario
+                const { data: lastAppointment, error: appointmentError } = await supabase
+                    .from('appointments')
+                    .select('scheduled_start')
+                    .eq('patient_user_id', user.id)
+                    .order('scheduled_start', { ascending: false })
+                    .limit(1);
+
+                if (appointmentError) {
+                    console.warn(`[PATIENTS] Warning: Could not fetch appointments for user ${user.id}:`, appointmentError.message);
+                }
+
+                const lastVisit = (lastAppointment && lastAppointment.length > 0) 
+                    ? lastAppointment[0].scheduled_start 
+                    : null;
+
+                // Obtener datos adicionales desde tabla patients si existe
+                let dateOfBirth = null;
+                let medicalConditions = null;
+                let allergies = null;
                 
-                // Mapeamos los campos desde patient.users
-                first_name: patient.users.first_name,
-                last_name: patient.users.last_name,
-                cedula: patient.users.cedula,
-                phone_number: patient.users.phone_number,
-                email: patient.users.email,
+                try {
+                    const { data: patientRecord } = await supabase
+                        .from('patients')
+                        .select('date_of_birth, medical_conditions, allergies')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    
+                    if (patientRecord) {
+                        dateOfBirth = patientRecord.date_of_birth;
+                        medicalConditions = patientRecord.medical_conditions;
+                        allergies = patientRecord.allergies;
+                    }
+                } catch (e) {
+                    console.warn(`[PATIENTS] Could not fetch patient record for user ${user.id}`);
+                }
                 
-                date_of_birth: patient.date_of_birth,
-                principal_condition: patient.medical_conditions || 'No especificada',
-                allergies: patient.allergies,
-                ultima_visita: lastVisit,
-                age: calculateAge(patient.date_of_birth),
-            };
+                return {
+                    id: user.id,
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    cedula: user.cedula,
+                    phone_number: user.phone_number,
+                    email: user.email,
+                    date_of_birth: dateOfBirth,
+                    principal_condition: medicalConditions,
+                    allergies: allergies,
+                    ultima_visita: lastVisit,
+                };
+            } catch (err) {
+                console.error(`[PATIENTS] Error processing user ${user.id}:`, err.message);
+                // Retornar usuario sin última cita en caso de error
+                return {
+                    id: user.id,
+                    user_id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    cedula: user.cedula,
+                    phone_number: user.phone_number,
+                    email: user.email,
+                    date_of_birth: null,
+                    principal_condition: null,
+                    allergies: null,
+                    ultima_visita: null,
+                };
+            }
         }));
         
+        console.log(`[PATIENTS] ✅ Successfully loaded ${patientsWithDetails.length} patients`);
         return patientsWithDetails;
 
     } catch (error) {
-        console.error('Error en patientService.getPatientsList:', error);
-        throw new Error('Fallo en el servicio al cargar pacientes.'); 
+        console.error('[PATIENTS] ❌ Error en patientService.getPatientsList:', error.message);
+        console.error('[PATIENTS] Stack trace:', error.stack);
+        throw error;
     }
 }
 

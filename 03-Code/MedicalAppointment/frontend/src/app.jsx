@@ -32,6 +32,12 @@ import PatientProfile from './pages/patient/PatientProfile';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorAppointments from './pages/doctor/DoctorAppointments';
+import DoctorSchedule from './pages/doctor/DoctorSchedule';
+import DoctorProfile from './pages/doctor/DoctorProfile';
+import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
+import DoctorMessages from './pages/doctor/DoctorMessages';
+import DoctorReports from './pages/doctor/DoctorReports';
+import DoctorScheduleAppointment from './pages/doctor/DoctorScheduleAppointment';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -233,6 +239,54 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['doctor']}>
             <DoctorAppointments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/schedule"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorSchedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/profile"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/prescriptions"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorPrescriptions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/messages"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorMessages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/reports"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/schedule-appointment"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorScheduleAppointment />
           </ProtectedRoute>
         }
       />

@@ -14,8 +14,8 @@ router.post('/', requireRole('patient'), appointmentController.createAppointment
 router.get('/patient', requireRole('patient'), appointmentController.getPatientAppointments);
 router.get('/patient/:id', requireRole('patient'), appointmentController.getAppointmentById);
 router.put('/:id', requireRole('patient'), appointmentController.updateAppointment);
-router.patch('/:id/reschedule', requireRole('patient'), appointmentController.rescheduleAppointment);
-router.delete('/:id', requireRole('patient'), appointmentController.cancelAppointment);
+router.patch('/:id/reschedule', appointmentController.rescheduleAppointment); // Allow both patient and doctor
+router.delete('/:id', appointmentController.cancelAppointment); // Allow both patient and doctor
 
 // Rutas de doctores - CRUD completo + acciones de negocio
 router.get('/doctor', requireRole('doctor'), appointmentController.getDoctorAppointments);

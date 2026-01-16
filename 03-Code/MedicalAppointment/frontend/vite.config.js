@@ -9,10 +9,10 @@ export default defineConfig({
     proxy: {
       // Proxy /api requests to the LOCAL backend during development
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
+        secure: false,
+        ws: true
       }
     }
   },

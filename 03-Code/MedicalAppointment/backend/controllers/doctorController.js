@@ -240,28 +240,45 @@ const doctorController = {
     getDoctorPatients: async (req, res) => {
   try {
     const userId = req.user?.id;
+    console.log('[DOCTOR_PATIENTS] Starting with userId:', userId);
+    
     if (!userId) {
       return res.status(401).json({ error: 'Doctor no autenticado' });
     }
 
     // 1️⃣ Obtener doctor_id
+    console.log('[DOCTOR_PATIENTS] Fetching doctor record...');
     const { data: doctor, error: doctorError } = await supabase
       .from('doctors')
       .select('id')
       .eq('user_id', userId)
       .single();
 
-    if (doctorError || !doctor) {
+    if (doctorError) {
+      console.error('[DOCTOR_PATIENTS] Error fetching doctor:', doctorError.message);
+      return res.status(404).json({ error: 'Doctor no encontrado', details: doctorError.message });
+    }
+
+    if (!doctor) {
+      console.error('[DOCTOR_PATIENTS] No doctor found for userId:', userId);
       return res.status(404).json({ error: 'Doctor no encontrado' });
     }
 
+    console.log('[DOCTOR_PATIENTS] Found doctor:', doctor.id);
+
     // 2️⃣ Obtener TODAS las citas del doctor (sin filtrar por estado)
+    console.log('[DOCTOR_PATIENTS] Fetching appointments for doctor:', doctor.id);
     const { data: allAppointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select('id, patient_user_id')
       .eq('doctor_id', doctor.id);
 
-    if (appointmentsError) throw appointmentsError;
+    if (appointmentsError) {
+      console.error('[DOCTOR_PATIENTS] Error fetching appointments:', appointmentsError.message);
+      throw appointmentsError;
+    }
+
+    console.log('[DOCTOR_PATIENTS] Found appointments:', allAppointments?.length || 0);
 
     // 3️⃣ Extraer pacientes únicos que ALGUNA VEZ han tenido una cita con el doctor
     const patientsWithAppointments = new Set();
@@ -271,79 +288,72 @@ const doctorController = {
       }
     });
 
-    console.log('📊 Doctor ID:', doctor.id);
-    console.log('📋 Total citas encontradas:', allAppointments.length);
-    console.log('👥 Pacientes con citas:', patientsWithAppointments.size, Array.from(patientsWithAppointments));
+    console.log('[DOCTOR_PATIENTS] Unique patients with appointments:', patientsWithAppointments.size);
 
-    // 4️⃣ Obtener TODOS los pacientes desde la tabla patients con su información de usuario
-    const { data: patientRecords, error: patientRecordsError } = await supabase
-      .from('patients')
+    // 4️⃣ Obtener TODOS los usuarios activos
+    console.log('[DOCTOR_PATIENTS] Fetching all active users...');
+    const { data: users, error: usersError } = await supabase
+      .from('users')
       .select(`
-        user_id,
-        users:user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          cedula,
-          is_active
-        )
-      `);
+        id,
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        cedula,
+        is_active
+      `)
+      .eq('is_active', true);
 
-    if (patientRecordsError) throw patientRecordsError;
+    if (usersError) {
+      console.error('[DOCTOR_PATIENTS] Error fetching users:', usersError.message);
+      throw usersError;
+    }
 
-    console.log('👥 Total registros en tabla patients:', patientRecords.length);
+    console.log('[DOCTOR_PATIENTS] Found active users:', users?.length || 0);
     
-    // Extraer usuarios de pacientes (solo activos)
-    const patientUsers = (patientRecords || [])
-      .filter(p => p.users && p.users.is_active)
-      .map(p => p.users);
+    // Extraer info de usuarios
+    const patientUsers = (users || []).map(u => ({
+      id: u.id,
+      user_id: u.id,
+      first_name: u.first_name,
+      last_name: u.last_name,
+      email: u.email,
+      phone_number: u.phone_number,
+      cedula: u.cedula,
+      is_active: u.is_active
+    }));
     
-    console.log('📱 Total pacientes activos extraídos:', patientUsers.length);
-    console.log('📋 IDs de pacientes encontrados:', patientUsers.map(p => ({ 
-      id: p.id, 
-      nombre: `${p.first_name} ${p.last_name}`,
-      activo: p.is_active
-    })));
+    console.log('[DOCTOR_PATIENTS] Total patient users extracted:', patientUsers.length);
 
     // 5️⃣ Separar en activos (con citas) y nuevos (sin citas NUNCA)
     const activePatients = [];
     const newPatients = [];
 
     (patientUsers || []).forEach(patient => {
-      const patientObj = {
-        id: patient.id,
-        user_id: patient.id,
-        first_name: patient.first_name,
-        last_name: patient.last_name,
-        email: patient.email,
-        phone_number: patient.phone_number,
-        cedula: patient.cedula,
-        is_active: patient.is_active
-      };
-
       if (patientsWithAppointments.has(patient.id)) {
         // Este paciente ya tiene citas con el doctor
-        activePatients.push(patientObj);
+        activePatients.push(patient);
       } else {
         // Este paciente NUNCA ha tenido una cita con el doctor
-        newPatients.push(patientObj);
+        newPatients.push(patient);
       }
     });
 
-    console.log('✅ Pacientes activos (con citas):', activePatients.length);
-    console.log('🆕 Pacientes nuevos (sin citas):', newPatients.length);
+    console.log('[DOCTOR_PATIENTS] Active patients (with appointments):', activePatients.length);
+    console.log('[DOCTOR_PATIENTS] New patients (no appointments):', newPatients.length);
 
     // 6️⃣ Responder
+    console.log('[DOCTOR_PATIENTS] ✅ Success - returning patients');
     res.json({
       activePatients,
       newPatients
     });
 
   } catch (error) {
-    console.error('Error fetching doctor patients:', error);
-    res.status(500).json({ error: error.message });
+    console.error('[DOCTOR_PATIENTS] ❌ Catch block error:', error.message);
+    console.error('[DOCTOR_PATIENTS] Error stack:', error.stack);
+    res.status(500).json({ error: error.message || 'Error fetching doctor patients' });
   }
 },
 
@@ -395,6 +405,88 @@ const doctorController = {
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
+      }
+    },
+
+    getDoctorReports: async (req, res) => {
+      try {
+        const doctorUserId = req.user.id;
+        const { reportType = 'appointments', dateRange = 'week' } = req.query;
+
+        // Get doctor ID from current user
+        const { data: doctor, error: doctorError } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('user_id', doctorUserId)
+          .single();
+
+        if (doctorError || !doctor) {
+          return res.status(404).json({ error: 'Doctor profile not found' });
+        }
+
+        // Calculate date range
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch(dateRange) {
+          case 'week':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+          default:
+            startDate.setDate(now.getDate() - 7);
+        }
+
+        // Get appointments report
+        const { data: appointments, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            scheduled_start,
+            scheduled_end,
+            status_id,
+            patient_user_id,
+            users!patient_user_id (first_name, last_name)
+          `)
+          .eq('doctor_id', doctor.id)
+          .gte('scheduled_start', startDate.toISOString())
+          .lte('scheduled_start', now.toISOString());
+
+        if (appointmentsError) {
+          console.error('Error fetching appointments:', appointmentsError);
+          throw appointmentsError;
+        }
+
+        // Calculate statistics
+        const completed = appointments?.filter(a => a.status_id === 4) || [];
+        const pending = appointments?.filter(a => [1, 2].includes(a.status_id)) || [];
+        const cancelled = appointments?.filter(a => a.status_id === 3) || [];
+        const uniquePatients = new Set(appointments?.map(a => a.patient_user_id) || []);
+
+        res.json({
+          total_appointments: appointments?.length || 0,
+          completed_appointments: completed.length,
+          pending_appointments: pending.length,
+          cancelled_appointments: cancelled.length,
+          patients_treated: uniquePatients.size,
+          total_revenue: completed.length * 40, // Mock: $40 per appointment
+          average_rating: 4.8, // Mock rating
+          appointments: (appointments || []).map(a => ({
+            id: a.id,
+            patient: `${a.users?.first_name || 'Unknown'} ${a.users?.last_name || ''}`,
+            date: new Date(a.scheduled_start).toLocaleDateString(),
+            status: ['scheduled', 'confirmed', 'completed', 'no-show', 'cancelled'][a.status_id - 1] || 'unknown',
+            type: 'Consulta General'
+          }))
+        });
+      } catch (error) {
+        console.error('Error generating report:', error);
+        res.status(500).json({ error: 'Error generating report', details: error.message });
       }
     }
 };
