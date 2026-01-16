@@ -1019,21 +1019,211 @@ const appointmentController = {
     }
   }, // Coma necesaria aquí
 
-  markAsNoShow: async (req, res) => {
-    res.status(501).json({ message: "No implementado aún" });
-  },
+markAsNoShow: async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
 
-  getAllAppointments: async (req, res) => {
-    res.status(501).json({ message: "No implementado aún" });
-  },
+    const { data: doctor } = await supabase
+      .from('doctors')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
 
-  getAppointmentByIdAdmin: async (req, res) => {
-    res.status(501).json({ message: "No implementado aún" });
-  },
+    if (!doctor) {
+      return res.status(404).json({ error: 'Doctor no encontrado' });
+    }
 
-  forceDeleteAppointment: async (req, res) => {
-    res.status(501).json({ message: "No implementado aún" });
+    const { data: appointment } = await supabase
+      .from('appointments')
+      .select('doctor_id')
+      .eq('id', id)
+      .single();
+
+    if (!appointment || appointment.doctor_id !== doctor.id) {
+      return res.status(403).json({ error: 'No tienes permiso' });
+    }
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ 
+        status_id: 4, // no-show
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ message: 'Cita marcada como no-show', appointment: data });
+  } catch (error) {
+    console.error('Error marking as no-show:', error);
+    res.status(500).json({ error: error.message });
   }
+},
+
+getAllAppointments: async (req, res) => {
+  try {
+    const { doctorId, specialtyId, status } = req.query;
+
+    let query = supabase
+      .from('appointments')
+      .select(`
+        id,
+        scheduled_start,
+        scheduled_end,
+        reason,
+        status_id,
+        created_at,
+        updated_at,
+        users:patient_user_id (
+          first_name,
+          last_name,
+          email
+        ),
+        doctors!appointments_doctor_id_fkey!inner (
+          id,
+          users!inner (
+            first_name,
+            last_name
+          ),
+          specialties (
+            id,
+            name
+          )
+        ),
+        appointment_status (
+          code,
+          label
+        ),
+        consultation_rooms (
+          name,
+          room_number
+        )
+      `)
+      .order('scheduled_start', { ascending: false });
+
+    // Filtros opcionales
+    if (doctorId) {
+      query = query.eq('doctor_id', doctorId);
+    }
+
+    if (specialtyId) {
+      query = query.eq('doctors.specialty_id', specialtyId);
+    }
+
+    if (status) {
+      // Mapear status string a status_id
+      const statusMap = {
+        'scheduled': 1,
+        'confirmed': 2,
+        'completed': 3,
+        'cancelled': 5,
+        'no-show': 4
+      };
+      query = query.eq('status_id', statusMap[status] || status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Formatear respuesta
+    const appointments = (data || []).map(apt => ({
+      id: apt.id,
+      scheduled_start: apt.scheduled_start,
+      scheduled_end: apt.scheduled_end,
+      reason: apt.reason,
+      status_id: apt.status_id,
+      status_code: apt.appointment_status?.code,
+      status_label: apt.appointment_status?.label,
+      patient_name: apt.users ? `${apt.users.first_name} ${apt.users.last_name}` : 'N/A',
+      patient_email: apt.users?.email,
+      doctor_id: apt.doctors?.id,
+      doctor_name: apt.doctors?.users ? `${apt.doctors.users.first_name} ${apt.doctors.users.last_name}` : 'N/A',
+      specialty_id: apt.doctors?.specialties?.id,
+      specialty_name: apt.doctors?.specialties?.name,
+      room_name: apt.consultation_rooms?.name,
+      room_number: apt.consultation_rooms?.room_number,
+      created_at: apt.created_at,
+      updated_at: apt.updated_at
+    }));
+
+    res.json(appointments);
+  } catch (error) {
+    console.error('Error fetching all appointments:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
+
+getAppointmentByIdAdmin: async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        users:patient_user_id (
+          first_name,
+          last_name,
+          email,
+          phone_number
+        ),
+        doctors!appointments_doctor_id_fkey!inner (
+          id,
+          professional_id,
+          users!inner (
+            first_name,
+            last_name,
+            email
+          ),
+          specialties (
+            name
+          )
+        ),
+        appointment_status (
+          code,
+          label
+        ),
+        consultation_rooms (
+          name,
+          room_number,
+          floor
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Cita no encontrada' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching appointment by admin:', error);
+    res.status(500).json({ error: error.message });
+  }
+},
+
+forceDeleteAppointment: async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Cita eliminada permanentemente' });
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
 };
 
 module.exports = appointmentController;
