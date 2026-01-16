@@ -16,7 +16,7 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback',
     passport.authenticate('google', { 
         session: false,
-        failureRedirect: '/panels/login.html?error=google_auth_failed'
+        failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=google_auth_failed`
     }),
     async (req, res) => {
         try {
@@ -78,23 +78,12 @@ router.get('/google/callback',
             const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64');
 
             // Obtener URL del frontend desde variable de entorno
-            // Local: http://127.0.0.1:5500/MedicalAppointment
-            // Producción: https://t6-awd-medical-appointment-web-syst-vercel.app
-            const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5500/MedicalAppointment';
+            // Local: http://localhost:5173 (Vite dev server)
+            // Producción: https://medical-appointment-web-system.vercel.app
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-            // Redirigir directamente según necesidad
-            let redirectUrl;
-            if (needsCompletion) {
-                redirectUrl = `${frontendUrl}/panels/completeProfile.html?oauth=${payloadEncoded}`;
-            } else {
-                const dashboardRoutes = {
-                    patient: 'patient/patientDashboard.html',
-                    doctor: 'doctor/doctorHome.html',
-                    admin: 'Admin/DashboardAdmin.html'
-                };
-                const dashboard = dashboardRoutes[roleName] || 'patient/patientDashboard.html';
-                redirectUrl = `${frontendUrl}/panels/${dashboard}?oauth=${payloadEncoded}`;
-            }
+            // Redirigir a login con parámetro oauth para que el frontend maneje el resto
+            const redirectUrl = `${frontendUrl}/login?oauth=${payloadEncoded}${needsCompletion ? '&needs_completion=true' : ''}`;
 
             console.log('Redirigiendo a:', redirectUrl);
             res.redirect(redirectUrl);
