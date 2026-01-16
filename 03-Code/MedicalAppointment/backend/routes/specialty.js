@@ -11,11 +11,7 @@ router.use(authMiddleware);
 // ============================================
 // RUTAS PÚBLICAS (solo autenticadas)
 // ============================================
-// Estas rutas pueden ser accedidas por cualquier usuario autenticado
 router.get('/active', specialtyController.getActiveSpecialties);
-router.get('/', specialtyController.getAllSpecialties);
-router.get('/:id', specialtyController.getSpecialtyById);
-router.get('/:id/doctors', specialtyController.getSpecialtyWithDoctors);
 
 // ============================================
 // RUTAS DE ESTADÍSTICAS (Admin/Doctor)
@@ -23,6 +19,12 @@ router.get('/:id/doctors', specialtyController.getSpecialtyWithDoctors);
 router.get('/stats', requireRole('admin', 'doctor'), specialtyController.getSpecialtyStats);
 router.get('/filter', requireRole('admin', 'doctor'), specialtyController.filterSpecialties);
 
+// ============================================
+// RUTAS GENERALES
+// ============================================
+router.get('/', specialtyController.getAllSpecialties);
+router.get('/:id', specialtyController.getSpecialtyById);
+router.get('/:id/doctors', specialtyController.getSpecialtyWithDoctors);
 // ============================================
 // RUTAS ADMINISTRATIVAS (Solo Admin)
 // ============================================

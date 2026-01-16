@@ -52,18 +52,34 @@ const fetchDoctors = async () => {
     }
   };
 
-  const loadAppointments = async (extraParams = {}) => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await api.get('/appointments', { params: extraParams });
-      setAppointments(response.data || []);
-    } catch (err) {
-      setError(err.message || 'Error cargando citas');
-    } finally {
+const loadAppointments = async (extraParams = {}) => {
+  setLoading(true);
+  setError('');
+  try {
+    // Verificar que el usuario sea admin
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (user.role !== 'admin') {
+      setError('Solo los administradores pueden ver todas las citas');
+      setAppointments([]);
       setLoading(false);
+      return;
     }
-  };
+
+    const response = await api.get('/appointments', { params: extraParams });
+    setAppointments(response.data || []);
+  } catch (err) {
+    console.error('Error completo appointments:', err);
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      setError('No tienes permisos para ver las citas. Asegúrate de estar logueado como admin.');
+    } else {
+      setError(err.response?.data?.message || err.message || 'Error cargando citas');
+    }
+    setAppointments([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const applyFilters = () => {
     const q = {};
