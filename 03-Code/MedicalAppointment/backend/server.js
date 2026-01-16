@@ -12,59 +12,27 @@ const PORT = process.env.PORT || 3000;
 /* =====================================================
    🔥 CORS PREFLIGHT GLOBAL (DEBE IR PRIMERO)
    ===================================================== */
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  const allowedOrigins = [
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    'http://localhost:5173',
-    'https://medical-appointment-frontend-ten.vercel.app',
-    'https://t6-awd-medical-appointment-web-syst.vercel.app',
-    'https://fronttemporalappointments.vercel.app',
-    'https://medical-appointment-web-system.vercel.app',
-    'https://medical-appointment-web-system-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-l0utuvg37-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-nsgnxey6v-stevven23s-projects.vercel.app'
-  ];
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-  );
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  // 🔥 RESPUESTA DIRECTA AL PREFLIGHT
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
 
 /* =====================================================
    CORS NORMAL
    ===================================================== */
 app.use(cors({
-  origin: [
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    'http://localhost:5173',
-    'https://medical-appointment-frontend-ten.vercel.app',
-    'https://t6-awd-medical-appointment-web-syst.vercel.app',
-    'https://medical-appointment-web-system.vercel.app',
-    'https://medical-appointment-web-system-l0utuvg37-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-qmmxn05ev-stevven23s-projects.vercel.app',
-    'https://medical-appointment-web-system-stevven23s-projects.vercel.app'
-  ],
-  credentials: true
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      origin.includes('vercel.app') ||
+      origin.includes('localhost')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS no permitido'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 /* =====================================================
    MIDDLEWARES BASE
