@@ -372,11 +372,8 @@ export default function DoctorPrescriptions() {
         pdf.text('Código de Verificación', qrX, qrY - 3);
         
         // Construir URL para obtener imagen PNG
-        const apiBaseUrl = window.location.hostname === 'localhost' 
-          ? 'http://localhost:3000/api'
-          : 'https://api.clinica.example.com/api'; // Cambiar por URL de producción
-        
-        const qrImageUrl = `${apiBaseUrl}/prescriptions/qr-image/${prescription.qr_token}`;
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const qrImageUrl = `${apiBaseUrl}/api/prescriptions/qr-image/${prescription.qr_token}`;
         console.log('🖼️ URL de imagen QR:', qrImageUrl);
         console.log('🖼️ Agregando imagen QR...');
         
