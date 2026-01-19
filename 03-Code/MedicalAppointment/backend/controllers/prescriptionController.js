@@ -125,9 +125,11 @@ const prescriptionController = {
                     .eq('is_valid', true)
                     .single();
                 qrRecord = data;
-                console.log('✅ QR encontrado en BD:', qrRecord?.qr_token?.substring(0, 10));
+                if (qrRecord) {
+                    console.log('✅ QR encontrado en BD:', qrRecord?.qr_token?.substring(0, 10));
+                }
             } catch (err) {
-                console.log('⚠️ QR no encontrado en BD, se generará uno nuevo');
+                console.log('⚠️ QR no encontrado en BD, se generará uno nuevo:', err.message);
             }
 
             // Si no existe QR, generarlo
@@ -137,6 +139,8 @@ const prescriptionController = {
                     const apiUrl = process.env.API_URL || 'http://localhost:3000';
                     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
                     const prescriptionCode = `RX-${prescription.id.substring(0, 8).toUpperCase()}`;
+                    
+                    console.log('🌐 URLs utilizadas:', { apiUrl, frontendUrl });
                     const newQR = await qrService.generateQR(prescription.id, prescriptionCode, apiUrl, frontendUrl);
                     
                     console.log('✅ QR generado exitosamente');
@@ -144,10 +148,12 @@ const prescriptionController = {
                         ...prescription,
                         prescription_code: prescriptionCode,
                         qr_token: newQR.qrToken,
-                        qr_url: newQR.qrDataUrl
+                        qr_url: newQR.qrDataUrl,
+                        qr_image_url: newQR.qrImageUrl
                     });
                 } catch (qrError) {
                     console.error('❌ Error generando QR:', qrError.message);
+                    console.error('Stack:', qrError.stack);
                     return res.status(200).json({
                         ...prescription,
                         qr_token: null,
@@ -158,7 +164,7 @@ const prescriptionController = {
 
             // Si existe QR, generar la imagen
             try {
-                console.log('🖼️ Regenerando imagen QR desde URL:', qrRecord.verification_url.substring(0, 50));
+                console.log('🖼️ Regenerando imagen QR desde URL:', qrRecord.verification_url?.substring(0, 50) || 'N/A');
                 const qrDataUrl = await QRCode.toDataURL(qrRecord.verification_url, {
                     errorCorrectionLevel: 'H',
                     type: 'image/png',
@@ -170,14 +176,16 @@ const prescriptionController = {
                 return res.status(200).json({
                     ...prescription,
                     qr_token: qrRecord.qr_token,
-                    qr_url: qrDataUrl
+                    qr_url: qrDataUrl,
+                    qr_image_url: `${process.env.API_URL || 'http://localhost:3000'}/api/prescriptions/qr-image/${qrRecord.qr_token}`
                 });
             } catch (err) {
                 console.error('❌ Error regenerando imagen QR:', err.message);
                 return res.status(200).json({
                     ...prescription,
                     qr_token: qrRecord.qr_token || null,
-                    qr_url: null
+                    qr_url: null,
+                    qr_image_url: null
                 });
             }
         } catch (error) {
