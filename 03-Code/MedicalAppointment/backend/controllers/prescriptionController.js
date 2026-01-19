@@ -1,4 +1,6 @@
 const supabase = require('../database');
+const qrService = require('../services/qrService');
+const QRCode = require('qrcode');
 
 /**
  * Obtiene el doctor_id REAL desde la tabla doctors
@@ -22,7 +24,7 @@ const prescriptionController = {
 
     /**
      * GET /api/prescriptions
-     * Obtiene todas las recetas del doctor logueado
+     * Obtiene todas las recetas del doctor logueado con sus QR codes
      */
     getAllPrescriptions: async (req, res) => {
         try {
@@ -51,7 +53,34 @@ const prescriptionController = {
 
             if (error) throw error;
 
-            res.status(200).json(prescriptions || []);
+            // Enriquecer cada receta con su información de QR
+            const enrichedPrescriptions = await Promise.all(
+                (prescriptions || []).map(async (prescription) => {
+                    try {
+                        const { data: qrRecord } = await supabase
+                            .from('prescription_qr_codes')
+                            .select('qr_token, verification_url, is_valid')
+                            .eq('prescription_id', prescription.id)
+                            .eq('is_valid', true)
+                            .single();
+
+                        return {
+                            ...prescription,
+                            qr_token: qrRecord?.qr_token || null,
+                            qr_url: qrRecord?.verification_url || null
+                        };
+                    } catch (err) {
+                        // Si no hay QR, solo retornar sin el
+                        return {
+                            ...prescription,
+                            qr_token: null,
+                            qr_url: null
+                        };
+                    }
+                })
+            );
+
+            res.status(200).json(enrichedPrescriptions || []);
         } catch (error) {
             console.error('Error en getAllPrescriptions:', error.message);
             res.status(500).json({ error: error.message });
@@ -60,7 +89,7 @@ const prescriptionController = {
 
     /**
      * GET /api/prescriptions/:id
-     * Obtiene una receta específica por ID
+     * Obtiene una receta específica por ID con su QR
      */
     getPrescriptionById: async (req, res) => {
         try {
@@ -84,7 +113,73 @@ const prescriptionController = {
                 return res.status(404).json({ error: 'Receta no encontrada' });
             }
 
-            res.status(200).json(prescription);
+            console.log('📋 Buscando QR para receta:', id);
+
+            // Obtener QR si existe
+            let qrRecord = null;
+            try {
+                const { data } = await supabase
+                    .from('prescription_qr_codes')
+                    .select('qr_token, verification_url, is_valid')
+                    .eq('prescription_id', id)
+                    .eq('is_valid', true)
+                    .single();
+                qrRecord = data;
+                console.log('✅ QR encontrado en BD:', qrRecord?.qr_token?.substring(0, 10));
+            } catch (err) {
+                console.log('⚠️ QR no encontrado en BD, se generará uno nuevo');
+            }
+
+            // Si no existe QR, generarlo
+            if (!qrRecord) {
+                try {
+                    console.log('🔄 Generando nuevo QR...');
+                    const apiUrl = process.env.API_URL || 'http://localhost:3000';
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                    const prescriptionCode = `RX-${prescription.id.substring(0, 8).toUpperCase()}`;
+                    const newQR = await qrService.generateQR(prescription.id, prescriptionCode, apiUrl, frontendUrl);
+                    
+                    console.log('✅ QR generado exitosamente');
+                    return res.status(200).json({
+                        ...prescription,
+                        prescription_code: prescriptionCode,
+                        qr_token: newQR.qrToken,
+                        qr_url: newQR.qrDataUrl
+                    });
+                } catch (qrError) {
+                    console.error('❌ Error generando QR:', qrError.message);
+                    return res.status(200).json({
+                        ...prescription,
+                        qr_token: null,
+                        qr_url: null
+                    });
+                }
+            }
+
+            // Si existe QR, generar la imagen
+            try {
+                console.log('🖼️ Regenerando imagen QR desde URL:', qrRecord.verification_url.substring(0, 50));
+                const qrDataUrl = await QRCode.toDataURL(qrRecord.verification_url, {
+                    errorCorrectionLevel: 'H',
+                    type: 'image/png',
+                    width: 300,
+                    margin: 2,
+                });
+
+                console.log('✅ Imagen QR regenerada, tamaño:', qrDataUrl.length);
+                return res.status(200).json({
+                    ...prescription,
+                    qr_token: qrRecord.qr_token,
+                    qr_url: qrDataUrl
+                });
+            } catch (err) {
+                console.error('❌ Error regenerando imagen QR:', err.message);
+                return res.status(200).json({
+                    ...prescription,
+                    qr_token: qrRecord.qr_token || null,
+                    qr_url: null
+                });
+            }
         } catch (error) {
             console.error('Error en getPrescriptionById:', error.message);
             res.status(500).json({ error: error.message });
@@ -146,10 +241,29 @@ const prescriptionController = {
 
             if (error) throw error;
 
-            res.status(201).json({
+            // Generar código QR para la receta
+            const apiUrl = process.env.API_URL || 'http://localhost:3000';
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const prescriptionCode = `RX-${prescription.id.substring(0, 8).toUpperCase()}`;
+            
+            let qrData = null;
+            try {
+                qrData = await qrService.generateQR(prescription.id, prescriptionCode, apiUrl, frontendUrl);
+            } catch (qrError) {
+                console.warn('QR generation failed, continuing without QR:', qrError.message);
+            }
+
+            const response = {
                 message: 'Receta creada exitosamente',
-                prescription
-            });
+                prescription: {
+                    ...prescription,
+                    prescription_code: prescriptionCode,
+                    qr_token: qrData?.qrToken || null,
+                    qr_url: qrData?.qrDataUrl || null
+                }
+            };
+
+            res.status(201).json(response);
 
         } catch (error) {
             console.error('Error en createPrescription:', error.message);
@@ -314,6 +428,121 @@ const prescriptionController = {
         } catch (error) {
             console.error('Error en getPatientPrescriptions:', error.message);
             res.status(500).json({ error: error.message });
+        }
+    },
+
+    /**
+     * GET /api/prescriptions/verify-qr/:qrToken
+     * Verifica la autenticidad de un código QR de receta
+     * NO requiere autenticación (endpoint público)
+     */
+    verifyQRCode: async (req, res) => {
+        try {
+            const { qrToken } = req.params;
+
+            if (!qrToken) {
+                return res.status(400).json({
+                    error: 'QR token es requerido'
+                });
+            }
+
+            // Verificar QR usando el servicio
+            const verificationResult = await qrService.verifyQR(qrToken);
+
+            if (!verificationResult.valid) {
+                return res.status(401).json({
+                    error: verificationResult.message,
+                    errorCode: verificationResult.error
+                });
+            }
+
+            // Retornar datos de la receta verificada
+            res.status(200).json({
+                valid: true,
+                message: 'Receta auténtica verificada',
+                data: {
+                    prescription: verificationResult.prescription,
+                    doctor: verificationResult.doctor
+                }
+            });
+
+        } catch (error) {
+            console.error('Error en verifyQRCode:', error.message);
+            res.status(500).json({
+                error: 'Error al verificar QR',
+                message: error.message
+            });
+        }
+    },
+
+    /**
+     * GET /api/prescriptions/qr-image/:qrToken
+     * Devuelve solo la imagen PNG del QR
+     * Genera la imagen bajo demanda si no está almacenada en BD
+     */
+    getQRImage: async (req, res) => {
+        try {
+            const { qrToken } = req.params;
+
+            if (!qrToken) {
+                return res.status(400).json({
+                    error: 'QR token es requerido'
+                });
+            }
+
+            // Obtener el record de QR de la base de datos
+            const { data: qrRecord, error } = await supabase
+                .from('prescription_qr_codes')
+                .select('qr_image, is_valid, verification_url')
+                .eq('qr_token', qrToken)
+                .single();
+
+            if (error || !qrRecord) {
+                return res.status(404).json({ error: 'QR no encontrado' });
+            }
+
+            if (!qrRecord.is_valid) {
+                return res.status(401).json({ error: 'QR inválido o expirado' });
+            }
+
+            let imageData = qrRecord.qr_image;
+
+            // Si no está almacenada en BD, generar bajo demanda
+            if (!imageData && qrRecord.verification_url) {
+                console.log('🔄 Generando imagen QR bajo demanda para token:', qrToken);
+                try {
+                    imageData = await QRCode.toDataURL(qrRecord.verification_url, {
+                        errorCorrectionLevel: 'H',
+                        type: 'image/png',
+                        width: 300,
+                        margin: 2,
+                    });
+                } catch (err) {
+                    console.error('Error generando QR bajo demanda:', err.message);
+                    return res.status(500).json({ error: 'No se pudo generar imagen QR' });
+                }
+            }
+
+            if (!imageData) {
+                return res.status(500).json({ error: 'Imagen QR no disponible' });
+            }
+
+            // Extraer datos base64 y convertir a buffer
+            const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+
+            // Enviar como imagen PNG
+            res.setHeader('Content-Type', 'image/png');
+            res.setHeader('Content-Length', imageBuffer.length);
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.send(imageBuffer);
+
+        } catch (error) {
+            console.error('Error en getQRImage:', error.message);
+            res.status(500).json({
+                error: 'Error al obtener imagen QR',
+                message: error.message
+            });
         }
     }
 };

@@ -8,6 +8,12 @@ const { authMiddleware } = require('../middleware/auth');
 // Función para validar si el ID es un UUID válido
 const isUUID = (id) => /^[0-9a-fA-F-]{36}$/.test(id);
 
+// GET /api/prescriptions/verify-qr/:qrToken - Verificar autenticidad de QR (SIN autenticación)
+router.get('/verify-qr/:qrToken', prescriptionController.verifyQRCode);
+
+// GET /api/prescriptions/qr-image/:qrToken - Obtener imagen PNG del QR (SIN autenticación)
+router.get('/qr-image/:qrToken', prescriptionController.getQRImage);
+
 // GET /api/prescriptions/patient - Obtener recetas del paciente logueado
 router.get('/patient', authMiddleware, prescriptionController.getPatientPrescriptions);
 

@@ -7,6 +7,7 @@ import Home from './pages/public/Home';
 import Login from './pages/public/login.jsx';
 import Register from './pages/public/Register';
 import CompleteProfile from './pages/public/CompleteProfile';
+import VerifyPrescriptionQR from './pages/VerifyPrescriptionQR';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
@@ -75,6 +76,7 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+      <Route path="/verify-prescription/:qrToken" element={<VerifyPrescriptionQR />} />
       <Route 
         path="/login" 
         element={user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Login />} 

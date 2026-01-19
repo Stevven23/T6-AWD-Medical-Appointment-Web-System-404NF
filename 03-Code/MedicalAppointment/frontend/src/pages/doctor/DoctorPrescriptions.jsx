@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import { doctorAPI, prescriptionAPI } from '../../services/api';
-import { TrashIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, EyeIcon, ArrowDownTrayIcon, QrCodeIcon } from '@heroicons/react/24/outline';
+import PrescriptionQRModal from '../../components/PrescriptionQRModal';
 
 export default function DoctorPrescriptions() {
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [prescriptions, setPrescriptions] = useState([]);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrPrescription, setQRPrescription] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
@@ -142,14 +145,32 @@ export default function DoctorPrescriptions() {
 
   const downloadPrescriptionPDF = async (prescription) => {
     try {
+      // Obtener receta actualizada con QR si no lo tiene
+      let prescriptionData = { ...prescription };
+      if (!prescriptionData.qr_url && prescription.id) {
+        try {
+          const response = await prescriptionAPI.getById(prescription.id);
+          const updatedPrescription = response.data;
+          prescriptionData = {
+            ...prescription,
+            qr_url: updatedPrescription.qr_url || prescription.qr_url,
+            qr_token: updatedPrescription.qr_token || prescription.qr_token
+          };
+          console.log('Receta actualizada:', prescriptionData);
+        } catch (err) {
+          console.warn('No se pudo obtener QR, continuando sin él:', err.message);
+          // Continuar sin QR, pero mantener los datos originales
+        }
+      }
+
       // Cargar jsPDF desde CDN
       if (!window.jspdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        script.onload = () => generatePDF(prescription);
+        script.onload = () => generatePDF(prescriptionData);
         document.body.appendChild(script);
       } else {
-        generatePDF(prescription);
+        generatePDF(prescriptionData);
       }
     } catch (err) {
       console.error('Error downloading PDF:', err);
@@ -158,6 +179,11 @@ export default function DoctorPrescriptions() {
   };
 
   const generatePDF = (prescription) => {
+    console.log('📄 Iniciando generación de PDF');
+    console.log('💊 Datos de receta:', prescription);
+    console.log('🎯 QR URL:', prescription.qr_url);
+    console.log('🔐 QR Token:', prescription.qr_token);
+    
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -329,6 +355,42 @@ export default function DoctorPrescriptions() {
     pdf.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, margin, y);
     pdf.text('Receta válida por 30 días a partir de la fecha de emisión', margin, y + 6);
 
+    // Agregar código QR al PDF si existe
+    if (prescription.qr_token) {
+      console.log('✅ QR encontrado, intentando agregar al PDF');
+      console.log('🔐 QR Token:', prescription.qr_token);
+      try {
+        const qrSize = 40; // Tamaño del QR en mm
+        const qrX = pageWidth - margin - qrSize; // Esquina derecha
+        const qrY = y - qrSize - 10; // Encima del pie de página
+        
+        console.log('📍 Posición QR:', { x: qrX, y: qrY, size: qrSize });
+        
+        // Agregar etiqueta de QR
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Código de Verificación', qrX, qrY - 3);
+        
+        // Construir URL para obtener imagen PNG
+        const apiBaseUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3000/api'
+          : 'https://api.clinica.example.com/api'; // Cambiar por URL de producción
+        
+        const qrImageUrl = `${apiBaseUrl}/prescriptions/qr-image/${prescription.qr_token}`;
+        console.log('🖼️ URL de imagen QR:', qrImageUrl);
+        console.log('🖼️ Agregando imagen QR...');
+        
+        // Agregar imagen QR desde URL
+        pdf.addImage(qrImageUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+        console.log('✅ QR agregado exitosamente al PDF');
+      } catch (err) {
+        console.error('❌ Error agregando QR al PDF:', err.message);
+        console.error('Stack:', err.stack);
+      }
+    } else {
+      console.warn('⚠️ No hay QR token disponible:', { qr_url: prescription.qr_url, qr_token: prescription.qr_token });
+    }
+
     // Descargar PDF
     const filename = `Receta_${selectedPatient.first_name}_${selectedPatient.last_name}_${new Date().getTime()}.pdf`;
     pdf.save(filename);
@@ -417,7 +479,7 @@ export default function DoctorPrescriptions() {
                   <div className="space-y-3">
                     {prescriptions.map(prescription => (
                       <div
-                        key={prescription.prescription_id}
+                        key={prescription.id}
                         className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                       >
                         <div>
@@ -435,6 +497,16 @@ export default function DoctorPrescriptions() {
                             <EyeIcon className="w-5 h-5" />
                           </button>
                           <button
+                            onClick={() => {
+                              setQRPrescription(prescription);
+                              setShowQRModal(true);
+                            }}
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                            title="Ver código QR"
+                          >
+                            <QrCodeIcon className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => downloadPrescriptionPDF(prescription)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
                             title="Descargar PDF"
@@ -442,7 +514,7 @@ export default function DoctorPrescriptions() {
                             <ArrowDownTrayIcon className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => deletePrescription(prescription.prescription_id)}
+                            onClick={() => deletePrescription(prescription.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                             title="Eliminar"
                           >
@@ -583,6 +655,17 @@ export default function DoctorPrescriptions() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Modal de QR */}
+        {showQRModal && (
+          <PrescriptionQRModal
+            prescription={qrPrescription}
+            onClose={() => {
+              setShowQRModal(false);
+              setQRPrescription(null);
+            }}
+          />
         )}
       </div>
     </DoctorLayout>
