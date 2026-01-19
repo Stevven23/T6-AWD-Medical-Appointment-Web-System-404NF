@@ -27,10 +27,8 @@ export default function VerifyPrescriptionQR() {
       setError(null);
       setResult(null);
 
-      // Determinar URL base de API
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000'
-        : `${window.location.protocol}//${window.location.hostname}`;
+      // Usar la URL del backend desde variables de entorno
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
       const response = await fetch(`${apiUrl}/api/prescriptions/verify-qr/${token}`);
       const data = await response.json();
