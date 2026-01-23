@@ -7,14 +7,15 @@ const nodemailer = require('nodemailer');
 
 // Configuración del transportador de email
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
+  host: 'smtp.sendgrid.net',
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: 'apikey', // Literal "apikey"
+    pass: process.env.SENDGRID_API_KEY,
   },
 });
+
 
 // Plantilla base HTML
 const getEmailTemplate = (title, content) => `
@@ -132,12 +133,12 @@ const emailService = {
 
   async sendEmail(to, subject, htmlContent) {
     try {
-      if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      if (!process.env.SENDGRID_API_KEY) {
         console.log('📧 [SIMULACIÓN] Email:', subject, '→', to);
         return { success: true, messageId: `mock-${Date.now()}`, mode: 'simulation' };
       }
       const info = await transporter.sendMail({
-        from: `"Clínica San Miguel" <${process.env.SMTP_USER}>`,
+        from: `"Clínica San Miguel" <ericktufinoortiz@gmail.com>`,
         to,
         subject,
         html: htmlContent,
@@ -168,15 +169,15 @@ const emailService = {
 
   async verifyConnection() {
     try {
-      if (!process.env.SMTP_USER) {
-        console.log('⚠️  SMTP no configurado - Emails en modo simulación');
+      if (!process.env.SENDGRID_API_KEY) {
+        console.log('⚠️ SendGrid no configurado - Emails en modo simulación');
         return false;
       }
       await transporter.verify();
-      console.log('✅ Servidor SMTP listo');
+      console.log('✅ Servidor SendGrid listo');
       return true;
     } catch (error) {
-      console.error('❌ Error SMTP:', error.message);
+      console.error('❌ Error SendGrid:', error.message);
       return false;
     }
   }
