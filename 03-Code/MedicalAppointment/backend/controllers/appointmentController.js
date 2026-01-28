@@ -72,7 +72,7 @@ const appointmentController = {
         reason,
         status_id,
         appointment_status (code, label),
-        consultation_rooms (name, room_number)
+        consultation_rooms!appointments_consultation_room_id_fkey (name, room_number)
       `)
       .gte('scheduled_start', now.toISOString())
       .lte('scheduled_start', futureDate.toISOString())
@@ -266,7 +266,7 @@ const appointmentController = {
               name
             )
           ),
-          consultation_rooms (
+          consultation_rooms!appointments_consultation_room_id_fkey (
             name,
             room_number
           )
@@ -338,7 +338,7 @@ const appointmentController = {
               name
             )
           ),
-          consultation_rooms (
+          consultation_rooms!appointments_consultation_room_id_fkey (
             name,
             room_number,
             floor
@@ -949,7 +949,7 @@ const appointmentController = {
             code,
             label
           ),
-          consultation_rooms (
+          consultation_rooms!appointments_consultation_room_id_fkey (
             id,
             name,
             room_number
@@ -1221,7 +1221,7 @@ const appointmentController = {
             gender,
             address
           ),
-          consultation_rooms (
+          consultation_rooms!appointments_consultation_room_id_fkey (
             name,
             room_number,
             floor
@@ -1420,7 +1420,7 @@ getAllAppointments: async (req, res) => {
           code,
           label
         ),
-        consultation_rooms (
+        consultation_rooms!appointments_consultation_room_id_fkey (
           name,
           room_number
         )
@@ -1510,7 +1510,7 @@ getAppointmentByIdAdmin: async (req, res) => {
           code,
           label
         ),
-        consultation_rooms (
+        consultation_rooms!appointments_consultation_room_id_fkey (
           name,
           room_number,
           floor
