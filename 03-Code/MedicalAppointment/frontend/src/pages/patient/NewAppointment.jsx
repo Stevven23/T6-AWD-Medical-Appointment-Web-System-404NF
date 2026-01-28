@@ -162,14 +162,19 @@ export default function NewAppointment() {
   };
 
   const formatTime = (time) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('es-EC', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    // Simplemente formatear la hora sin conversión de zona horaria
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const period = hour >= 12 ? 'p. m.' : 'a. m.';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${displayHour.toString().padStart(2, '0')}:${minutes} ${period}`;
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-EC', {
+    // Agregar tiempo para evitar conversión UTC que causa mostrar día anterior
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('es-EC', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

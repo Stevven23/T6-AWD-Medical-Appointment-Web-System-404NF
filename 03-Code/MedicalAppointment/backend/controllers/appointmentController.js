@@ -185,16 +185,45 @@ const appointmentController = {
 
       if (createError) throw createError;
 
-      // Obtener email del paciente para crear recordatorio
-      const { data: patientData } = await supabase
-        .from('users')
-        .select('email')
-        .eq('id', patientUserId)
-        .single();
+      // Obtener datos completos para email de confirmación
+      try {
+        const { data: fullAppointment } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patient:patient_user_id (first_name, last_name, email),
+            doctors!appointments_doctor_id_fkey (
+              users (first_name, last_name),
+              specialties (name)
+            )
+          `)
+          .eq('id', appointment.id)
+          .single();
 
-      // Crear recordatorio automático (24 horas antes)
-      if (patientData?.email) {
-        await createAppointmentReminder(appointment.id, scheduled_start, patientData.email);
+        if (fullAppointment) {
+          const patient = fullAppointment.patient;
+          const doctor = fullAppointment.doctors?.users;
+          const specialty = fullAppointment.doctors?.specialties?.name;
+
+          if (patient && doctor) {
+            await emailService.sendAppointmentConfirmation({
+              patientEmail: patient.email,
+              patientName: `${patient.first_name} ${patient.last_name}`,
+              doctorName: `Dr(a). ${doctor.first_name} ${doctor.last_name}`,
+              appointmentDate: scheduled_start,
+              specialty: specialty || 'Consulta General'
+            });
+            console.log('✅ Email de confirmación enviado');
+          }
+        }
+
+        // Crear recordatorio automático (24 horas antes)
+        if (fullAppointment?.patient?.email) {
+          await createAppointmentReminder(appointment.id, scheduled_start, fullAppointment.patient.email);
+        }
+      } catch (emailError) {
+        console.error('❌ Error enviando email de confirmación:', emailError);
+        // No fallar la creación si el email falla
       }
 
       res.status(201).json({
@@ -808,6 +837,55 @@ const appointmentController = {
       }
 
       console.log('[RESCHEDULE] Success:', updatedData);
+      
+      // Enviar email de reagendación
+      try {
+        const { data: fullAppointment } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patient:patient_user_id (first_name, last_name, email),
+            doctors!appointments_doctor_id_fkey (
+              users (first_name, last_name),
+              specialties (name)
+            )
+          `)
+          .eq('id', id)
+          .single();
+
+        if (fullAppointment) {
+          const patient = fullAppointment.patient;
+          const doctor = fullAppointment.doctors?.users;
+          const specialty = fullAppointment.doctors?.specialties?.name;
+
+          if (patient && doctor) {
+            await emailService.sendAppointmentRescheduled({
+              patientEmail: patient.email,
+              patientName: `${patient.first_name} ${patient.last_name}`,
+              doctorName: `Dr(a). ${doctor.first_name} ${doctor.last_name}`,
+              oldDate: appointment.scheduled_start,
+              newDate: finalStartTime,
+              specialty: specialty || 'Consulta General'
+            });
+            console.log('[RESCHEDULE] ✅ Email de reagendación enviado');
+          }
+        }
+
+        // Actualizar recordatorio
+        const reminderTime = new Date(new Date(finalStartTime).getTime() - (24 * 60 * 60 * 1000));
+        await supabase
+          .from('reminders')
+          .update({ 
+            scheduled_send_time: reminderTime.toISOString(),
+            send_status: 'pending' 
+          })
+          .eq('appointment_id', id)
+          .eq('reminder_type', 'appointment_reminder');
+      } catch (emailError) {
+        console.error('[RESCHEDULE] ❌ Error enviando email:', emailError);
+        // No fallar la reagendación si el email falla
+      }
+
       res.json({
         message: 'Cita reagendada exitosamente',
         appointment: updatedData[0],
@@ -993,6 +1071,45 @@ const appointmentController = {
         .single();
 
       if (error) throw error;
+
+      // Enviar email de confirmación al paciente
+      try {
+        const { data: fullAppointment } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patient:patient_user_id (first_name, last_name, email),
+            doctors!appointments_doctor_id_fkey (
+              users (first_name, last_name),
+              specialties (name)
+            )
+          `)
+          .eq('id', appointment.id)
+          .single();
+
+        if (fullAppointment) {
+          const patient = fullAppointment.patient;
+          const doctorData = fullAppointment.doctors?.users;
+          const specialty = fullAppointment.doctors?.specialties?.name;
+
+          if (patient && doctorData) {
+            await emailService.sendAppointmentConfirmation({
+              patientEmail: patient.email,
+              patientName: `${patient.first_name} ${patient.last_name}`,
+              doctorName: `Dr(a). ${doctorData.first_name} ${doctorData.last_name}`,
+              appointmentDate: scheduled_start,
+              specialty: specialty || 'Consulta General'
+            });
+            console.log('✅ Email de confirmación enviado al paciente');
+
+            // Crear recordatorio automático (24 horas antes)
+            await createAppointmentReminder(appointment.id, scheduled_start, patient.email);
+          }
+        }
+      } catch (emailError) {
+        console.error('❌ Error enviando email de confirmación:', emailError);
+        // No fallar la creación si el email falla
+      }
 
       res.status(201).json({
         message: 'Cita agendada exitosamente',
