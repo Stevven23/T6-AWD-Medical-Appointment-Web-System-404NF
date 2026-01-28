@@ -216,20 +216,73 @@ export default function DoctorReports() {
   const downloadReport = async (format) => {
     try {
       setLoading(true);
+      console.log('[DOWNLOAD_REPORT] Starting download with format:', format);
+      
       if (format === 'csv') {
-        const response = await reportAPI.exportToCSV({ range: dateRange });
-        const url = window.URL.createObjectURL(new Blob([response]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `reporte_doctor_${new Date().getTime()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
+        const { startDate, endDate } = getDateRange(dateRange);
+        console.log('[DOWNLOAD_REPORT] Date range:', { startDate, endDate });
+        
+        try {
+          const response = await reportAPI.exportToCSV({ startDate, endDate });
+          console.log('[DOWNLOAD_REPORT] Response received:', { 
+            type: typeof response,
+            hasData: !!response.data,
+            dataType: typeof response.data,
+            isBlob: response.data instanceof Blob
+          });
+          
+          // El Blob está en response.data, no en response directamente
+          const blobData = response.data;
+          
+          if (!(blobData instanceof Blob)) {
+            console.error('[DOWNLOAD_REPORT] No es un Blob:', blobData);
+            throw new Error('La respuesta no es un Blob válido');
+          }
+          
+          const url = window.URL.createObjectURL(blobData);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `reporte_doctor_${new Date().getTime()}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          console.log('[DOWNLOAD_REPORT] Download initiated successfully');
+        } catch (apiError) {
+          console.error('[DOWNLOAD_REPORT] API Error details:');
+          console.error('  Status:', apiError.response?.status);
+          console.error('  URL:', apiError.response?.url);
+          console.error('  Data type:', typeof apiError.response?.data);
+          console.error('  Is Blob:', apiError.response?.data instanceof Blob);
+          
+          // Intentar leer el Blob si es error
+          if (apiError.response?.data instanceof Blob) {
+            const text = await apiError.response.data.text();
+            console.error('[DOWNLOAD_REPORT] Error Blob content:', text);
+            
+            try {
+              const errorJson = JSON.parse(text);
+              console.error('[DOWNLOAD_REPORT] Error JSON:', errorJson);
+              showNotification(`Error: ${errorJson.error || 'Error desconocido'}`, 'error');
+            } catch (e) {
+              console.error('[DOWNLOAD_REPORT] Error raw text:', text);
+              showNotification(`Error: ${text || 'Error desconocido'}`, 'error');
+            }
+          } else {
+            console.error('[DOWNLOAD_REPORT] Error response:', apiError.response?.data);
+            showNotification(`Error: ${apiError.response?.data?.error || apiError.message}`, 'error');
+          }
+          
+          throw apiError;
+        }
       }
       showNotification(`Reporte descargado en ${format.toUpperCase()}`, 'success');
     } catch (error) {
-      console.error('Error downloading report:', error);
-      showNotification('Error al descargar el reporte', 'error');
+      console.error('[DOWNLOAD_REPORT] Error downloading report:', error);
+      if (!error.response?.data instanceof Blob) {
+        showNotification('Error al descargar el reporte', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -386,18 +439,7 @@ export default function DoctorReports() {
                 </div>
               </div>
 
-              {/* Revenue */}
-              <div className="bg-white border border-green-200 rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                    <p className="text-2xl font-bold text-green-600 mt-2">
-                      ${statistics?.total_revenue || 0}
-                    </p>
-                  </div>
-                  <div className="text-5xl opacity-10">💰</div>
-                </div>
-              </div>
+
             </div>
 
             {/* Detailed Appointments Table */}
@@ -417,7 +459,6 @@ export default function DoctorReports() {
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Fecha</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Hora</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Tipo</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Duración</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700">Estado</th>
                     </tr>
                   </thead>
@@ -439,9 +480,6 @@ export default function DoctorReports() {
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600">
                               {mapped.tipo}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {mapped.duracion !== undefined && mapped.duracion !== null && mapped.duracion !== '---' ? `${mapped.duracion} min` : '---'}
                             </td>
                             <td className="px-6 py-4 text-sm">
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -473,7 +511,7 @@ export default function DoctorReports() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                           No hay datos de citas disponibles
                         </td>
                       </tr>

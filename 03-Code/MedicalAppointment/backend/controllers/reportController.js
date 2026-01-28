@@ -1,6 +1,7 @@
 // backend/controllers/reportController.js
 
 const reportService = require('../services/reportService');
+const supabase = require('../database');
 
 const reportController = {
 
@@ -187,7 +188,9 @@ const reportController = {
   exportToCSV: async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const doctorId = req.user.doctorId;
+      const userId = req.user.id;
+
+      console.log('[EXPORT_CSV] Starting export with:', { startDate, endDate, userId });
 
       if (!startDate || !endDate) {
         return res.status(400).json({
@@ -196,19 +199,48 @@ const reportController = {
         });
       }
 
+      // Obtener doctor_id desde la tabla doctors
+      console.log('[EXPORT_CSV] Fetching doctor for userId:', userId);
+      const { data: doctor, error: doctorError } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (doctorError) {
+        console.error('[EXPORT_CSV] Error fetching doctor:', doctorError);
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado: ' + doctorError.message
+        });
+      }
+
+      if (!doctor) {
+        console.error('[EXPORT_CSV] Doctor not found for userId:', userId);
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado'
+        });
+      }
+
+      console.log('[EXPORT_CSV] Doctor found:', doctor.id);
+
       const csvContent = await reportService.exportAppointmentsToCSV(
-        doctorId,
+        doctor.id,
         startDate,
         endDate
       );
 
+      console.log('[EXPORT_CSV] CSV generated, length:', csvContent.length);
+
       // Set headers for file download
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=reporte_citas_${startDate}_${endDate}.csv`);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="reporte_citas_${startDate}_${endDate}.csv"`);
+      res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8'));
       res.send(csvContent);
 
     } catch (error) {
-      console.error('Error en reportController.exportToCSV:', error);
+      console.error('[EXPORT_CSV] Error:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Error al exportar datos'

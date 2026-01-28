@@ -315,6 +315,90 @@ const reportService = {
       console.error('Error en reportService.getModifiedAppointments:', error);
       throw new Error('Error al obtener citas modificadas');
     }
+  },
+
+  // Exportar citas a CSV
+  exportAppointmentsToCSV: async function(doctorId, startDate, endDate) {
+    try {
+      console.log('[CSV_EXPORT] Starting with:', { doctorId, startDate, endDate });
+
+      // Obtener citas directamente con una query más simple
+      let query = supabase
+        .from('appointments')
+        .select(`
+          id,
+          scheduled_start,
+          reason,
+          status_id,
+          users:patient_user_id (first_name, last_name)
+        `)
+        .gte('scheduled_start', startDate)
+        .lte('scheduled_start', endDate);
+
+      if (doctorId) {
+        query = query.eq('doctor_id', doctorId);
+      }
+
+      const { data: appointments, error } = await query.order('scheduled_start', { ascending: false });
+
+      console.log('[CSV_EXPORT] Query result:', { count: appointments?.length, error });
+
+      if (error) {
+        console.error('[CSV_EXPORT] Supabase error:', error);
+        throw new Error('Error al obtener citas: ' + error.message);
+      }
+
+      if (!appointments || appointments.length === 0) {
+        console.log('[CSV_EXPORT] No appointments found, returning headers only');
+        return 'Paciente,Fecha,Hora,Tipo,Estado\n';
+      }
+
+      console.log('[CSV_EXPORT] Processing', appointments.length, 'appointments');
+
+      // Crear encabezados
+      const headers = ['Paciente', 'Fecha', 'Hora', 'Tipo', 'Estado'];
+      const rows = [];
+
+      // Procesar cada cita
+      appointments.forEach((apt, idx) => {
+        try {
+          const patientName = apt.users ? `${apt.users.first_name} ${apt.users.last_name}` : 'Desconocido';
+          const fecha = new Date(apt.scheduled_start).toLocaleDateString('es-ES');
+          const hora = new Date(apt.scheduled_start).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+          const tipo = apt.reason || 'No especificado';
+          
+          // Mapear estado_id a nombre
+          let estado = 'Desconocido';
+          if (apt.status_id === 1) estado = 'Programada';
+          else if (apt.status_id === 2) estado = 'Completada';
+          else if (apt.status_id === 3) estado = 'Cancelada';
+          else if (apt.status_id === 4) estado = 'No presentada';
+
+          rows.push([
+            patientName,
+            fecha,
+            hora,
+            tipo,
+            estado
+          ]);
+        } catch (rowError) {
+          console.error('[CSV_EXPORT] Error processing row', idx, ':', rowError.message);
+        }
+      });
+
+      // Crear CSV con punto y coma como separador (estándar para Excel en español)
+      const csvContent = [
+        headers.join(';'),
+        ...rows.map(row => row.join(';'))
+      ].join('\n');
+
+      console.log('[CSV_EXPORT] CSV generated successfully:', csvContent.length, 'bytes');
+
+      return csvContent;
+    } catch (error) {
+      console.error('[CSV_EXPORT] Error en exportAppointmentsToCSV:', error);
+      throw new Error('Error al exportar citas a CSV: ' + error.message);
+    }
   }
 };
 
