@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, CheckCircleIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 /**
  * Componente para mostrar y gestionar QR de recetas
@@ -7,15 +7,50 @@ import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 export function PrescriptionQRModal({ prescription, onClose }) {
   const [copied, setCopied] = useState(false);
 
-  if (!prescription || !prescription.qr_url) {
+  // Handle case when prescription has no QR
+  if (!prescription) {
     return null;
+  }
+  
+  if (!prescription.qr_url) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Código QR</h2>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="text-center py-8">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <ExclamationTriangleIcon className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">QR no disponible</h3>
+            <p className="text-gray-600 mb-6">
+              Esta receta no tiene un código QR generado. Los códigos QR se generan automáticamente para recetas nuevas.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleDownloadQR = () => {
     // Crear link de descarga
     const link = document.createElement('a');
     link.href = prescription.qr_url;
-    link.download = `receta-qr-${prescription.prescription_code}.png`;
+    link.download = `receta-qr-${prescription.qr_token || prescription.id}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -29,13 +64,13 @@ export function PrescriptionQRModal({ prescription, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 my-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Código QR de Receta</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Código: <span className="font-mono font-semibold">{prescription.prescription_code}</span>
+            Token: <span className="font-mono font-semibold">{prescription.qr_token ? `${prescription.qr_token.substring(0, 12)}...` : 'N/A'}</span>
           </p>
         </div>
 

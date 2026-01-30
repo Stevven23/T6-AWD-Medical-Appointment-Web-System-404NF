@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PatientLayout from '../../layouts/PatientLayout';
-import { doctorAPI, specialtyAPI, appointmentAPI } from '../../services/api';
+import { DoctorModel, SpecialtyModel, AppointmentModel } from '../../models';
 import {
   MagnifyingGlassIcon,
   CalendarIcon,
@@ -30,7 +30,6 @@ export default function NewAppointment() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appointmentDetails, setAppointmentDetails] = useState({
     reason: '',
-    notes: '',
   });
 
   useEffect(() => {
@@ -51,8 +50,8 @@ export default function NewAppointment() {
 
   const loadSpecialties = async () => {
     try {
-      const response = await specialtyAPI.getAll();
-      setSpecialties(response.data);
+      const response = await SpecialtyModel.getAll();
+      setSpecialties(response.data || response);
     } catch (error) {
       showNotification('Error al cargar especialidades', 'error');
     }
@@ -61,8 +60,8 @@ export default function NewAppointment() {
   const loadDoctorsBySpecialty = async (specialtyId) => {
     try {
       setLoading(true);
-      const response = await doctorAPI.getBySpecialty(specialtyId);
-      setDoctors(response.data);
+      const response = await DoctorModel.getBySpecialty(specialtyId);
+      setDoctors(response.data || response);
     } catch (error) {
       showNotification('Error al cargar doctores', 'error');
     } finally {
@@ -73,12 +72,13 @@ export default function NewAppointment() {
   const loadAvailableSlots = async () => {
     try {
       setLoading(true);
-      const response = await appointmentAPI.getAvailableSlots(
+      const response = await AppointmentModel.getAvailableSlots(
         searchParams.doctor_id,
         searchParams.date
       );
-      // El backend devuelve { slots: [...] }
-      const slots = response.data.slots || response.data || [];
+      // El backend devuelve { slots: [...], doctorId, date, totalSlots }
+      // El modelo ya extrae response.data, así que response es el objeto directo
+      const slots = response?.slots || response?.data?.slots || response?.data || response || [];
       console.log('Available slots:', slots);
       setAvailableSlots(Array.isArray(slots) ? slots : []);
     } catch (error) {
@@ -122,20 +122,20 @@ export default function NewAppointment() {
       setLoading(true);
       
       // Construir scheduled_start combinando fecha y hora
-      const scheduledStart = `${searchParams.date}T${selectedSlot.start}:00`;
+      // El backend devuelve { time: "HH:MM" }, no { start: "HH:MM" }
+      const slotTime = selectedSlot.time || selectedSlot.start;
+      const scheduledStart = `${searchParams.date}T${slotTime}:00`;
       
       console.log('Creating appointment with:', {
         doctor_id: searchParams.doctor_id,
         scheduled_start: scheduledStart,
         reason: appointmentDetails.reason,
-        notes: appointmentDetails.notes,
       });
       
-      await appointmentAPI.create({
+      await AppointmentModel.create({
         doctor_id: searchParams.doctor_id,
         scheduled_start: scheduledStart,
         reason: appointmentDetails.reason,
-        notes: appointmentDetails.notes,
       });
       
       showNotification('Cita agendada exitosamente', 'success');
@@ -163,6 +163,7 @@ export default function NewAppointment() {
 
   const formatTime = (time) => {
     // Simplemente formatear la hora sin conversión de zona horaria
+    if (!time) return '';
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours);
     const period = hour >= 12 ? 'p. m.' : 'a. m.';
@@ -332,16 +333,20 @@ export default function NewAppointment() {
                       Horarios Disponibles para {formatDate(searchParams.date)}
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                      {availableSlots.map((slot, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSlotSelect(slot)}
-                          className="px-4 py-3 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all font-medium text-center"
-                        >
-                          <ClockIcon className="h-5 w-5 mx-auto mb-1" />
-                          {formatTime(slot.start)}
-                        </button>
-                      ))}
+                      {availableSlots.map((slot, index) => {
+                        // El backend devuelve { time: "HH:MM" }, no { start: "HH:MM" }
+                        const slotTime = slot.time || slot.start || '';
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleSlotSelect(slot)}
+                            className="px-4 py-3 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all font-medium text-center"
+                          >
+                            <ClockIcon className="h-5 w-5 mx-auto mb-1" />
+                            {formatTime(slotTime)}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -388,7 +393,7 @@ export default function NewAppointment() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Hora</p>
                       <p className="font-semibold text-gray-900">
-                        {selectedSlot && formatTime(selectedSlot.start)}
+                        {selectedSlot && formatTime(selectedSlot.time || selectedSlot.start)}
                       </p>
                     </div>
                   </div>
@@ -410,24 +415,6 @@ export default function NewAppointment() {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Ej: Control de rutina, dolor de cabeza, etc."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notas Adicionales (Opcional)
-                  </label>
-                  <textarea
-                    value={appointmentDetails.notes}
-                    onChange={(e) =>
-                      setAppointmentDetails((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
-                    rows="4"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Información adicional que el doctor deba conocer..."
                   />
                 </div>
 

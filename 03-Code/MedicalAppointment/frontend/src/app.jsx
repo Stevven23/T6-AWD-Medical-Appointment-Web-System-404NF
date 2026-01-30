@@ -7,16 +7,20 @@ import Home from './pages/public/Home';
 import Login from './pages/public/login.jsx';
 import Register from './pages/public/Register';
 import CompleteProfile from './pages/public/CompleteProfile';
+import ConfirmAppointment from './pages/public/ConfirmAppointment';
 import VerifyPrescriptionQR from './pages/VerifyPrescriptionQR';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import DoctorManagement from './pages/admin/DoctorManagement.jsx';
+import PatientManagement from './pages/admin/PatientManagement.jsx';
 import SpecialtyManagement from './pages/admin/SpecialtyManagement';
 import ScheduleManagement from './pages/admin/ScheduleManagement';
+import ConsultationRoomManagement from './pages/admin/ConsultationRoomManagement';
 import AdminCalendar from './pages/admin/AdminCalendar';
 import AdminProfile from './pages/admin/AdminProfile';
 import AdminLogs from './pages/admin/AdminLogs';
+import BillingManagement from './pages/admin/BillingManagement';
 
 // Patient pages
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -26,19 +30,22 @@ import MedicalRecord from './pages/patient/MedicalRecord';
 import PatientHistory from './pages/patient/PatientHistory';
 import PatientLab from './pages/patient/PatientLab';
 import PatientPrescriptions from './pages/patient/PatientPrescriptions';
-import PatientMessages from './pages/patient/PatientMessages';
+import PatientNotifications from './pages/patient/PatientNotifications';
 import PatientProfile from './pages/patient/PatientProfile';
+import RateAppointment from './pages/patient/RateAppointment';
+import PatientBilling from './pages/patient/PatientBilling';
 
 // Doctor pages
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorPatients from './pages/doctor/DoctorPatients';
 import DoctorAppointments from './pages/doctor/DoctorAppointments';
+import DoctorConsultation from './pages/doctor/DoctorConsultation';
 import DoctorSchedule from './pages/doctor/DoctorSchedule';
 import DoctorProfile from './pages/doctor/DoctorProfile';
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions';
-import DoctorMessages from './pages/doctor/DoctorMessages';
+import DoctorNotifications from './pages/doctor/DoctorNotifications';
+import DoctorLab from './pages/doctor/DoctorLab';
 import DoctorReports from './pages/doctor/DoctorReports';
-import DoctorScheduleAppointment from './pages/doctor/DoctorScheduleAppointment';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -77,6 +84,7 @@ function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/verify-prescription/:qrToken" element={<VerifyPrescriptionQR />} />
+      <Route path="/confirm-appointment/:appointmentId" element={<ConfirmAppointment />} />
       <Route 
         path="/login" 
         element={user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Login />} 
@@ -129,6 +137,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/consultation-rooms"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ConsultationRoomManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/profile"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
@@ -141,6 +157,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminLogs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/patients"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <PatientManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/billing"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <BillingManagement />
           </ProtectedRoute>
         }
       />
@@ -203,10 +235,10 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/patient/messages"
+        path="/patient/notifications"
         element={
           <ProtectedRoute allowedRoles={['patient']}>
-            <PatientMessages />
+            <PatientNotifications />
           </ProtectedRoute>
         }
       />
@@ -215,6 +247,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['patient']}>
             <PatientProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/rate/:appointmentId"
+        element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <RateAppointment />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/billing"
+        element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <PatientBilling />
           </ProtectedRoute>
         }
       />
@@ -269,14 +317,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/doctor/messages"
-        element={
-          <ProtectedRoute allowedRoles={['doctor']}>
-            <DoctorMessages />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/doctor/reports"
         element={
           <ProtectedRoute allowedRoles={['doctor']}>
@@ -285,10 +325,26 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/doctor/schedule-appointment"
+        path="/doctor/notifications"
         element={
           <ProtectedRoute allowedRoles={['doctor']}>
-            <DoctorScheduleAppointment />
+            <DoctorNotifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/lab"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorLab />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/consultation/:appointmentId"
+        element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorConsultation />
           </ProtectedRoute>
         }
       />

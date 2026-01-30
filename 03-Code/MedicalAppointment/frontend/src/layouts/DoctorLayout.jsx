@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -7,15 +8,41 @@ import {
   ClockIcon,
   DocumentIcon,
   UserCircleIcon,
-  EnvelopeIcon,
+  BellIcon,
   ChartBarIcon,
   ArrowRightOnRectangleIcon,
+  BeakerIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
 export default function DoctorLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Simular carga de notificaciones no leídas
+  useEffect(() => {
+    // TODO: Reemplazar con llamada real a la API de notificaciones
+    const checkNotifications = () => {
+      // Por ahora simular un número aleatorio de notificaciones
+      const storedNotifications = localStorage.getItem('doctor_notifications');
+      if (storedNotifications) {
+        try {
+          const notifications = JSON.parse(storedNotifications);
+          const unread = notifications.filter(n => !n.read).length;
+          setNotificationCount(unread);
+        } catch (e) {
+          setNotificationCount(0);
+        }
+      }
+    };
+    
+    checkNotifications();
+    // Revisar periódicamente
+    const interval = setInterval(checkNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
@@ -27,11 +54,12 @@ export default function DoctorLayout({ children }) {
   const menuItems = [
     { path: '/doctor/dashboard', icon: HomeIcon, label: 'Inicio' },
     { path: '/doctor/appointments', icon: CalendarIcon, label: 'Mi Agenda' },
-    { path: '/doctor/schedule-appointment', icon: ClockIcon, label: 'Agendar Cita' },
-    { path: '/doctor/patients', icon: UserGroupIcon, label: 'Pacientes' },
+    { path: '/doctor/patients', icon: UserGroupIcon, label: 'Mis Pacientes' },
     { path: '/doctor/prescriptions', icon: DocumentIcon, label: 'Recetas' },
+    { path: '/doctor/lab', icon: BeakerIcon, label: 'Laboratorio' },
+    { path: '/doctor/schedule', icon: Cog6ToothIcon, label: 'Mi Horario' },
     { path: '/doctor/reports', icon: ChartBarIcon, label: 'Reportes' },
-    { path: '/doctor/messages', icon: EnvelopeIcon, label: 'Mensajes' },
+    { path: '/doctor/notifications', icon: BellIcon, label: 'Notificaciones', badge: notificationCount },
     { path: '/doctor/profile', icon: UserCircleIcon, label: 'Mi Perfil' },
   ];
 
@@ -68,7 +96,16 @@ export default function DoctorLayout({ children }) {
                     }`}
                   >
                     <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
+                    <span className="font-medium text-sm flex-1">{item.label}</span>
+                    {item.badge > 0 && (
+                      <span className={`min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-xs font-bold ${
+                        isActive
+                          ? 'bg-white text-blue-600'
+                          : `${item.badgeColor || 'bg-red-500'} text-white`
+                      }`}>
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

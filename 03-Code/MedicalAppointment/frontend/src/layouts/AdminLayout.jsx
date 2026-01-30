@@ -9,6 +9,9 @@ import {
   UserCircleIcon,
   DocumentTextIcon,
   ArrowRightOnRectangleIcon,
+  BuildingOffice2Icon,
+  UsersIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 
 export default function AdminLayout({ children }) {
@@ -27,8 +30,11 @@ export default function AdminLayout({ children }) {
     { path: '/admin/dashboard', icon: HomeIcon, label: 'Inicio' },
     { path: '/admin/calendar', icon: CalendarIcon, label: 'Calendario' },
     { path: '/admin/doctors', icon: UserGroupIcon, label: 'Gestión Doctores' },
+    { path: '/admin/patients', icon: UsersIcon, label: 'Gestión Pacientes' },
     { path: '/admin/schedules', icon: ClockIcon, label: 'Horarios' },
     { path: '/admin/specialties', icon: BeakerIcon, label: 'Especialidades' },
+    { path: '/admin/consultation-rooms', icon: BuildingOffice2Icon, label: 'Salas de Consulta' },
+    { path: '/admin/billing', icon: CurrencyDollarIcon, label: 'Facturación' },
     { path: '/admin/profile', icon: UserCircleIcon, label: 'Mi Perfil' },
     { path: '/admin/logs', icon: DocumentTextIcon, label: 'Logs' },
   ];

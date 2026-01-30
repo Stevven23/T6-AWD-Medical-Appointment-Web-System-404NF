@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { doctorAPI, authAPI } from '../../services/api';
+import { DoctorModel, AuthModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 
 export default function DoctorProfile() {
@@ -32,7 +32,7 @@ export default function DoctorProfile() {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      const response = await doctorAPI.getProfile();
+      const response = await DoctorModel.getProfile();
       
       // Axios devuelve la respuesta dentro de .data
       const doctorData = response.data || response;
@@ -73,7 +73,7 @@ export default function DoctorProfile() {
 
     try {
       setLoading(true);
-      await doctorAPI.updateProfile(formData);
+      await DoctorModel.updateProfile(formData);
       showNotification('Perfil actualizado exitosamente', 'success');
       updateUser(formData);
     } catch (error) {
@@ -99,7 +99,7 @@ export default function DoctorProfile() {
 
     try {
       setLoading(true);
-      await authAPI.changePassword({
+      await AuthModel.changePassword({
         current_password: passwordData.current_password,
         new_password: passwordData.new_password,
       });

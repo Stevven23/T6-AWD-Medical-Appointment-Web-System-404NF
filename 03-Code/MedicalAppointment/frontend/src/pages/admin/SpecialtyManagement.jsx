@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { doctorAPI, specialtyAPI } from '../../services/api';
+import { SpecialtyModel } from '../../models';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -28,12 +28,12 @@ export default function SpecialtyManagement() {
     try {
       setLoading(true);
       const [specialtiesRes, statsRes] = await Promise.all([
-        specialtyAPI.getAll(),
-        specialtyAPI.getStats(),
+        SpecialtyModel.getAll(),
+        SpecialtyModel.getStats(),
       ]);
       
-      setSpecialties(specialtiesRes.data);
-      setStats(statsRes.data);
+      setSpecialties(specialtiesRes.data || specialtiesRes);
+      setStats(statsRes.data || statsRes);
     } catch (error) {
       showNotification('Error al cargar especialidades', 'error');
       console.error('Error loading data:', error);
@@ -47,10 +47,10 @@ export default function SpecialtyManagement() {
     
     try {
       if (currentSpecialty) {
-        await specialtyAPI.update(currentSpecialty.id, formData);
+        await SpecialtyModel.update(currentSpecialty.id, formData);
         showNotification('Especialidad actualizada exitosamente', 'success');
       } else {
-        await specialtyAPI.create(formData);
+        await SpecialtyModel.create(formData);
         showNotification('Especialidad creada exitosamente', 'success');
       }
       
@@ -66,7 +66,7 @@ export default function SpecialtyManagement() {
 
   const handleDelete = async () => {
     try {
-      await specialtyAPI.delete(currentSpecialty.id);
+      await SpecialtyModel.delete(currentSpecialty.id);
       showNotification('Especialidad eliminada exitosamente', 'success');
       setShowDeleteModal(false);
       setCurrentSpecialty(null);

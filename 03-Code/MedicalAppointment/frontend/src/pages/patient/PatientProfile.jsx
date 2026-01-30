@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { patientAPI, authAPI } from '../../services/api';
+import { PatientModel, AuthModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import {
   UserCircleIcon,
@@ -26,15 +26,15 @@ export default function PatientProfile() {
     gender: '',
     email: '',
     phone_number: '',
-    landline: '',
+    home_phone: '',
     address: '',
     city: '',
-    province: '',
+    state: '',
     postal_code: '',
     country: 'Ecuador',
     blood_type: '',
     allergies: '',
-    chronic_conditions: '',
+    medical_conditions: '',
     current_medications: '',
     height: '',
     weight: '',
@@ -58,12 +58,20 @@ export default function PatientProfile() {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      const response = await patientAPI.getProfile();
+      const response = await PatientModel.getProfile();
+      const profileData = response.data || response;
+      
+      // Ensure all values are strings, not null (prevents React controlled/uncontrolled warning)
+      const sanitizedData = {};
+      for (const key in profileData) {
+        sanitizedData[key] = profileData[key] ?? '';
+      }
+      
       setFormData({
         ...formData,
-        ...response.data,
-        date_of_birth: response.data.date_of_birth
-          ? response.data.date_of_birth.split('T')[0]
+        ...sanitizedData,
+        date_of_birth: profileData.date_of_birth
+          ? profileData.date_of_birth.split('T')[0]
           : '',
       });
     } catch (error) {
@@ -102,8 +110,8 @@ export default function PatientProfile() {
 
     try {
       setLoading(true);
-      console.log('📡 Llamando a patientAPI.updateProfile...');
-      const response = await patientAPI.updateProfile(formData);
+      console.log('📡 Llamando a PatientModel.updateProfile...');
+      const response = await PatientModel.updateProfile(formData);
       console.log('✅ Respuesta del servidor:', response);
       
       // IMPORTANTE: Solo actualizar los campos que cambiaste, mantener id y role intactos
@@ -367,8 +375,8 @@ export default function PatientProfile() {
                       </label>
                       <input
                         type="tel"
-                        name="landline"
-                        value={formData.landline}
+                        name="home_phone"
+                        value={formData.home_phone}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -403,8 +411,8 @@ export default function PatientProfile() {
                       </label>
                       <input
                         type="text"
-                        name="province"
-                        value={formData.province}
+                        name="state"
+                        value={formData.state}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -519,8 +527,8 @@ export default function PatientProfile() {
                         Condiciones Crónicas
                       </label>
                       <textarea
-                        name="chronic_conditions"
-                        value={formData.chronic_conditions}
+                        name="medical_conditions"
+                        value={formData.medical_conditions}
                         onChange={handleInputChange}
                         rows="3"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

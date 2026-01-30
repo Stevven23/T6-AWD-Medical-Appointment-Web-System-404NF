@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { medicalRecordAPI } from '../../services/api';
+import { MedicalRecordModel } from '../../models';
 import {
   BeakerIcon,
   DocumentArrowDownIcon,
@@ -9,6 +9,11 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   ShareIcon,
+  PlusIcon,
+  XMarkIcon,
+  TrashIcon,
+  ArrowUpTrayIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import jsPDF from 'jspdf';
 
@@ -16,6 +21,17 @@ export default function PatientLab() {
   const [loading, setLoading] = useState(true);
   const [labResults, setLabResults] = useState([]);
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
+  
+  // Upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [uploadData, setUploadData] = useState({
+    lab_name: '',
+    notes: '',
+    results: []
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadLabResults();
@@ -25,8 +41,9 @@ export default function PatientLab() {
     try {
       setLoading(true);
       setError(null);
-      const response = await medicalRecordAPI.getLabReports();
-      setLabResults(Array.isArray(response.data) ? response.data : []);
+      const response = await MedicalRecordModel.getLabReports();
+      const data = response.data || response;
+      setLabResults(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error loading lab results:', err);
       setError('Error al cargar los resultados de laboratorio');
@@ -438,6 +455,85 @@ export default function PatientLab() {
     console.log('Share result:', reportId);
   };
 
+  // Upload functions
+  const openUploadModal = (report) => {
+    setSelectedReport(report);
+    setUploadData({
+      lab_name: '',
+      notes: '',
+      results: [{ parameter_name: '', result_value: '', unit: '', reference_range: '', status: 'normal' }]
+    });
+    setShowUploadModal(true);
+  };
+
+  const addParameter = () => {
+    setUploadData(prev => ({
+      ...prev,
+      results: [...prev.results, { 
+        parameter_name: '', 
+        result_value: '', 
+        unit: '', 
+        reference_range: '', 
+        status: 'normal' 
+      }]
+    }));
+  };
+
+  const removeParameter = (index) => {
+    setUploadData(prev => ({
+      ...prev,
+      results: prev.results.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateParameter = (index, field, value) => {
+    setUploadData(prev => ({
+      ...prev,
+      results: prev.results.map((p, i) => i === index ? { ...p, [field]: value } : p)
+    }));
+  };
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const submitUpload = async () => {
+    if (!selectedReport) {
+      showNotification('No hay examen seleccionado', 'error');
+      return;
+    }
+
+    const validResults = uploadData.results.filter(r => r.parameter_name && r.result_value);
+    if (validResults.length === 0) {
+      showNotification('Ingrese al menos un resultado', 'error');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Upload results to existing pending exam using patient endpoint
+      await MedicalRecordModel.patientUploadResults(selectedReport.id, {
+        results: validResults,
+        interpretation: uploadData.lab_name 
+          ? `Laboratorio: ${uploadData.lab_name}. ${uploadData.notes || ''}` 
+          : uploadData.notes || '',
+        status: 'completed'
+      });
+
+      setShowUploadModal(false);
+      setSelectedReport(null);
+      showNotification('Resultados subidos exitosamente', 'success');
+      loadLabResults();
+    } catch (err) {
+      console.error('Error uploading lab results:', err);
+      showNotification('Error al subir los resultados', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <PatientLayout>
@@ -454,6 +550,21 @@ export default function PatientLab() {
   return (
     <PatientLayout>
       <div className="space-y-6">
+        {/* Notification */}
+        {notification && (
+          <div className={`p-4 rounded-lg flex items-center gap-3 ${
+            notification.type === 'success' 
+              ? 'bg-green-100 text-green-800 border border-green-300' 
+              : 'bg-red-100 text-red-800 border border-red-300'
+          }`}>
+            {notification.type === 'success' 
+              ? <CheckCircleIcon className="h-5 w-5" />
+              : <ExclamationTriangleIcon className="h-5 w-5" />
+            }
+            {notification.message}
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-8 text-white">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -468,15 +579,24 @@ export default function PatientLab() {
                 </p>
               </div>
             </div>
-            {labResults.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {labResults.filter(r => r.status !== 'pending').length > 0 && (
+                <button
+                  onClick={downloadAllResults}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-semibold shadow-lg"
+                >
+                  <DocumentArrowDownIcon className="h-5 w-5" />
+                  Descargar Todos
+                </button>
+              )}
               <button
-                onClick={downloadAllResults}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-semibold shadow-lg"
+                onClick={loadLabResults}
+                className="p-3 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                title="Actualizar"
               >
-                <DocumentArrowDownIcon className="h-5 w-5" />
-                Descargar Todos
+                <ArrowPathIcon className="h-5 w-5" />
               </button>
-            )}
+            </div>
           </div>
         </div>
 
@@ -616,24 +736,229 @@ export default function PatientLab() {
 
                   {/* Card Footer */}
                   <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => downloadLabResult(report)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                    >
-                      <DocumentArrowDownIcon className="h-5 w-5" />
-                      Descargar PDF
-                    </button>
-                    <button
-                      onClick={() => handleShare(report.id)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                    >
-                      <ShareIcon className="h-5 w-5" />
-                      Compartir
-                    </button>
+                    {report.status === 'pending' ? (
+                      <button
+                        onClick={() => openUploadModal(report)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                      >
+                        <ArrowUpTrayIcon className="h-5 w-5" />
+                        Subir Mis Resultados
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => downloadLabResult(report)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                        >
+                          <DocumentArrowDownIcon className="h-5 w-5" />
+                          Descargar PDF
+                        </button>
+                        <button
+                          onClick={() => handleShare(report.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                        >
+                          <ShareIcon className="h-5 w-5" />
+                          Compartir
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Upload Modal */}
+        {showUploadModal && selectedReport && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold">Subir Resultados de Laboratorio</h3>
+                  <p className="text-green-100 text-sm">{selectedReport.test_name}</p>
+                </div>
+                <button 
+                  onClick={() => { setShowUploadModal(false); setSelectedReport(null); }}
+                  className="text-white/80 hover:text-white p-2"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Exam Info */}
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Examen:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{selectedReport.test_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Ordenado por:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{selectedReport.doctor_full_name || 'Dr. Desconocido'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Fecha de orden:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{formatDate(selectedReport.order_date)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lab Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre del Laboratorio (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadData.lab_name}
+                    onChange={(e) => setUploadData({ ...uploadData, lab_name: e.target.value })}
+                    placeholder="Ej: Laboratorio San José"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Parameters Table */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-800">Resultados del Examen *</h4>
+                    <button
+                      onClick={addParameter}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+                    >
+                      <PlusIcon className="w-4 h-4" />
+                      Agregar parámetro
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 text-left">
+                          <th className="px-3 py-3 font-medium text-gray-700">Parámetro</th>
+                          <th className="px-3 py-3 font-medium text-gray-700">Resultado</th>
+                          <th className="px-3 py-3 font-medium text-gray-700">Unidad</th>
+                          <th className="px-3 py-3 font-medium text-gray-700">Rango</th>
+                          <th className="px-3 py-3 font-medium text-gray-700">Estado</th>
+                          <th className="px-3 py-3 w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {uploadData.results.map((param, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={param.parameter_name}
+                                onChange={(e) => updateParameter(index, 'parameter_name', e.target.value)}
+                                placeholder="Hemoglobina"
+                                className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={param.result_value}
+                                onChange={(e) => updateParameter(index, 'result_value', e.target.value)}
+                                placeholder="14.5"
+                                className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-green-500 focus:outline-none font-medium"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={param.unit}
+                                onChange={(e) => updateParameter(index, 'unit', e.target.value)}
+                                placeholder="g/dL"
+                                className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={param.reference_range}
+                                onChange={(e) => updateParameter(index, 'reference_range', e.target.value)}
+                                placeholder="12-16"
+                                className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <select
+                                value={param.status}
+                                onChange={(e) => updateParameter(index, 'status', e.target.value)}
+                                className={`w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-green-500 focus:outline-none ${
+                                  param.status === 'alto' ? 'bg-red-50 text-red-700' :
+                                  param.status === 'bajo' ? 'bg-yellow-50 text-yellow-700' :
+                                  'bg-green-50 text-green-700'
+                                }`}
+                              >
+                                <option value="normal">Normal</option>
+                                <option value="alto">Alto</option>
+                                <option value="bajo">Bajo</option>
+                              </select>
+                            </td>
+                            <td className="px-3 py-2">
+                              {uploadData.results.length > 1 && (
+                                <button
+                                  onClick={() => removeParameter(index)}
+                                  className="p-1 text-gray-400 hover:text-red-600 transition"
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notas adicionales
+                  </label>
+                  <textarea
+                    value={uploadData.notes}
+                    onChange={(e) => setUploadData({ ...uploadData, notes: e.target.value })}
+                    placeholder="Cualquier información adicional sobre el examen..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                  disabled={submitting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={submitUpload}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 flex items-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Subiendo...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowUpTrayIcon className="w-5 h-5" />
+                      Subir Examen
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

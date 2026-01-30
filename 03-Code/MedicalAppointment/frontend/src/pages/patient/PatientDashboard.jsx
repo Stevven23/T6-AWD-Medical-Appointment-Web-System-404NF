@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { appointmentAPI, medicalRecordAPI, prescriptionAPI } from '../../services/api';
+import { AppointmentModel, MedicalRecordModel, PrescriptionModel, PatientModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import {
   CalendarIcon,
@@ -36,10 +36,20 @@ export default function PatientDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // Solo cargar las citas, el resto calcular desde ellas o dejar vacío
-      const appointmentsRes = await appointmentAPI.getPatientAppointments();
       
-      const appointments = appointmentsRes.data || [];
+      // Cargar todos los datos en paralelo para mejor rendimiento
+      const [appointmentsRes, prescriptionsRes, labReportsRes, consultationNotesRes, profileRes] = await Promise.allSettled([
+        AppointmentModel.getPatientAppointments(),
+        PrescriptionModel.getPatientPrescriptions(),
+        MedicalRecordModel.getLabReports(),
+        MedicalRecordModel.getConsultationNotes(),
+        PatientModel.getProfile()
+      ]);
+
+      // Procesar citas
+      const appointments = appointmentsRes.status === 'fulfilled' 
+        ? (appointmentsRes.value.data || appointmentsRes.value || [])
+        : [];
       const now = new Date();
 
       const upcoming = appointments
@@ -52,20 +62,79 @@ export default function PatientDashboard() {
         (apt) => apt.status_code === 'completed'
       );
 
+      // Procesar prescripciones
+      const prescriptions = prescriptionsRes.status === 'fulfilled'
+        ? (prescriptionsRes.value.data || prescriptionsRes.value || [])
+        : [];
+      const activePrescriptions = prescriptions.length;
+
+      // Procesar lab reports
+      const labReports = labReportsRes.status === 'fulfilled'
+        ? (labReportsRes.value.data || labReportsRes.value || [])
+        : [];
+      const pendingResults = labReports.filter(
+        (report) => report.status === 'pending' || report.status === 'processing'
+      ).length;
+
+      // Procesar notas de consulta para historial reciente
+      const consultationNotes = consultationNotesRes.status === 'fulfilled'
+        ? (consultationNotesRes.value.data || consultationNotesRes.value || [])
+        : [];
+      
+      // Tomar las últimas 3 consultas completadas
+      const recentConsultations = consultationNotes
+        .filter(note => note.diagnosis || note.notes)
+        .slice(0, 3)
+        .map(note => ({
+          date: note.scheduled_start || note.created_at,
+          diagnosis: note.diagnosis || 'Consulta General',
+          doctor: {
+            first_name: note.doctor_first_name,
+            last_name: note.doctor_last_name
+          },
+          specialty: {
+            name: note.specialty_name
+          }
+        }));
+      
+      setRecentHistory(recentConsultations);
+
+      // Procesar perfil del paciente para resumen de salud
+      const profile = profileRes.status === 'fulfilled'
+        ? (profileRes.value.data || profileRes.value || null)
+        : null;
+
+      // Obtener la última consulta completada
+      const lastCompletedAppointment = completed
+        .sort((a, b) => new Date(b.scheduled_start) - new Date(a.scheduled_start))[0];
+      
+      const lastVisitDate = lastCompletedAppointment
+        ? new Date(lastCompletedAppointment.scheduled_start).toLocaleDateString('es-EC', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })
+        : null;
+
+      setHealthSummary({
+        blood_type: profile?.blood_type || null,
+        allergies: profile?.allergies || null,
+        conditions: profile?.medical_conditions || null,
+        medications: profile?.current_medications || null,
+        lastVisit: lastVisitDate
+      });
+
       setStats({
         upcomingAppointments: upcoming.length,
         completedAppointments: completed.length,
-        pendingResults: 0,
-        activePrescriptions: 0,
+        pendingResults: pendingResults,
+        activePrescriptions: activePrescriptions,
       });
 
       if (upcoming.length > 0) {
         setNextAppointment(upcoming[0]);
       }
 
-      // Dejar history vacío por ahora
-      setRecentHistory([]);
-      setHealthSummary(null);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -329,29 +398,33 @@ export default function PatientDashboard() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Tipo de Sangre</span>
-                  <span className="font-bold text-gray-900">{healthSummary?.blood_type || 'O+'}</span>
+                  <span className={`font-bold ${healthSummary?.blood_type ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {healthSummary?.blood_type || 'No registrado'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Alergias</span>
-                  <span className="font-bold text-gray-900">
-                    {healthSummary?.allergies || 'Penicilina'}
+                  <span className={`font-bold ${healthSummary?.allergies ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {healthSummary?.allergies || 'Ninguna registrada'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Condiciones</span>
-                  <span className="font-bold text-gray-900">
-                    {healthSummary?.conditions || 'Hipertensión Leve'}
+                  <span className={`font-bold ${healthSummary?.conditions ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {healthSummary?.conditions || 'Ninguna registrada'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Medicamentos</span>
-                  <span className="font-bold text-gray-900">
-                    {healthSummary?.medications || 'Losartan 50mg'}
+                  <span className={`font-bold ${healthSummary?.medications ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {healthSummary?.medications || 'Ninguno registrado'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Última Consulta</span>
-                  <span className="font-bold text-gray-900">{healthSummary?.lastVisit || '--'}</span>
+                  <span className={`font-bold ${healthSummary?.lastVisit ? 'text-gray-900' : 'text-gray-400'}`}>
+                    {healthSummary?.lastVisit || 'Sin consultas'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">Citas Completadas</span>

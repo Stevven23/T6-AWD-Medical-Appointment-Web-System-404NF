@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { medicalRecordAPI } from '../../services/api';
+import { MedicalRecordModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import jsPDF from 'jspdf';
 import {
@@ -39,12 +39,13 @@ export default function PatientHistory() {
       setError('');
       
       // Cargar registro médico general
-      const recordResponse = await medicalRecordAPI.get();
-      setMedicalRecord(recordResponse.data);
+      const recordResponse = await MedicalRecordModel.get();
+      setMedicalRecord(recordResponse.data || recordResponse);
 
       // Cargar notas de consultas
-      const notesResponse = await medicalRecordAPI.getConsultationNotes();
-      setConsultationNotes(Array.isArray(notesResponse.data) ? notesResponse.data : []);
+      const notesResponse = await MedicalRecordModel.getConsultationNotes();
+      const notesData = notesResponse.data || notesResponse;
+      setConsultationNotes(Array.isArray(notesData) ? notesData : []);
     } catch (e) {
       console.error('Error loading medical history:', e);
       setError('Error al cargar el historial médico.');

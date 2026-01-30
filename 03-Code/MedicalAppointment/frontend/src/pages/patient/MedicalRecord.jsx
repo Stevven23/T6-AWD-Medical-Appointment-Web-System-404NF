@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { medicalRecordAPI } from '../../services/api';
+import { MedicalRecordModel } from '../../models';
 import {
   DocumentTextIcon,
   HeartIcon,
@@ -19,8 +19,8 @@ export default function MedicalRecord() {
   const loadMedicalRecord = async () => {
     try {
       setLoading(true);
-      const response = await medicalRecordAPI.getComplete();
-      setMedicalRecord(response.data);
+      const response = await MedicalRecordModel.getComplete();
+      setMedicalRecord(response.data || response);
     } catch (error) {
       console.error('Error loading medical record:', error);
     } finally {

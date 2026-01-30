@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { appointmentAPI } from '../../services/api';
+import { AppointmentModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import {
   Chart as ChartJS,
@@ -78,18 +78,21 @@ export default function AdminDashboard() {
       setLoading(true);
       
       const [generalRes, appointmentRes, doctorRes, advancedRes] = await Promise.all([
-        appointmentAPI.getGeneralStats(),
-        appointmentAPI.getAppointmentStats(),
-        appointmentAPI.getDoctorStats(),
-        appointmentAPI.getAdvancedStats(),
+        AppointmentModel.getGeneralStats(),
+        AppointmentModel.getAppointmentStats(),
+        AppointmentModel.getDoctorStats(),
+        AppointmentModel.getAdvancedStats(),
       ]);
 
-      console.log('Advanced Stats Response:', advancedRes.data); // Para debug
+      console.log('Advanced Stats Response:', advancedRes); // Para debug
 
-      setGeneralStats(generalRes.data || {});
-      setAppointmentStats(appointmentRes.data || {});
-      setDoctorStats(doctorRes.data || {});
-      setAdvancedStats(advancedRes.data || {});
+      setGeneralStats(generalRes.data || generalRes || {});
+      // appointmentRes returns { data, summary, filters, generatedAt }
+      // We need the summary object
+      const aptData = appointmentRes.data || appointmentRes || {};
+      setAppointmentStats(aptData.summary || aptData || {});
+      setDoctorStats(doctorRes.data || doctorRes || {});
+      setAdvancedStats(advancedRes.data || advancedRes || {});
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       console.error('Error details:', error.response?.data); // Para ver más detalles
@@ -624,8 +627,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {(advancedStats.doctorPerformance || []).slice(0, 10).map((doctor) => (
-                    <tr key={doctor.doctorId} className="hover:bg-gray-50">
+                  {(advancedStats.doctorPerformance || []).slice(0, 10).map((doctor, index) => (
+                    <tr key={doctor.doctorId || `doctor-${index}`} className="hover:bg-gray-50">
                       <td className="px-4 py-4 text-sm font-medium text-gray-900">{doctor.doctorName}</td>
                       <td className="px-4 py-4 text-sm text-gray-500">{doctor.totalAppointments}</td>
                       <td className="px-4 py-4 text-sm text-gray-500">{doctor.completedAppointments}</td>
@@ -661,8 +664,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {(advancedStats.specialtyPerformance || []).map((specialty) => (
-                    <tr key={specialty.specialtyName} className="hover:bg-gray-50">
+                  {(advancedStats.specialtyPerformance || []).map((specialty, index) => (
+                    <tr key={specialty.specialtyName || `specialty-${index}`} className="hover:bg-gray-50">
                       <td className="px-4 py-4 text-sm font-medium text-gray-900">{specialty.specialtyName}</td>
                       <td className="px-4 py-4 text-sm text-gray-500">{specialty.totalAppointments}</td>
                       <td className="px-4 py-4 text-sm text-gray-500">{specialty.averageDuration} min</td>

@@ -27,10 +27,10 @@ export default function VerifyPrescriptionQR() {
       setError(null);
       setResult(null);
 
-      // Usar la URL del backend desde variables de entorno
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      // Usar la URL del external-api para verificación de QR
+      const externalApiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'http://localhost:3003/api/v1';
       
-      const response = await fetch(`${apiUrl}/api/prescriptions/verify-qr/${token}`);
+      const response = await fetch(`${externalApiUrl}/qr-codes/verify-prescription/${token}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -59,6 +59,54 @@ export default function VerifyPrescriptionQR() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Helper to format medications list
+  const formatMedications = (medications) => {
+    if (!medications) return 'No especificado';
+    
+    // If it's a string, return as is
+    if (typeof medications === 'string') return medications;
+    
+    // If it's an array of objects, format nicely
+    if (Array.isArray(medications)) {
+      return medications.map((med, index) => {
+        if (typeof med === 'string') return med;
+        
+        // Handle object format
+        const name = med.medication || med.name || 'Medicamento';
+        const dosage = med.dosage || '';
+        const frequency = med.frequency || '';
+        const duration = med.duration || '';
+        const instructions = med.instructions || '';
+        
+        let text = `${index + 1}. ${name}`;
+        if (dosage) text += ` - ${dosage}`;
+        if (frequency) text += `\n   Frecuencia: ${frequency}`;
+        if (duration) text += `\n   Duración: ${duration}`;
+        if (instructions) text += `\n   Instrucciones: ${instructions}`;
+        
+        return text;
+      }).join('\n\n');
+    }
+    
+    // If it's a single object
+    if (typeof medications === 'object') {
+      const name = medications.medication || medications.name || 'Medicamento';
+      return name;
+    }
+    
+    return String(medications);
+  };
+
+  // Helper to format doctor name
+  const formatDoctor = (doctor) => {
+    if (!doctor) return 'No especificado';
+    if (typeof doctor === 'string') return doctor;
+    if (typeof doctor === 'object') {
+      return doctor.name || `${doctor.first_name || ''} ${doctor.last_name || ''}`.trim() || 'No especificado';
+    }
+    return String(doctor);
   };
 
   return (
@@ -118,28 +166,38 @@ export default function VerifyPrescriptionQR() {
                 {/* Doctor Info */}
                 <div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Profesional Médico</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-2">{result.data?.doctor?.first_name} {result.data?.doctor?.last_name}</p>
-                  <p className="text-sm text-gray-600 mt-1">{result.data?.doctor?.email}</p>
+                  <p className="text-lg font-semibold text-gray-900 mt-2">{formatDoctor(result.data?.doctor)}</p>
+                  {result.data?.doctor?.specialty && (
+                    <p className="text-sm text-gray-600 mt-1">{typeof result.data.doctor.specialty === 'object' ? result.data.doctor.specialty.name : result.data.doctor.specialty}</p>
+                  )}
                 </div>
 
                 {/* Date */}
                 <div>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha de Emisión</p>
-                  <p className="text-lg font-semibold text-gray-900 mt-2">{formatDate(result.data?.prescription?.created_at)}</p>
+                  <p className="text-lg font-semibold text-gray-900 mt-2">{formatDate(result.data?.prescription?.createdAt || result.data?.prescription?.created_at)}</p>
                 </div>
               </div>
+
+              {/* Patient Info */}
+              {result.data?.patient && (
+                <div className="mb-6 pb-6 border-b">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Paciente</p>
+                  <p className="text-lg font-semibold text-gray-900 mt-2">{typeof result.data.patient === 'string' ? result.data.patient : `${result.data.patient.first_name} ${result.data.patient.last_name}`}</p>
+                </div>
+              )}
 
               {/* Medical Info */}
               <div className="border-t pt-6 space-y-6">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Diagnóstico</label>
-                  <p className="text-gray-900 font-medium mt-2">{result.data?.prescription?.diagnosis}</p>
+                  <p className="text-gray-900 font-medium mt-2">{result.data?.prescription?.diagnosis || 'No especificado'}</p>
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Medicamentos Prescritos</label>
                   <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-gray-800 whitespace-pre-wrap font-medium text-sm">{result.data?.prescription?.medications}</p>
+                    <pre className="text-gray-800 whitespace-pre-wrap font-medium text-sm font-sans">{formatMedications(result.data?.prescription?.medications)}</pre>
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import api, { doctorAPI, specialtyAPI } from '../../services/api';
+import { DoctorModel, SpecialtyModel, AppointmentModel } from '../../models';
 
 const getMonthDays = (year, month) => {
   const date = new Date(year, month, 1);
@@ -38,8 +38,8 @@ export default function AdminCalendar() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await doctorAPI.getAll();
-      setDoctors(response.data || []);
+      const response = await DoctorModel.getAll();
+      setDoctors(response.data || response || []);
     } catch (err) {
       console.error('Error loading doctors:', err);
       setDoctors([]);
@@ -48,8 +48,8 @@ export default function AdminCalendar() {
 
   const fetchSpecialties = async () => {
     try {
-      const response = await specialtyAPI.getActive();
-      setSpecialties(response.data || []);
+      const response = await SpecialtyModel.getActive();
+      setSpecialties(response.data || response || []);
     } catch (err) {
       console.error('Error loading specialties:', err);
       setSpecialties([]);
@@ -69,8 +69,8 @@ export default function AdminCalendar() {
         return;
       }
 
-      const response = await api.get('/appointments', { params: extraParams });
-      setAppointments(response.data || []);
+      const response = await AppointmentModel.getAll(extraParams);
+      setAppointments(response.data || response || []);
     } catch (err) {
       console.error('Error loading appointments:', err);
       if (err.response?.status === 501) {

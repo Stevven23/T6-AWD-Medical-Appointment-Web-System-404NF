@@ -7,10 +7,11 @@ import {
   BeakerIcon,
   ClipboardDocumentListIcon,
   UserCircleIcon,
-  EnvelopeIcon,
+  BellIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
@@ -54,9 +55,14 @@ export default function PatientLayout({ children }) {
       label: 'Recetas Médicas' 
     },
     { 
-      path: '/patient/messages', 
-      icon: EnvelopeIcon, 
-      label: 'Mensajes' 
+      path: '/patient/billing', 
+      icon: CurrencyDollarIcon, 
+      label: 'Mis Facturas' 
+    },
+    { 
+      path: '/patient/notifications', 
+      icon: BellIcon, 
+      label: 'Notificaciones' 
     },
     { 
       path: '/patient/profile', 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { doctorAPI, specialtyAPI } from '../../services/api';
+import { DoctorModel, SpecialtyModel } from '../../models';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -48,14 +48,14 @@ export default function DoctorManagement() {
     try {
       setLoading(true);
       const [doctorsRes, specialtiesRes, statsRes] = await Promise.all([
-        doctorAPI.getAll(),
-        specialtyAPI.getAll(),
-        doctorAPI.getStats(),
+        DoctorModel.getAll(),
+        SpecialtyModel.getAll(),
+        DoctorModel.getStats(),
       ]);
       
-      setDoctors(doctorsRes.data);
-      setSpecialties(specialtiesRes.data);
-      setStats(statsRes.data);
+      setDoctors(doctorsRes.data || doctorsRes);
+      setSpecialties(specialtiesRes.data || specialtiesRes);
+      setStats(statsRes.data || statsRes);
     } catch (error) {
       showNotification('Error al cargar doctores', 'error');
       console.error('Error loading data:', error);
@@ -73,10 +73,10 @@ export default function DoctorManagement() {
       if (searchTerm) params.search = searchTerm;
 
       const response = Object.keys(params).length > 0
-        ? await doctorAPI.filter(params)
-        : await doctorAPI.getAll();
+        ? await DoctorModel.filter(params)
+        : await DoctorModel.getAll();
       
-      setDoctors(response.data);
+      setDoctors(response.data || response);
     } catch (error) {
       showNotification('Error al filtrar doctores', 'error');
     } finally {
@@ -107,10 +107,10 @@ export default function DoctorManagement() {
     
     try {
       if (currentDoctor) {
-        await doctorAPI.update(currentDoctor.id, formData);
+        await DoctorModel.update(currentDoctor.id, formData);
         showNotification('Doctor actualizado exitosamente', 'success');
       } else {
-        await doctorAPI.create(formData);
+        await DoctorModel.create(formData);
         showNotification('Doctor creado exitosamente', 'success');
       }
       
@@ -126,7 +126,7 @@ export default function DoctorManagement() {
 
   const handleDelete = async () => {
     try {
-      await doctorAPI.delete(currentDoctor.id);
+      await DoctorModel.delete(currentDoctor.id);
       showNotification('Doctor eliminado exitosamente', 'success');
       setShowDeleteModal(false);
       setCurrentDoctor(null);
@@ -343,11 +343,11 @@ export default function DoctorManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {doctor.specialty?.name || 'Sin especialidad'}
+                      {doctor.specialty_name || doctor.specialty?.name || 'Sin especialidad'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{doctor.email || 'N/A'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{doctor.phone_number || 'N/A'}</td>
-                    <td className="px-6 py-4">{getStatusBadge(doctor.status)}</td>
+                    <td className="px-6 py-4">{getStatusBadge(doctor.status || (doctor.active ? 'active' : 'inactive'))}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button

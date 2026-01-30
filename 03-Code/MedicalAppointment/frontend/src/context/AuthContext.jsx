@@ -1,8 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { authAPI } from '../services/api';
+/**
+ * Auth Context
+ * Provides authentication state and methods throughout the app
+ * 
+ * @module context/AuthContext
+ */
+
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import AuthModel from '../models/Auth.model';
+import { STORAGE_KEYS, ROLES } from '../config/constants';
 
 const AuthContext = createContext(null);
 
+/**
+ * Custom hook to access auth context
+ * @returns {Object} Auth context value
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -11,143 +23,157 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Auth Provider Component
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Initialize auth state from storage
   useEffect(() => {
-    // Check for existing session
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const initializeAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
 
-    console.log('🔍 Verificando sesión almacenada...');
-    console.log('Token:', storedToken ? 'Existe' : 'No existe');
-    console.log('User:', storedUser ? 'Existe' : 'No existe');
-
-    const tryRestore = async () => {
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        try {
+        if (storedToken && storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          console.log('✅ Usuario parseado correctamente:', parsedUser);
           
-          // Validar estructura mínima del usuario
-          if (parsedUser && parsedUser.id && parsedUser.role) {
-            setUser(parsedUser);
-            console.log('✅ Sesión restaurada exitosamente');
-          } else {
-            console.error('❌ Usuario con estructura inválida, limpiando sesión');
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setToken(null);
-          }
-        } catch (error) {
-          console.error('❌ Error parsing stored user:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setToken(null);
-        }
-      } else if (storedToken && !storedUser) {
-        console.log('⚠️ Token existe pero no hay user, intentando obtener desde API...');
-        // If we have token but no user in storage, try to fetch it
-        try {
-          const resp = await authAPI.me();
-          const userData = resp.data?.user || resp.data?.user || resp.data;
-          if (userData && userData.id && userData.role) {
+          if (parsedUser?.id && parsedUser?.role) {
             setToken(storedToken);
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-            console.log('✅ Usuario obtenido desde API y guardado');
+            setUser(parsedUser);
           } else {
-            // If cannot get user, clear token
-            console.error('❌ No se pudo obtener usuario válido desde API');
-            localStorage.removeItem('token');
-            setToken(null);
+            clearAuthData();
           }
-        } catch (err) {
-          console.error('❌ Error fetching current user:', err);
-          localStorage.removeItem('token');
-          setToken(null);
+        } else if (storedToken) {
+          try {
+            const userData = await AuthModel.getCurrentUser();
+            if (userData?.id && userData?.role) {
+              setToken(storedToken);
+              setUser(userData);
+              localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+            } else {
+              clearAuthData();
+            }
+          } catch {
+            clearAuthData();
+          }
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        clearAuthData();
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
-    tryRestore();
+    initializeAuth();
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await authAPI.login(email, password);
-      console.log('Login response:', response);
+  const clearAuthData = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    setToken(null);
+    setUser(null);
+  }, []);
 
-      const data = response.data || response;
-      const newToken = data.token || data.accessToken || data.data?.token;
-      const userData = data.user || data.data?.user;
+  const login = useCallback(async (email, password) => {
+    try {
+      const { token: newToken, user: userData } = await AuthModel.login(email, password);
 
       if (!newToken || !userData) {
-        console.error('Login response missing token or user:', data);
         return { success: false, error: 'Respuesta inválida del servidor' };
       }
 
       setToken(newToken);
       setUser(userData);
 
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-
       return { success: true, user: userData };
     } catch (error) {
-      console.error('Login error:', error);
-      // Manejar diferentes formas de error
-      if (error.response && error.response.data) {
-        return { success: false, error: error.response.data.error || JSON.stringify(error.response.data) };
-      }
-      return { success: false, error: error.message || 'Error al iniciar sesión' };
+      return { 
+        success: false, 
+        error: error.message || 'Error al iniciar sesión' 
+      };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const register = useCallback(async (userData) => {
     try {
-      await authAPI.logout();
+      const { token: newToken, user: newUser } = await AuthModel.register(userData);
+
+      if (!newToken || !newUser) {
+        return { success: false, error: 'Respuesta inválida del servidor' };
+      }
+
+      setToken(newToken);
+      setUser(newUser);
+
+      return { success: true, user: newUser };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.message || 'Error al registrarse' 
+      };
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await AuthModel.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setToken(null);
-      setUser(null);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearAuthData();
     }
-  };
+  }, [clearAuthData]);
 
-  const updateUser = (userData) => {
-    console.log('🔄 Actualizando usuario en AuthContext:', userData);
-    
-    // Validar que userData tiene las propiedades básicas necesarias
-    if (!userData || !userData.id || !userData.role) {
-      console.error('❌ userData inválido, no se actualizará:', userData);
-      return;
-    }
-    
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
     try {
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      console.log('✅ Usuario actualizado correctamente en localStorage');
+      await AuthModel.changePassword(currentPassword, newPassword);
+      return { success: true };
     } catch (error) {
-      console.error('❌ Error al guardar usuario en localStorage:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Error al cambiar contraseña' 
+      };
     }
-  };
+  }, []);
+
+  const updateUser = useCallback((userData) => {
+    if (!userData?.id || !userData?.role) return;
+    
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
+  }, [user]);
+
+  const hasRole = useCallback((roles) => {
+    if (!user?.role) return false;
+    const roleArray = Array.isArray(roles) ? roles : [roles];
+    return roleArray.includes(user.role);
+  }, [user]);
+
+  const isAdmin = user?.role === ROLES.ADMIN;
+  const isDoctor = user?.role === ROLES.DOCTOR;
+  const isPatient = user?.role === ROLES.PATIENT;
+  const isAuthenticated = !!token && !!user;
 
   const value = {
     user,
     token,
     loading,
+    isAuthenticated,
+    isAdmin,
+    isDoctor,
+    isPatient,
     login,
+    register,
     logout,
+    changePassword,
     updateUser,
-    isAuthenticated: !!token,
+    hasRole,
   };
 
   return (
@@ -156,3 +182,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

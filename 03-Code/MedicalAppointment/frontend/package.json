@@ -2,6 +2,7 @@
   "name": "clinica-san-miguel-frontend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@heroicons/react": "^2.1.0",
     "axios": "^1.6.2",

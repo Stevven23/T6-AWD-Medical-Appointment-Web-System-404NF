@@ -1,11 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { appointmentAPI } from '../../services/api';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { AppointmentModel, DoctorModel } from '../../models';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CalendarIcon,
+  ClockIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  PlayIcon,
+  BellAlertIcon,
+  DocumentTextIcon,
+  BeakerIcon,
+  ChartBarIcon,
+  ExclamationCircleIcon,
+  ArrowRightIcon
+} from '@heroicons/react/24/outline';
 
 export default function DoctorDashboard() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [pendingActions, setPendingActions] = useState([]);
+  const [stats, setStats] = useState({
+    todayCount: 0,
+    weekCount: 0,
+    completedToday: 0,
+    pendingToday: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -16,15 +40,93 @@ export default function DoctorDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await appointmentAPI.getDoctorAppointments();
-      // Response is directly an array of appointments
-      const appointments = Array.isArray(response) ? response : response.data || [];
-      // Filter for upcoming appointments
-      const upcoming = appointments
-        .filter(apt => new Date(apt.scheduled_start) > new Date())
+      const response = await AppointmentModel.getDoctorAppointments();
+      const allAppointments = Array.isArray(response) ? response : response.data || [];
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      
+      // Filter today's appointments
+      const todayApts = allAppointments.filter(apt => {
+        const aptDate = new Date(apt.scheduled_start || apt.appointment_date);
+        return aptDate >= today && aptDate < tomorrow;
+      }).sort((a, b) => new Date(a.scheduled_start || a.start_time) - new Date(b.scheduled_start || b.start_time));
+      
+      setTodayAppointments(todayApts);
+      
+      // Filter upcoming appointments (next 7 days, excluding completed)
+      const upcoming = allAppointments
+        .filter(apt => {
+          const aptDate = new Date(apt.scheduled_start || apt.appointment_date);
+          return aptDate >= today && aptDate <= weekEnd && apt.status_code !== 'completed' && apt.status_code !== 'cancelled';
+        })
         .sort((a, b) => new Date(a.scheduled_start) - new Date(b.scheduled_start))
-        .slice(0, 6);
-      setUpcomingAppointments(upcoming);
+        .slice(0, 8);
+      
+      setAppointments(upcoming);
+      
+      // Calculate stats
+      const completedToday = todayApts.filter(apt => apt.status_code === 'completed').length;
+      const pendingToday = todayApts.filter(apt => apt.status_code !== 'completed' && apt.status_code !== 'cancelled').length;
+      const weekApts = allAppointments.filter(apt => {
+        const aptDate = new Date(apt.scheduled_start || apt.appointment_date);
+        return aptDate >= today && aptDate <= weekEnd;
+      }).length;
+      
+      setStats({
+        todayCount: todayApts.length,
+        weekCount: weekApts,
+        completedToday,
+        pendingToday
+      });
+      
+      // Generate pending actions
+      const actions = [];
+      
+      // Citas próximas a comenzar (en los próximos 30 minutos)
+      const now = new Date();
+      const in30min = new Date(now.getTime() + 30 * 60000);
+      const nearApts = todayApts.filter(apt => {
+        const aptTime = new Date(apt.scheduled_start);
+        return aptTime >= now && aptTime <= in30min && apt.status_code === 'scheduled';
+      });
+      
+      nearApts.forEach(apt => {
+        actions.push({
+          id: `start-${apt.id}`,
+          type: 'start_consultation',
+          title: `Iniciar consulta con ${apt.patient_name || 'Paciente'}`,
+          description: `Programada para ${formatTime(apt.scheduled_start)}`,
+          priority: 'high',
+          appointmentId: apt.id
+        });
+      });
+      
+      // Citas confirmadas pendientes de iniciar
+      const confirmedWaiting = todayApts.filter(apt => 
+        (apt.status_code === 'confirmed' || apt.status_code === 'scheduled') && 
+        new Date(apt.scheduled_start) <= now
+      );
+      
+      confirmedWaiting.forEach(apt => {
+        if (!actions.find(a => a.appointmentId === apt.id)) {
+          actions.push({
+            id: `waiting-${apt.id}`,
+            type: 'start_consultation',
+            title: `Paciente esperando: ${apt.patient_name || 'Paciente'}`,
+            description: `Cita a las ${formatTime(apt.scheduled_start)}`,
+            priority: 'urgent',
+            appointmentId: apt.id
+          });
+        }
+      });
+      
+      setPendingActions(actions.slice(0, 5));
+      
     } catch (err) {
       setError('Error al cargar el dashboard');
       console.error(err);
@@ -38,7 +140,9 @@ export default function DoctorDashboard() {
   };
 
   const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    // Adjust for Monday start (0 = Sunday in JS, we want Monday = 0)
+    return firstDay === 0 ? 6 : firstDay - 1;
   };
 
   const goToPreviousMonth = () => {
@@ -54,12 +158,10 @@ export default function DoctorDashboard() {
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
 
-    // Empty cells for days before month starts
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
 
-    // Days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
@@ -69,9 +171,9 @@ export default function DoctorDashboard() {
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
+      weekday: 'short',
       day: 'numeric',
+      month: 'short'
     });
   };
 
@@ -79,187 +181,352 @@ export default function DoctorDashboard() {
     return new Date(dateTime).toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
+      hour12: true
+    });
+  };
+
+  const handleStartConsultation = (appointmentId) => {
+    navigate(`/doctor/consultation/${appointmentId}`, {
+      state: { fromDashboard: true }
     });
   };
 
   const monthName = currentDate.toLocaleDateString('es-ES', {
     month: 'long',
-    year: 'numeric',
+    year: 'numeric'
   });
 
   const calendarDays = generateCalendarDays();
+  const todayDate = new Date();
 
   return (
     <DoctorLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
-          <h2 className="text-3xl font-bold mb-2">Bienvenido</h2>
-          <p className="text-blue-100">Gestiona tu agenda y pacientes desde aquí</p>
-        </div>
-
-        {/* Calendar and Appointments Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar Card */}
-          <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Calendario</h3>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                ¡Buenos días, Doctor!
+              </h2>
+              <p className="text-blue-100">
+                {todayDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
             </div>
-
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={goToPreviousMonth}
-                className="p-1 hover:bg-gray-100 rounded-lg transition"
-              >
-                <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
-              </button>
-              <h4 className="text-sm font-semibold text-gray-700 capitalize text-center flex-1">
-                {monthName}
-              </h4>
-              <button
-                onClick={goToNextMonth}
-                className="p-1 hover:bg-gray-100 rounded-lg transition"
-              >
-                <ChevronRightIcon className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
-                <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => (
-                <button
-                  key={index}
-                  className={`aspect-square text-xs rounded-lg transition ${
-                    day === null
-                      ? 'bg-gray-50'
-                      : day === new Date().getDate() &&
-                        currentDate.getMonth() === new Date().getMonth() &&
-                        currentDate.getFullYear() === new Date().getFullYear()
-                      ? 'bg-blue-600 text-white font-bold hover:bg-blue-700'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
+            <div className="mt-4 md:mt-0 flex items-center gap-4">
+              <div className="text-center px-4 py-2 bg-white/20 rounded-lg">
+                <p className="text-3xl font-bold">{stats.pendingToday}</p>
+                <p className="text-sm text-blue-100">Citas Pendientes</p>
+              </div>
+              <div className="text-center px-4 py-2 bg-white/20 rounded-lg">
+                <p className="text-3xl font-bold">{stats.completedToday}</p>
+                <p className="text-sm text-blue-100">Completadas Hoy</p>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Upcoming Appointments Card */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Próximas Citas</h3>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link
+            to="/doctor/appointments"
+            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <CalendarIcon className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Ver Citas</p>
+              <p className="text-xs text-gray-500">Gestionar agenda</p>
+            </div>
+          </Link>
+          
+          <Link
+            to="/doctor/patients"
+            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <UserGroupIcon className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Pacientes</p>
+              <p className="text-xs text-gray-500">Ver historial</p>
+            </div>
+          </Link>
+          
+          <Link
+            to="/doctor/prescriptions"
+            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+              <DocumentTextIcon className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Recetas</p>
+              <p className="text-xs text-gray-500">Historial</p>
+            </div>
+          </Link>
+          
+          <Link
+            to="/doctor/reports"
+            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+              <ChartBarIcon className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Reportes</p>
+              <p className="text-xs text-gray-500">Estadísticas</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Today's Agenda */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <ClockIcon className="w-5 h-5 text-blue-600" />
+                Mi Agenda Hoy
+              </h3>
+              <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1">
+                Ver todas <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+            </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : error ? (
-              <div className="text-red-600 py-8 text-center">{error}</div>
-            ) : upcomingAppointments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No hay citas próximas programadas</p>
+            ) : todayAppointments.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No hay citas programadas para hoy</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {upcomingAppointments.map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {formatTime(appointment.scheduled_start).split(':')[0]}
-                        </span>
+                {todayAppointments.map((apt, idx) => {
+                  const aptTime = new Date(apt.scheduled_start);
+                  const now = new Date();
+                  const isPast = aptTime < now;
+                  const isNow = aptTime <= now && apt.status_code !== 'completed';
+                  
+                  return (
+                    <div
+                      key={apt.id}
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition ${
+                        isNow 
+                          ? 'border-blue-300 bg-blue-50' 
+                          : apt.status_code === 'completed'
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {/* Time */}
+                      <div className="text-center w-16">
+                        <p className={`text-lg font-bold ${isNow ? 'text-blue-600' : 'text-gray-700'}`}>
+                          {formatTime(apt.scheduled_start).split(':')[0]}:{formatTime(apt.scheduled_start).split(':')[1].split(' ')[0]}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatTime(apt.scheduled_start).split(' ')[1]}
+                        </p>
+                      </div>
+                      
+                      {/* Patient Info */}
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">{apt.patient_name || 'Paciente'}</p>
+                        <p className="text-sm text-gray-600">{apt.reason || 'Consulta general'}</p>
+                      </div>
+                      
+                      {/* Status & Action */}
+                      <div className="flex items-center gap-2">
+                        {apt.status_code === 'completed' ? (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                            <CheckCircleIcon className="w-4 h-4" />
+                            Completada
+                          </span>
+                        ) : apt.status_code === 'cancelled' ? (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                            Cancelada
+                          </span>
+                        ) : apt.status_code === 'in_progress' ? (
+                          <button
+                            onClick={() => handleStartConsultation(apt.id)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
+                          >
+                            <PlayIcon className="w-4 h-4" />
+                            Continuar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStartConsultation(apt.id)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
+                          >
+                            <PlayIcon className="w-4 h-4" />
+                            Iniciar
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">
-                        {appointment.patient_name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {appointment.reason || 'Consulta general'}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDate(appointment.scheduled_start)} - {formatTime(appointment.scheduled_start)}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        appointment.status_code === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : appointment.status_code === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {appointment.status_label || 'Pendiente'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Pending Actions */}
+            {pendingActions.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <BellAlertIcon className="w-5 h-5 text-orange-500" />
+                  Acciones Pendientes
+                </h4>
+                <div className="space-y-2">
+                  {pendingActions.map((action) => (
+                    <div
+                      key={action.id}
+                      className={`p-3 rounded-lg cursor-pointer transition ${
+                        action.priority === 'urgent'
+                          ? 'bg-red-50 border border-red-200 hover:bg-red-100'
+                          : action.priority === 'high'
+                          ? 'bg-orange-50 border border-orange-200 hover:bg-orange-100'
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      onClick={() => {
+                        if (action.type === 'start_consultation') {
+                          handleStartConsultation(action.appointmentId);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <ExclamationCircleIcon className={`w-5 h-5 flex-shrink-0 ${
+                          action.priority === 'urgent' ? 'text-red-500' : 'text-orange-500'
+                        }`} />
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{action.title}</p>
+                          <p className="text-xs text-gray-500">{action.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mini Calendar */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">Calendario</h4>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <button onClick={goToPreviousMonth} className="p-1 hover:bg-gray-100 rounded">
+                  <ChevronLeftIcon className="w-4 h-4 text-gray-600" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 capitalize">{monthName}</span>
+                <button onClick={goToNextMonth} className="p-1 hover:bg-gray-100 rounded">
+                  <ChevronRightIcon className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
+                  <div key={day} className="text-center text-xs font-semibold text-gray-500 py-1">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, index) => {
+                  const isToday = day === todayDate.getDate() &&
+                    currentDate.getMonth() === todayDate.getMonth() &&
+                    currentDate.getFullYear() === todayDate.getFullYear();
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`aspect-square flex items-center justify-center text-xs rounded ${
+                        day === null
+                          ? ''
+                          : isToday
+                          ? 'bg-blue-600 text-white font-bold'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Stats Card */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h4 className="font-semibold text-gray-800 mb-3">Esta Semana</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total citas</span>
+                  <span className="font-bold text-gray-800">{stats.weekCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Hoy</span>
+                  <span className="font-bold text-blue-600">{stats.todayCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Completadas hoy</span>
+                  <span className="font-bold text-green-600">{stats.completedToday}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Citas Hoy</p>
-                <p className="text-3xl font-bold text-gray-800">
-                  {upcomingAppointments.filter(apt => {
-                    const aptDate = new Date(apt.scheduled_start);
-                    const today = new Date();
-                    return aptDate.toDateString() === today.toDateString();
-                  }).length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-600 text-xl">📅</span>
-              </div>
-            </div>
+        {/* Upcoming Appointments */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Próximas Citas (7 días)</h3>
+            <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-sm">
+              Ver calendario completo
+            </Link>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Próximas Citas</p>
-                <p className="text-3xl font-bold text-gray-800">
-                  {upcomingAppointments.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 text-xl">👥</span>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Pacientes Atendidos</p>
-                <p className="text-3xl font-bold text-gray-800">
-                  {upcomingAppointments.filter(apt => apt.status_code === 'completed').length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <span className="text-purple-600 text-xl">✓</span>
-              </div>
+          ) : appointments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No hay citas próximas programadas</p>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {appointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer"
+                  onClick={() => handleStartConsultation(apt.id)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarIcon className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">{formatDate(apt.scheduled_start)}</span>
+                  </div>
+                  <p className="font-semibold text-gray-800 mb-1">{apt.patient_name || 'Paciente'}</p>
+                  <p className="text-sm text-gray-500">{formatTime(apt.scheduled_start)}</p>
+                  <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium ${
+                    apt.status_code === 'confirmed'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {apt.status_label || 'Pendiente'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DoctorLayout>
