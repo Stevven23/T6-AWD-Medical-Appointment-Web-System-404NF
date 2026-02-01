@@ -2,9 +2,9 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Public pages
+// Public pages (refactored with Clean Code structure)
 import Home from './pages/public/Home';
-import Login from './pages/public/login.jsx';
+import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 import ForgotPassword from './pages/public/ForgotPassword';
 import ResetPassword from './pages/public/ResetPassword';
