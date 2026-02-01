@@ -64,6 +64,39 @@ export default function PatientHistory() {
     });
   };
 
+  // Helper function to parse JSON notes into readable text
+  const parseNotesContent = (rawContent) => {
+    if (!rawContent) return null;
+    
+    if (typeof rawContent === 'string' && !rawContent.trim().startsWith('{')) {
+      return rawContent;
+    }
+    
+    try {
+      const parsed = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+      
+      if (parsed.subjective || parsed.objective || parsed.assessment || parsed.plan) {
+        const parts = [];
+        if (parsed.subjective) parts.push(`Subjetivo: ${parsed.subjective}`);
+        if (parsed.objective) parts.push(`Objetivo: ${parsed.objective}`);
+        if (parsed.assessment) parts.push(`Evaluación: ${parsed.assessment}`);
+        if (parsed.plan) parts.push(`Plan: ${parsed.plan}`);
+        return parts.join('\n');
+      }
+      
+      if (typeof parsed === 'object') {
+        return Object.entries(parsed)
+          .filter(([_, value]) => value && value !== '')
+          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}: ${value}`)
+          .join('\n');
+      }
+      
+      return rawContent;
+    } catch {
+      return rawContent;
+    }
+  };
+
   const formatDateTime = (dateString) => {
     const d = new Date(dateString);
     if (Number.isNaN(d.getTime())) return 'Fecha no válida';
@@ -225,25 +258,28 @@ export default function PatientHistory() {
 
     // Notas clínicas
     if (note.notes) {
-      pdf.setFont(undefined, 'bold');
-      pdf.setFontSize(11);
-      pdf.setTextColor(...primaryColor);
-      pdf.text('OBSERVACIONES CLÍNICAS', margin, y);
-      y += 7;
-      
-      pdf.setTextColor(...secondaryColor);
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      const notesLines = pdf.splitTextToSize(note.notes, pageWidth - 2 * margin - 10);
-      notesLines.forEach(line => {
-        if (y > 270) {
-          pdf.addPage();
-          y = 20;
-        }
-        pdf.text(line, margin + 5, y);
-        y += 6;
-      });
-      y += 5;
+      const parsedNotes = parseNotesContent(note.notes);
+      if (parsedNotes) {
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(11);
+        pdf.setTextColor(...primaryColor);
+        pdf.text('OBSERVACIONES CLÍNICAS', margin, y);
+        y += 7;
+        
+        pdf.setTextColor(...secondaryColor);
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        const notesLines = pdf.splitTextToSize(parsedNotes, pageWidth - 2 * margin - 10);
+        notesLines.forEach(line => {
+          if (y > 270) {
+            pdf.addPage();
+            y = 20;
+          }
+          pdf.text(line, margin + 5, y);
+          y += 6;
+        });
+        y += 5;
+      }
     }
 
     // Plan de tratamiento
@@ -740,10 +776,51 @@ function ConsultationCard({ note, index, formatDate, onViewPDF }) {
 }
 
 function DetailSection({ title, content }) {
+  // Try to parse JSON content (for notes that are stored as JSON)
+  const parseContent = (rawContent) => {
+    if (!rawContent) return null;
+    
+    // If it's already a string that doesn't look like JSON, return as is
+    if (typeof rawContent === 'string' && !rawContent.trim().startsWith('{')) {
+      return rawContent;
+    }
+    
+    try {
+      const parsed = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+      
+      // If it's a SOAP note format
+      if (parsed.subjective || parsed.objective || parsed.assessment || parsed.plan) {
+        const parts = [];
+        if (parsed.subjective) parts.push(`Subjetivo: ${parsed.subjective}`);
+        if (parsed.objective) parts.push(`Objetivo: ${parsed.objective}`);
+        if (parsed.assessment) parts.push(`Evaluación: ${parsed.assessment}`);
+        if (parsed.plan) parts.push(`Plan: ${parsed.plan}`);
+        return parts.join('\n\n');
+      }
+      
+      // If it has other structured data, format it nicely
+      if (typeof parsed === 'object') {
+        return Object.entries(parsed)
+          .filter(([_, value]) => value && value !== '')
+          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}: ${value}`)
+          .join('\n');
+      }
+      
+      return rawContent;
+    } catch {
+      // Not valid JSON, return as is
+      return rawContent;
+    }
+  };
+
+  const displayContent = parseContent(content);
+  
+  if (!displayContent) return null;
+
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
       <h4 className="font-bold text-gray-900 mb-2">{title}</h4>
-      <p className="text-gray-700 text-sm whitespace-pre-line">{content}</p>
+      <p className="text-gray-700 text-sm whitespace-pre-line">{displayContent}</p>
     </div>
   );
 }

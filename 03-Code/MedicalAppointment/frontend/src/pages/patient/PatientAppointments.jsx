@@ -18,7 +18,7 @@ import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 export default function PatientAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('upcoming');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -276,9 +276,10 @@ export default function PatientAppointments() {
     const styles = {
       scheduled: 'bg-blue-500 text-white',
       confirmed: 'bg-green-500 text-white',
-      completed: 'bg-gray-500 text-white',
+      completed: 'bg-emerald-600 text-white',
       cancelled: 'bg-red-500 text-white',
       pending: 'bg-yellow-500 text-white',
+      no_show: 'bg-orange-500 text-white',
     };
 
     const labels = {
@@ -287,6 +288,7 @@ export default function PatientAppointments() {
       completed: 'Completada',
       cancelled: 'Cancelada',
       pending: 'Pendiente',
+      no_show: 'No asistió',
     };
 
     return (
@@ -351,7 +353,21 @@ export default function PatientAppointments() {
 
     // Sort by date: newest first for 'all' tab, oldest first for others
     if (activeTab === 'all') {
-      return filtered.sort((a, b) => new Date(b.scheduled_start) - new Date(a.scheduled_start));
+      // Custom sort for 'all' tab: completed first, then upcoming, then cancelled, then others
+      const now = new Date();
+      return filtered.sort((a, b) => {
+        const statusOrder = (apt) => {
+          if (apt.status_code === 'completed') return 0;
+          if ((apt.status_code === 'scheduled' || apt.status_code === 'confirmed') && new Date(apt.scheduled_start) >= now) return 1;
+          if (apt.status_code === 'cancelled') return 2;
+          return 3;
+        };
+        const orderA = statusOrder(a);
+        const orderB = statusOrder(b);
+        if (orderA !== orderB) return orderA - orderB;
+        // Within same category, sort by date (most recent first)
+        return new Date(b.scheduled_start) - new Date(a.scheduled_start);
+      });
     }
     return filtered.sort((a, b) => new Date(a.scheduled_start) - new Date(b.scheduled_start));
   };
