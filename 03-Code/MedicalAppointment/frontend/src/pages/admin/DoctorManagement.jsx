@@ -8,6 +8,9 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
   FunnelIcon,
+  KeyIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
 
 export default function DoctorManagement() {
@@ -24,7 +27,16 @@ export default function DoctorManagement() {
   // Modals
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [currentDoctor, setCurrentDoctor] = useState(null);
+  
+  // Password modal data
+  const [passwordData, setPasswordData] = useState({ name: '', email: '', password: '' });
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  
+  // Promotion data (for existing user)
+  const [promotionData, setPromotionData] = useState(null);
   
   // Form
   const [formData, setFormData] = useState({
@@ -109,18 +121,104 @@ export default function DoctorManagement() {
       if (currentDoctor) {
         await DoctorModel.update(currentDoctor.id, formData);
         showNotification('Doctor actualizado exitosamente', 'success');
+        closeModal();
+        loadData();
       } else {
-        await DoctorModel.create(formData);
-        showNotification('Doctor creado exitosamente', 'success');
+        // Use createWithUser to create doctor with user account
+        const result = await DoctorModel.createWithUser(formData);
+        const data = result.data || result;
+        
+        // Check if user requires promotion (already exists)
+        if (data.requires_promotion) {
+          setPromotionData({
+            existingUser: data.existing_user,
+            formData: formData
+          });
+          setShowPromotionModal(true);
+          return; // Don't close modal yet
+        }
+        
+        // Check if user was promoted
+        if (data.promoted) {
+          showNotification('Usuario existente promovido a doctor. Puede acceder con su contraseña actual.', 'success');
+        } else {
+          // New user created - show temporary password
+          const tempPassword = data.temporary_password;
+          if (tempPassword) {
+            setPasswordData({
+              name: `${formData.first_name} ${formData.last_name}`,
+              email: formData.email,
+              password: tempPassword
+            });
+            setShowPasswordModal(true);
+          }
+          showNotification('Doctor creado con cuenta de usuario', 'success');
+        }
+        
+        closeModal();
+        loadData();
       }
+    } catch (error) {
+      showNotification(
+        error.message || error.response?.data?.error || 'Error al guardar doctor',
+        'error'
+      );
+    }
+  };
+
+  const handlePromoteUser = async () => {
+    if (!promotionData) return;
+    
+    try {
+      // Call createWithUser with promote_existing = true
+      const result = await DoctorModel.createWithUser({
+        ...promotionData.formData,
+        promote_existing: true
+      });
       
+      const data = result.data || result;
+      showNotification('Usuario promovido a doctor exitosamente. Puede acceder con su contraseña actual.', 'success');
+      
+      setShowPromotionModal(false);
+      setPromotionData(null);
       closeModal();
       loadData();
     } catch (error) {
       showNotification(
-        error.response?.data?.error || 'Error al guardar doctor',
+        error.message || 'Error al promover usuario',
         'error'
       );
+    }
+  };
+
+  const handleResetPassword = async (doctor) => {
+    try {
+      const result = await DoctorModel.resetPassword(doctor.id);
+      const tempPassword = result.data?.temporary_password || result.temporary_password;
+      if (tempPassword) {
+        setPasswordData({
+          name: `${doctor.first_name} ${doctor.last_name}`,
+          email: doctor.email,
+          password: tempPassword
+        });
+        setShowPasswordModal(true);
+      }
+      showNotification('Contraseña restablecida exitosamente', 'success');
+    } catch (error) {
+      showNotification(
+        error.message || 'Error al restablecer contraseña',
+        'error'
+      );
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(passwordData.password);
+      setPasswordCopied(true);
+      setTimeout(() => setPasswordCopied(false), 2000);
+    } catch (err) {
+      showNotification('Error al copiar al portapapeles', 'error');
     }
   };
 
@@ -358,6 +456,13 @@ export default function DoctorManagement() {
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
+                          onClick={() => handleResetPassword(doctor)}
+                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                          title="Restablecer Contraseña"
+                        >
+                          <KeyIcon className="w-5 h-5" />
+                        </button>
+                        <button
                           onClick={() => openDeleteModal(doctor)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Eliminar"
@@ -558,6 +663,132 @@ export default function DoctorManagement() {
                   Eliminar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-6 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <KeyIcon className="w-8 h-8" />
+                <h2 className="text-2xl font-bold">Contraseña Temporal</h2>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <p className="text-yellow-800 text-sm font-medium">
+                  ⚠️ Guarde esta contraseña. No se mostrará de nuevo a menos que la restablezca.
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Doctor</label>
+                  <p className="text-gray-900 font-semibold">{passwordData.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                  <p className="text-gray-900">{passwordData.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Contraseña Temporal</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg px-4 py-3 font-mono text-lg text-gray-900 select-all">
+                      {passwordData.password}
+                    </div>
+                    <button
+                      onClick={copyToClipboard}
+                      className={`p-3 rounded-lg transition-colors ${
+                        passwordCopied 
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title="Copiar al portapapeles"
+                    >
+                      {passwordCopied ? (
+                        <CheckIcon className="w-6 h-6" />
+                      ) : (
+                        <ClipboardDocumentIcon className="w-6 h-6" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordCopied && (
+                    <p className="text-green-600 text-sm mt-2 font-medium">✓ Copiado al portapapeles</p>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-gray-600 text-sm mb-6">
+                Comunique esta contraseña al doctor para que pueda acceder al sistema. 
+                Si la olvida, puede restablecerla usando el botón <KeyIcon className="w-4 h-4 inline text-yellow-600" /> en la tabla.
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordData({ name: '', email: '', password: '' });
+                  setPasswordCopied(false);
+                }}
+                className="w-full px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Promoción de Usuario */}
+      {showPromotionModal && promotionData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserIcon className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Usuario Existente Detectado</h3>
+              <p className="text-gray-600 mb-4">
+                Se encontró un usuario con este email que actualmente tiene rol de <strong>{promotionData.existingUser?.current_role || 'usuario'}</strong>.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-500 mb-1">Usuario encontrado:</p>
+              <p className="font-medium text-gray-800">
+                {promotionData.existingUser?.first_name} {promotionData.existingUser?.last_name}
+              </p>
+              <p className="text-sm text-gray-600">{promotionData.existingUser?.email}</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>¿Qué significa promover?</strong><br />
+                El usuario conservará su contraseña actual y se le asignará el rol de <strong>Doctor</strong>. 
+                Podrá acceder al panel de doctores con sus credenciales existentes.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowPromotionModal(false);
+                  setPromotionData(null);
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePromoteUser}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors"
+              >
+                Promover a Doctor
+              </button>
             </div>
           </div>
         </div>

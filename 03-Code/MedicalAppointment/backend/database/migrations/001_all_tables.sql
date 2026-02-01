@@ -88,6 +88,10 @@
     "columnas": "id (bigint), prescription_id (uuid), qr_token (character varying), verification_url (text), is_valid (boolean), created_at (timestamp with time zone), updated_at (timestamp with time zone), qr_image (text)"
   },
   {
+    "table_name": "prescription_renewals",
+    "columnas": "id (uuid), original_prescription_id (uuid), patient_user_id (uuid), doctor_id (uuid), new_prescription_id (uuid), status (character varying), request_reason (text), patient_notes (text), doctor_response (text), rejection_reason (text), requested_at (timestamp with time zone), reviewed_at (timestamp with time zone), created_at (timestamp with time zone), updated_at (timestamp with time zone)"
+  },
+  {
     "table_name": "prescriptions",
     "columnas": "id (uuid), patient_user_id (uuid), doctor_id (uuid), diagnosis (text), medications (text), instructions (text), duration (character varying), created_at (timestamp with time zone), updated_at (timestamp with time zone), appointment_id (uuid)"
   },
@@ -109,7 +113,7 @@
   },
   {
     "table_name": "schedule_exceptions",
-    "columnas": "id (uuid), doctor_id (uuid), exception_date (date), exception_type (character varying), reason (text), is_all_day (boolean), exception_start_time (time without time zone), exception_end_time (time without time zone), created_at (timestamp with time zone)"
+    "columnas": "id (uuid), doctor_id (uuid), exception_date (date), exception_type (character varying), reason (text), is_all_day (boolean), exception_start_time (time without time zone), exception_end_time (time without time zone), created_at (timestamp with time zone), status (character varying), admin_notes (text), reviewed_at (timestamp with time zone), reviewed_by (uuid)"
   },
   {
     "table_name": "specialties",

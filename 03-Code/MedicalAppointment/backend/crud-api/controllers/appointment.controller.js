@@ -7,6 +7,7 @@
 
 const appointmentRepository = require('../repositories/appointment.repository');
 const doctorRepository = require('../repositories/doctor.repository');
+const consultationRoomRepository = require('../repositories/consultationRoom.repository');
 const ResponseBuilder = require('../../shared/utils/responseBuilder.utils');
 const { asyncHandler } = require('../../shared/middleware/errorHandler.middleware');
 const { NotFoundError, ValidationError } = require('../../shared/errors');
@@ -82,16 +83,27 @@ class AppointmentController {
     console.log('[Appointments] Found', appointments.length, 'appointments');
 
     // Transform nested data to flat structure for frontend
-    const transformedAppointments = appointments.map(apt => ({
-      ...apt,
-      doctor_id: apt.doctor_id || apt.doctors?.id,
-      doctor_first_name: apt.doctors?.users?.first_name || '',
-      doctor_last_name: apt.doctors?.users?.last_name || '',
-      specialty_name: apt.doctors?.specialties?.name || '',
-      status_code: apt.appointment_status?.code || '',
-      status_label: apt.appointment_status?.label || '',
-      location: apt.consultation_rooms?.name || apt.consultation_rooms?.room_number || ''
-    }));
+    const transformedAppointments = appointments.map(apt => {
+      // Build location string with room name and number
+      let location = '';
+      if (apt.consultation_rooms?.name) {
+        location = apt.consultation_rooms.name;
+        if (apt.consultation_rooms.room_number) {
+          location += ` - Sala ${apt.consultation_rooms.room_number}`;
+        }
+      }
+      
+      return {
+        ...apt,
+        doctor_id: apt.doctor_id || apt.doctors?.id,
+        doctor_first_name: apt.doctors?.users?.first_name || '',
+        doctor_last_name: apt.doctors?.users?.last_name || '',
+        specialty_name: apt.doctors?.specialties?.name || '',
+        status_code: apt.appointment_status?.code || '',
+        status_label: apt.appointment_status?.label || '',
+        location: location
+      };
+    });
 
     return ResponseBuilder.success(res, transformedAppointments);
   });
@@ -219,6 +231,17 @@ class AppointmentController {
     // Check if already cancelled
     if (existing.status_id === AppointmentStatus.CANCELLED) {
       throw new ValidationError('No se puede actualizar una cita cancelada');
+    }
+
+    // Validate consultation room availability if assigning one
+    if (consultation_room_id) {
+      const room = await consultationRoomRepository.findById(consultation_room_id);
+      if (!room) {
+        throw new NotFoundError('Sala de consulta', consultation_room_id);
+      }
+      if (!room.is_available) {
+        throw new ValidationError('No se puede asignar una sala que no está disponible');
+      }
     }
 
     const updated = await appointmentRepository.update(id, {

@@ -13,6 +13,8 @@ const ResponseBuilder = require('../../shared/utils/responseBuilder.utils');
 const { asyncHandler } = require('../../shared/middleware/errorHandler.middleware');
 const { NotFoundError, ValidationError } = require('../../shared/errors');
 const { parsePaginationQuery, createPagination } = require('../../shared/utils/helpers.utils');
+const bcrypt = require('bcrypt');
+const { supabase } = require('../../shared/config/database.config');
 
 class DoctorController {
   /**
@@ -124,6 +126,207 @@ class DoctorController {
   });
 
   /**
+   * POST /doctors/with-user
+   * Create new doctor with user account (admin)
+   * Handles multiple scenarios:
+   * - New user: Creates user + doctor
+   * - Existing patient: Promotes to doctor role + creates doctor record
+   * - Existing doctor: Returns error
+   * - Conflicting data: Returns specific error messages
+   */
+  createWithUser = asyncHandler(async (req, res) => {
+    const { 
+      cedula, 
+      first_name, 
+      last_name, 
+      email, 
+      phone_number, 
+      specialty_id, 
+      license_number,
+      status = 'active',
+      promote_existing = false // Flag to allow promoting existing users
+    } = req.body;
+
+    // Validate required fields
+    if (!cedula || !first_name || !last_name || !email || !specialty_id) {
+      throw new ValidationError('Cédula, nombre, apellido, email y especialidad son requeridos');
+    }
+
+    // Validate cedula format (10 digits)
+    if (!/^\d{10}$/.test(cedula)) {
+      throw new ValidationError('La cédula debe tener 10 dígitos numéricos');
+    }
+
+    // Get doctor role_id first
+    const { data: doctorRole } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'doctor')
+      .single();
+
+    if (!doctorRole) {
+      throw new ValidationError('Rol de doctor no encontrado en el sistema');
+    }
+
+    // Check if email already exists
+    const existingByEmail = await userRepository.findByEmail(email.toLowerCase());
+    
+    // Check if cedula already exists
+    const existingByCedula = await userRepository.findByCedula(cedula);
+
+    // CASE 1: Both email and cedula exist - check if they're the same user
+    if (existingByEmail && existingByCedula) {
+      if (existingByEmail.id !== existingByCedula.id) {
+        throw new ValidationError('Conflicto de datos: El email y la cédula pertenecen a usuarios diferentes en el sistema');
+      }
+      // Same user - check if already a doctor
+      const existingDoctor = await doctorRepository.findByUserId(existingByEmail.id);
+      if (existingDoctor) {
+        throw new ValidationError('Este usuario ya está registrado como doctor');
+      }
+      // User exists but is not a doctor - can be promoted
+      if (!promote_existing) {
+        return ResponseBuilder.success(res, {
+          requires_promotion: true,
+          existing_user: {
+            id: existingByEmail.id,
+            email: existingByEmail.email,
+            first_name: existingByEmail.first_name,
+            last_name: existingByEmail.last_name,
+            current_role: existingByEmail.roles?.name || 'unknown'
+          },
+          message: 'Este usuario ya existe en el sistema. ¿Desea promoverlo a doctor?'
+        }, 200, 'Usuario existente encontrado');
+      }
+    }
+
+    // CASE 2: Only email exists
+    if (existingByEmail && !existingByCedula) {
+      // Email exists but cedula doesn't match
+      if (existingByEmail.cedula && existingByEmail.cedula !== cedula) {
+        throw new ValidationError(`El email ${email} ya está registrado con una cédula diferente (${existingByEmail.cedula?.substring(0,4)}****)`);
+      }
+      // Check if already a doctor
+      const existingDoctor = await doctorRepository.findByUserId(existingByEmail.id);
+      if (existingDoctor) {
+        throw new ValidationError('Este email ya pertenece a un doctor registrado');
+      }
+      // Can be promoted
+      if (!promote_existing) {
+        return ResponseBuilder.success(res, {
+          requires_promotion: true,
+          existing_user: {
+            id: existingByEmail.id,
+            email: existingByEmail.email,
+            first_name: existingByEmail.first_name,
+            last_name: existingByEmail.last_name,
+            current_role: existingByEmail.roles?.name || 'unknown'
+          },
+          message: 'Este email ya existe en el sistema. ¿Desea promover este usuario a doctor?'
+        }, 200, 'Usuario existente encontrado');
+      }
+    }
+
+    // CASE 3: Only cedula exists
+    if (existingByCedula && !existingByEmail) {
+      throw new ValidationError(`La cédula ${cedula} ya está registrada con otro email (${existingByCedula.email?.substring(0,3)}***)`);
+    }
+
+    // CASE 4: Promotion of existing user
+    if (promote_existing && (existingByEmail || existingByCedula)) {
+      const existingUser = existingByEmail || existingByCedula;
+      
+      // Double check not already a doctor
+      const existingDoctor = await doctorRepository.findByUserId(existingUser.id);
+      if (existingDoctor) {
+        throw new ValidationError('Este usuario ya está registrado como doctor');
+      }
+
+      // Update user role to doctor and update any missing fields
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          role_id: doctorRole.id,
+          first_name: first_name || existingUser.first_name,
+          last_name: last_name || existingUser.last_name,
+          phone_number: phone_number || existingUser.phone_number,
+          cedula: cedula || existingUser.cedula,
+          is_active: status === 'active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingUser.id);
+
+      if (updateError) {
+        throw new ValidationError(`Error al actualizar usuario: ${updateError.message}`);
+      }
+
+      // Create doctor record
+      const doctor = await doctorRepository.create({
+        user_id: existingUser.id,
+        specialty_id,
+        professional_id: license_number,
+        active: status === 'active'
+      });
+
+      return ResponseBuilder.created(res, {
+        ...doctor,
+        user: existingUser,
+        promoted: true,
+        message: 'Usuario existente promovido a doctor. Puede acceder con su contraseña actual.'
+      }, 'Usuario promovido a doctor exitosamente');
+    }
+
+    // CASE 5: New user - create from scratch
+    const tempPassword = `${cedula}${last_name.substring(0, 3).toUpperCase()}!`;
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert({
+        email: email.toLowerCase(),
+        password_hash: hashedPassword,
+        first_name,
+        last_name,
+        cedula,
+        phone_number,
+        role_id: doctorRole.id,
+        is_active: status === 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select('id, email, first_name, last_name')
+      .single();
+
+    if (userError) {
+      // Handle unique constraint violations
+      if (userError.code === '23505') {
+        if (userError.message.includes('email')) {
+          throw new ValidationError('El email ya está en uso');
+        }
+        if (userError.message.includes('cedula')) {
+          throw new ValidationError('La cédula ya está en uso');
+        }
+      }
+      throw new ValidationError(`Error al crear usuario: ${userError.message}`);
+    }
+
+    // Create doctor record
+    const doctor = await doctorRepository.create({
+      user_id: newUser.id,
+      specialty_id,
+      professional_id: license_number,
+      active: status === 'active'
+    });
+
+    return ResponseBuilder.created(res, {
+      ...doctor,
+      user: newUser,
+      temporary_password: tempPassword,
+      message: 'Doctor creado. Contraseña temporal: ' + tempPassword
+    }, 'Doctor creado exitosamente con cuenta de usuario');
+  });
+
+  /**
    * PUT /doctors/:id
    * Update doctor
    */
@@ -143,6 +346,50 @@ class DoctorController {
     });
 
     return ResponseBuilder.success(res, updated, 200, 'Doctor actualizado exitosamente');
+  });
+
+  /**
+   * POST /doctors/:id/reset-password
+   * Reset doctor's password to a new temporary password (admin only)
+   */
+  resetPassword = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    // Find doctor
+    const doctor = await doctorRepository.findWithDetails(id);
+    if (!doctor) {
+      throw new NotFoundError('Doctor', id);
+    }
+
+    // Get user data
+    const user = await userRepository.findById(doctor.user_id);
+    if (!user) {
+      throw new NotFoundError('Usuario asociado al doctor');
+    }
+
+    // Generate new temporary password
+    const tempPassword = `${user.cedula || 'TEMP'}${(user.last_name || 'XXX').substring(0, 3).toUpperCase()}!${Math.floor(Math.random() * 1000)}`;
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+    // Update password
+    const { error } = await supabase
+      .from('users')
+      .update({ 
+        password_hash: hashedPassword,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', doctor.user_id);
+
+    if (error) {
+      throw new ValidationError(`Error al restablecer contraseña: ${error.message}`);
+    }
+
+    return ResponseBuilder.success(res, {
+      doctor_id: id,
+      doctor_name: `${user.first_name} ${user.last_name}`,
+      email: user.email,
+      temporary_password: tempPassword
+    }, 200, 'Contraseña restablecida exitosamente');
   });
 
   /**

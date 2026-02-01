@@ -73,6 +73,25 @@ class DoctorModel {
   }
 
   /**
+   * Create new doctor with user account (for admin)
+   * Creates both user record (with doctor role) and doctor record
+   * @param {Object} doctorData - Doctor data including user fields
+   * @param {string} doctorData.cedula - Doctor's cedula (10 digits)
+   * @param {string} doctorData.first_name - First name
+   * @param {string} doctorData.last_name - Last name
+   * @param {string} doctorData.email - Email
+   * @param {string} doctorData.phone_number - Phone number
+   * @param {string} doctorData.specialty_id - Specialty ID
+   * @param {string} doctorData.license_number - Medical license number
+   * @param {string} doctorData.status - Status (active/inactive/vacation)
+   * @returns {Promise<Doctor>}
+   */
+  static async createWithUser(doctorData) {
+    const response = await crudApi.post('/doctors/with-user', doctorData);
+    return response.data;
+  }
+
+  /**
    * Update doctor
    * @param {string} id - Doctor ID
    * @param {Object} doctorData - Doctor data
@@ -80,6 +99,16 @@ class DoctorModel {
    */
   static async update(id, doctorData) {
     const response = await crudApi.put(`/doctors/${id}`, doctorData);
+    return response.data;
+  }
+
+  /**
+   * Reset doctor password to a new temporary password (admin only)
+   * @param {string} id - Doctor ID
+   * @returns {Promise<Object>} Object with temporary_password
+   */
+  static async resetPassword(id) {
+    const response = await crudApi.post(`/doctors/${id}/reset-password`);
     return response.data;
   }
 

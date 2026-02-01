@@ -34,6 +34,7 @@ const waitingListRoutes = require('./routes/waitingList.routes');
 const medicalServiceRoutes = require('./routes/medicalService.routes');
 const billingItemRoutes = require('./routes/billingItem.routes');
 const insuranceProviderRoutes = require('./routes/insuranceProvider.routes');
+const securityRoutes = require('./routes/security.routes');
 
 const app = express();
 // Render injects PORT, fallback to CRUD_API_PORT for local dev
@@ -103,6 +104,7 @@ app.use(`${API_PREFIX}/waiting-list`, waitingListRoutes);
 app.use(`${API_PREFIX}/medical-services`, medicalServiceRoutes);
 app.use(`${API_PREFIX}/billing-items`, billingItemRoutes);
 app.use(`${API_PREFIX}/insurance-providers`, insuranceProviderRoutes);
+app.use(`${API_PREFIX}/security`, securityRoutes);
 
 // =============================================================================
 // ERROR HANDLING

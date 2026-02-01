@@ -38,6 +38,8 @@ export default function BillingManagement() {
     payment_method: 'cash',
     reference_number: '',
     notes: '',
+    insurance_provider_id: '',
+    insurance_claim_number: '',
   });
 
   useEffect(() => {
@@ -420,7 +422,7 @@ export default function BillingManagement() {
         {/* Detail Modal */}
         {showDetailModal && selectedBilling && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">Detalle de Factura</h3>
@@ -438,14 +440,15 @@ export default function BillingManagement() {
                     <p className="font-medium">
                       {selectedBilling.patient?.first_name} {selectedBilling.patient?.last_name}
                     </p>
+                    <p className="text-sm text-gray-500">{selectedBilling.patient?.email}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Fecha</p>
+                    <p className="text-xs text-gray-500 uppercase">Fecha de Emisión</p>
                     <p className="font-medium">{formatDate(selectedBilling.created_at)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Monto</p>
-                    <p className="font-medium text-lg">{formatCurrency(selectedBilling.amount)}</p>
+                    <p className="text-xs text-gray-500 uppercase">Fecha de Vencimiento</p>
+                    <p className="font-medium">{formatDate(selectedBilling.due_date) || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Método de Pago</p>
@@ -453,10 +456,62 @@ export default function BillingManagement() {
                   </div>
                 </div>
 
+                {/* Desglose de Montos */}
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">{formatCurrency(selectedBilling.subtotal || selectedBilling.base_amount)}</span>
+                  </div>
+                  {selectedBilling.insurance_discount_percentage > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Descuento Seguro ({selectedBilling.insurance_discount_percentage}%)</span>
+                      <span>-{formatCurrency(selectedBilling.insurance_discount_amount)}</span>
+                    </div>
+                  )}
+                  {selectedBilling.tax_amount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Impuestos ({selectedBilling.tax_percentage || 0}%)</span>
+                      <span className="font-medium">{formatCurrency(selectedBilling.tax_amount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-2 border-t border-gray-200">
+                    <span className="font-semibold text-gray-800">Total</span>
+                    <span className="font-bold text-xl">{formatCurrency(selectedBilling.total_amount || selectedBilling.amount)}</span>
+                  </div>
+                </div>
+
+                {/* Información del Seguro */}
+                {(selectedBilling.insurance_provider_id || selectedBilling.insurance_provider) && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-800 mb-2">Información del Seguro</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-blue-600">Aseguradora</p>
+                        <p className="font-medium text-blue-900">{selectedBilling.insurance_provider?.name || selectedBilling.insurance_provider || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-blue-600">% Descuento</p>
+                        <p className="font-medium text-blue-900">{selectedBilling.insurance_discount_percentage || 0}%</p>
+                      </div>
+                      <div>
+                        <p className="text-blue-600">N° de Claim</p>
+                        <p className="font-medium text-blue-900">{selectedBilling.insurance_claim_number || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-blue-600">Monto Descuento</p>
+                        <p className="font-medium text-blue-900">{formatCurrency(selectedBilling.insurance_discount_amount)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {selectedBilling.paid_at && (
                   <div className="bg-green-50 rounded-lg p-4">
                     <p className="text-sm text-green-600">Pagado el</p>
                     <p className="font-medium text-green-800">{formatDate(selectedBilling.paid_at)}</p>
+                    {selectedBilling.payment_method && (
+                      <p className="text-sm text-green-700 mt-1">Método: {selectedBilling.payment_method}</p>
+                    )}
                   </div>
                 )}
 
@@ -468,7 +523,14 @@ export default function BillingManagement() {
                 )}
               </div>
 
-              <div className="p-6 border-t bg-gray-50 flex justify-end">
+              <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                >
+                  <PrinterIcon className="w-4 h-4" />
+                  Imprimir
+                </button>
                 <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"

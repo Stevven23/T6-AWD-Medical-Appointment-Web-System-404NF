@@ -65,7 +65,7 @@ class ConsultationRoomController {
    * Create new consultation room (admin)
    */
   create = asyncHandler(async (req, res) => {
-    const { name, room_number, description, floor, capacity } = req.body;
+    const { name, room_number, description, floor, capacity, equipment, notes, is_available } = req.body;
 
     if (!name || !room_number) {
       throw new ValidationError('name y room_number son requeridos');
@@ -83,7 +83,9 @@ class ConsultationRoomController {
       description,
       floor,
       capacity,
-      is_available: true
+      equipment: Array.isArray(equipment) ? equipment : [],
+      notes,
+      is_available: is_available !== false
     });
 
     return ResponseBuilder.created(res, room, 'Sala de consulta creada exitosamente');
@@ -95,7 +97,7 @@ class ConsultationRoomController {
    */
   update = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, room_number, description, floor, capacity, is_available } = req.body;
+    const { name, room_number, description, floor, capacity, is_available, equipment, notes } = req.body;
 
     const existing = await consultationRoomRepository.findById(id);
     if (!existing) {
@@ -116,7 +118,9 @@ class ConsultationRoomController {
       description,
       floor,
       capacity,
-      is_available
+      is_available,
+      equipment: equipment !== undefined ? (Array.isArray(equipment) ? equipment : []) : undefined,
+      notes
     });
 
     return ResponseBuilder.success(res, updated, 200, 'Sala de consulta actualizada');

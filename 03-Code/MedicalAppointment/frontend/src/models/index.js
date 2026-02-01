@@ -20,3 +20,4 @@ export { default as ReportsModel } from './Reports.model';
 export { default as NotificationModel } from './Notification.model';
 export { default as WaitingListModel } from './WaitingList.model';
 export { default as DoctorRatingModel } from './DoctorRating.model';
+export { default as SecurityModel } from './Security.model';

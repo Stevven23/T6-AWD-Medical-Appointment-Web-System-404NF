@@ -41,7 +41,7 @@ class SpecialtyController {
    * Create new specialty (admin)
    */
   create = asyncHandler(async (req, res) => {
-    const { name, description } = req.body;
+    const { name, description, consultation_fee } = req.body;
 
     if (!name) {
       throw new ValidationError('El nombre es requerido');
@@ -56,7 +56,8 @@ class SpecialtyController {
     // Note: specialties table has no is_active column
     const specialty = await specialtyRepository.create({
       name,
-      description
+      description,
+      consultation_fee: consultation_fee ? parseFloat(consultation_fee) : null
     });
 
     return ResponseBuilder.created(res, specialty, 'Especialidad creada exitosamente');
@@ -68,7 +69,7 @@ class SpecialtyController {
    */
   update = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, description } = req.body;
+    const { name, description, consultation_fee } = req.body;
 
     const existing = await specialtyRepository.findById(id);
     if (!existing) {
@@ -85,7 +86,8 @@ class SpecialtyController {
 
     const updated = await specialtyRepository.update(id, {
       name,
-      description
+      description,
+      consultation_fee: consultation_fee !== undefined ? (consultation_fee ? parseFloat(consultation_fee) : null) : undefined
     });
 
     return ResponseBuilder.success(res, updated, 200, 'Especialidad actualizada exitosamente');

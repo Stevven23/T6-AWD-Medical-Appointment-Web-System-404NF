@@ -54,6 +54,13 @@ router.get('/my-patients', authMiddleware, requireRole('doctor'), doctorControll
  */
 router.post('/', authMiddleware, requireRole('admin'), doctorController.create);
 
+/**
+ * @route   POST /api/v1/doctors/with-user
+ * @desc    Create new doctor with user account (admin only)
+ * @access  Admin
+ */
+router.post('/with-user', authMiddleware, requireRole('admin'), doctorController.createWithUser);
+
 // Parameterized routes - MUST be after specific routes
 /**
  * @route   GET /api/v1/doctors/:id
@@ -68,6 +75,13 @@ router.get('/:id', doctorController.getById);
  * @access  Admin
  */
 router.put('/:id', authMiddleware, requireRole('admin'), doctorController.update);
+
+/**
+ * @route   POST /api/v1/doctors/:id/reset-password
+ * @desc    Reset doctor password to a new temporary password (admin only)
+ * @access  Admin
+ */
+router.post('/:id/reset-password', authMiddleware, requireRole('admin'), doctorController.resetPassword);
 
 /**
  * @route   DELETE /api/v1/doctors/:id

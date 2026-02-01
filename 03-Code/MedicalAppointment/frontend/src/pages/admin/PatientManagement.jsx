@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { PatientModel } from '../../models';
+import { crudApi } from '../../services/httpClient';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -9,6 +10,9 @@ import {
   XMarkIcon,
   EyeIcon,
   DocumentTextIcon,
+  CalendarDaysIcon,
+  CurrencyDollarIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 
 export default function PatientManagement() {
@@ -47,6 +51,10 @@ export default function PatientManagement() {
   });
   
   const [notification, setNotification] = useState(null);
+  const [patientAppointments, setPatientAppointments] = useState([]);
+  const [patientBillings, setPatientBillings] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [detailTab, setDetailTab] = useState('info');
 
   useEffect(() => {
     loadData();
@@ -153,9 +161,28 @@ export default function PatientManagement() {
     setShowModal(true);
   };
 
-  const openDetailModal = (patient) => {
+  const openDetailModal = async (patient) => {
     setCurrentPatient(patient);
     setShowDetailModal(true);
+    setDetailTab('info');
+    setLoadingDetails(true);
+    
+    try {
+      // Cargar historial de citas
+      const [appointmentsRes, billingsRes] = await Promise.all([
+        crudApi.get(`/appointments`, { params: { patient_user_id: patient.user_id || patient.id } }).catch(() => ({ data: [] })),
+        crudApi.get(`/billings`, { params: { patient_user_id: patient.user_id || patient.id } }).catch(() => ({ data: [] })),
+      ]);
+      
+      setPatientAppointments(appointmentsRes.data?.data || appointmentsRes.data || []);
+      setPatientBillings(billingsRes.data?.data || billingsRes.data || []);
+    } catch (error) {
+      console.error('Error loading patient details:', error);
+      setPatientAppointments([]);
+      setPatientBillings([]);
+    } finally {
+      setLoadingDetails(false);
+    }
   };
 
   const resetForm = () => {
@@ -616,10 +643,10 @@ export default function PatientManagement() {
         {/* Detail Modal */}
         {showDetailModal && currentPatient && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-6 border-b">
-                <h3 className="text-xl font-semibold text-gray-900">Detalles del Paciente</h3>
-                <button onClick={() => { setShowDetailModal(false); setCurrentPatient(null); }} className="text-gray-400 hover:text-gray-600">
+                <h3 className="text-xl font-semibold text-gray-900">Ficha del Paciente</h3>
+                <button onClick={() => { setShowDetailModal(false); setCurrentPatient(null); setDetailTab('info'); }} className="text-gray-400 hover:text-gray-600">
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -635,12 +662,62 @@ export default function PatientManagement() {
                       {currentPatient.first_name} {currentPatient.last_name}
                     </h4>
                     <p className="text-gray-500">CI: {currentPatient.cedula}</p>
+                    <div className="flex gap-2 mt-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${currentPatient.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {currentPatient.is_active !== false ? 'Activo' : 'Inactivo'}
+                      </span>
+                      {currentPatient.is_email_verified && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Email Verificado</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h5 className="font-semibold text-gray-800 mb-3">Información Personal</h5>
+                {/* Tabs */}
+                <div className="border-b border-gray-200 mb-6">
+                  <nav className="flex gap-4">
+                    <button
+                      onClick={() => setDetailTab('info')}
+                      className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        detailTab === 'info' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <ClipboardDocumentListIcon className="w-4 h-4" />
+                      Información
+                    </button>
+                    <button
+                      onClick={() => setDetailTab('appointments')}
+                      className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        detailTab === 'appointments' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <CalendarDaysIcon className="w-4 h-4" />
+                      Historial de Citas ({patientAppointments.length})
+                    </button>
+                    <button
+                      onClick={() => setDetailTab('billing')}
+                      className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        detailTab === 'billing' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <CurrencyDollarIcon className="w-4 h-4" />
+                      Facturas ({patientBillings.filter(b => b.status === 'pending').length} pendientes)
+                    </button>
+                  </nav>
+                </div>
+
+                {loadingDetails ? (
+                  <div className="py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-500 mt-2">Cargando...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Tab: Info */}
+                    {detailTab === 'info' && (
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <h5 className="font-semibold text-gray-800 mb-3">Información Personal</h5>
                     <dl className="space-y-2">
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Email:</dt>
@@ -707,6 +784,88 @@ export default function PatientManagement() {
                     </div>
                   </div>
                 </div>
+                    )}
+
+                    {/* Tab: Historial de Citas */}
+                    {detailTab === 'appointments' && (
+                      <div>
+                        {patientAppointments.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <CalendarDaysIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                            <p>No hay citas registradas</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {patientAppointments.map((apt) => (
+                              <div key={apt.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      {formatDate(apt.scheduled_start)} - {new Date(apt.scheduled_start).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Dr. {apt.doctor?.first_name || apt.doctor_first_name} {apt.doctor?.last_name || apt.doctor_last_name}
+                                    </p>
+                                    <p className="text-sm text-gray-500">{apt.specialty_name || apt.specialty?.name || 'N/A'}</p>
+                                    {apt.reason && <p className="text-xs text-gray-400 mt-1">Motivo: {apt.reason}</p>}
+                                  </div>
+                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                    apt.status_code === 'completed' ? 'bg-green-100 text-green-800' :
+                                    apt.status_code === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                    apt.status_code === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {apt.status_label || apt.status_code}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tab: Facturas */}
+                    {detailTab === 'billing' && (
+                      <div>
+                        {patientBillings.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <CurrencyDollarIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                            <p>No hay facturas registradas</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {patientBillings.map((billing) => (
+                              <div key={billing.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      {billing.invoice_number || `#${billing.id?.slice(0, 8)}`}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {formatDate(billing.created_at)}
+                                    </p>
+                                    <p className="text-lg font-bold text-gray-800 mt-1">
+                                      ${parseFloat(billing.total_amount || billing.amount || 0).toFixed(2)}
+                                    </p>
+                                  </div>
+                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                    billing.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                    billing.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {billing.status === 'paid' ? 'Pagado' :
+                                     billing.status === 'overdue' ? 'Vencido' : 'Pendiente'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
                   <button

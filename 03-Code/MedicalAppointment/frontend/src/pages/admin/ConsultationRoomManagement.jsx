@@ -8,8 +8,30 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   MagnifyingGlassIcon,
+  UserGroupIcon,
+  MapPinIcon,
+  WrenchScrewdriverIcon,
+  DocumentTextIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { crudApi } from '../../services/httpClient';
+
+// Helper para parsear equipamiento (puede venir como array o string)
+const parseEquipment = (equipment) => {
+  if (!equipment) return [];
+  if (Array.isArray(equipment)) return equipment.filter(e => e && e.trim());
+  if (typeof equipment === 'string') {
+    // Intentar parsear como JSON si viene como string de array
+    try {
+      const parsed = JSON.parse(equipment);
+      if (Array.isArray(parsed)) return parsed.filter(e => e && e.trim());
+    } catch {
+      // Si no es JSON, separar por comas
+      return equipment.split(',').map(e => e.trim()).filter(e => e);
+    }
+  }
+  return [];
+};
 
 export default function ConsultationRoomManagement() {
   const [rooms, setRooms] = useState([]);
@@ -29,10 +51,11 @@ export default function ConsultationRoomManagement() {
     floor: '',
     building: '',
     capacity: 1,
-    equipment: '',
+    equipment: [],
     is_available: true,
     notes: '',
   });
+  const [equipmentInput, setEquipmentInput] = useState('');
 
   useEffect(() => {
     loadRooms();
@@ -72,18 +95,42 @@ export default function ConsultationRoomManagement() {
 
   const handleEdit = (room) => {
     setSelectedRoom(room);
+    const parsedEquipment = parseEquipment(room.equipment);
     setFormData({
       name: room.name || '',
       room_number: room.room_number || '',
       floor: room.floor || '',
       building: room.building || '',
       capacity: room.capacity || 1,
-      equipment: room.equipment || '',
+      equipment: parsedEquipment,
       is_available: room.is_available !== false,
       notes: room.notes || '',
     });
+    setEquipmentInput('');
     setModalMode('edit');
     setShowModal(true);
+  };
+
+  const addEquipmentItem = () => {
+    const item = equipmentInput.trim();
+    if (item && !formData.equipment.includes(item)) {
+      setFormData({ ...formData, equipment: [...formData.equipment, item] });
+      setEquipmentInput('');
+    }
+  };
+
+  const removeEquipmentItem = (index) => {
+    setFormData({
+      ...formData,
+      equipment: formData.equipment.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleEquipmentKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addEquipmentItem();
+    }
   };
 
   const handleDelete = async (roomId) => {
@@ -117,10 +164,11 @@ export default function ConsultationRoomManagement() {
       floor: '',
       building: '',
       capacity: 1,
-      equipment: '',
+      equipment: [],
       is_available: true,
       notes: '',
     });
+    setEquipmentInput('');
     setSelectedRoom(null);
     setModalMode('create');
   };
@@ -231,63 +279,105 @@ export default function ConsultationRoomManagement() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredRooms.map((room) => (
-              <div key={room.id} className="bg-white rounded-lg shadow-md p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${room.is_available ? 'bg-green-100' : 'bg-red-100'}`}>
-                      <BuildingOffice2Icon className={`w-6 h-6 ${room.is_available ? 'text-green-600' : 'text-red-600'}`} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{room.name}</h3>
-                      <p className="text-sm text-gray-500">Sala {room.room_number}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRooms.map((room) => {
+              const equipmentList = parseEquipment(room.equipment);
+              return (
+                <div key={room.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+                  {/* Header con estado */}
+                  <div className={`px-5 py-3 ${room.is_available ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BuildingOffice2Icon className="w-6 h-6 text-white" />
+                        <div>
+                          <h3 className="font-semibold text-white">{room.name}</h3>
+                          <p className="text-xs text-white/80">Sala {room.room_number}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${room.is_available ? 'bg-white/20 text-white' : 'bg-white/20 text-white'}`}>
+                        {room.is_available ? '● Disponible' : '○ No Disponible'}
+                      </span>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    room.is_available 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {room.is_available ? 'Disponible' : 'No Disponible'}
-                  </span>
-                </div>
 
-                <div className="space-y-2 text-sm text-gray-600 mb-4">
-                  {room.floor && <p><span className="font-medium">Piso:</span> {room.floor}</p>}
-                  {room.building && <p><span className="font-medium">Edificio:</span> {room.building}</p>}
-                  {room.capacity && <p><span className="font-medium">Capacidad:</span> {room.capacity} personas</p>}
-                  {room.equipment && (
-                    <p><span className="font-medium">Equipamiento:</span> {room.equipment}</p>
-                  )}
-                </div>
+                  {/* Contenido */}
+                  <div className="p-5">
+                    {/* Info básica con iconos */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPinIcon className="w-4 h-4 text-gray-400" />
+                        <span>Piso {room.floor || '-'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <UserGroupIcon className="w-4 h-4 text-gray-400" />
+                        <span>{room.capacity || 1} {room.capacity === 1 ? 'persona' : 'personas'}</span>
+                      </div>
+                    </div>
 
-                <div className="flex gap-2 pt-3 border-t">
-                  <button
-                    onClick={() => toggleAvailability(room)}
-                    className={`flex-1 px-3 py-2 text-sm rounded-lg transition ${
-                      room.is_available 
-                        ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                    }`}
-                  >
-                    {room.is_available ? 'Marcar No Disponible' : 'Marcar Disponible'}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(room)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                  >
-                    <PencilSquareIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(room.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+                    {/* Equipamiento como tags */}
+                    {equipmentList.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                          <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
+                          <span className="font-medium">Equipamiento</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {equipmentList.map((item, index) => (
+                            <span 
+                              key={index} 
+                              className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notas */}
+                    {room.notes && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                          <DocumentTextIcon className="w-3.5 h-3.5" />
+                          <span className="font-medium">Notas</span>
+                        </div>
+                        <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg italic">
+                          {room.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="flex gap-2 px-5 py-3 bg-gray-50 border-t">
+                    <button
+                      onClick={() => toggleAvailability(room)}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition ${
+                        room.is_available 
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      {room.is_available ? 'Deshabilitar' : 'Habilitar'}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(room)}
+                      className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+                      title="Editar"
+                    >
+                      <PencilSquareIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(room.id)}
+                      className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
+                      title="Eliminar"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {filteredRooms.length === 0 && (
               <div className="col-span-full text-center py-12 text-gray-500">
@@ -376,13 +466,47 @@ export default function ConsultationRoomManagement() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Equipamiento
                     </label>
-                    <textarea
-                      value={formData.equipment}
-                      onChange={(e) => setFormData({...formData, equipment: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                      rows={2}
-                      placeholder="Ej: Camilla, Esfigmomanómetro, Estetoscopio..."
-                    />
+                    <div className="space-y-2">
+                      {/* Tags de equipamiento */}
+                      {formData.equipment.length > 0 && (
+                        <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg border">
+                          {formData.equipment.map((item, index) => (
+                            <span 
+                              key={index} 
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() => removeEquipmentItem(index)}
+                                className="text-blue-600 hover:text-blue-800 ml-1"
+                              >
+                                <XMarkIcon className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Input para agregar */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={equipmentInput}
+                          onChange={(e) => setEquipmentInput(e.target.value)}
+                          onKeyDown={handleEquipmentKeyDown}
+                          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Agregar equipo (Enter para añadir)"
+                        />
+                        <button
+                          type="button"
+                          onClick={addEquipmentItem}
+                          className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                        >
+                          <PlusIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">Escriba el nombre del equipo y presione Enter o el botón +</p>
+                    </div>
                   </div>
 
                   <div>

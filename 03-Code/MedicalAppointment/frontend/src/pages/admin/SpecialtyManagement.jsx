@@ -7,6 +7,7 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 
 export default function SpecialtyManagement() {
@@ -17,7 +18,7 @@ export default function SpecialtyManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentSpecialty, setCurrentSpecialty] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', consultation_fee: '' });
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
@@ -81,13 +82,17 @@ export default function SpecialtyManagement() {
 
   const openAddModal = () => {
     setCurrentSpecialty(null);
-    setFormData({ name: '', description: '' });
+    setFormData({ name: '', description: '', consultation_fee: '' });
     setShowModal(true);
   };
 
   const openEditModal = (specialty) => {
     setCurrentSpecialty(specialty);
-    setFormData({ name: specialty.name, description: specialty.description || '' });
+    setFormData({ 
+      name: specialty.name, 
+      description: specialty.description || '',
+      consultation_fee: specialty.consultation_fee || ''
+    });
     setShowModal(true);
   };
 
@@ -99,7 +104,7 @@ export default function SpecialtyManagement() {
   const closeModal = () => {
     setShowModal(false);
     setCurrentSpecialty(null);
-    setFormData({ name: '', description: '' });
+    setFormData({ name: '', description: '', consultation_fee: '' });
   };
 
   const showNotification = (message, type = 'info') => {
@@ -195,9 +200,9 @@ export default function SpecialtyManagement() {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold">ID</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Nombre</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Descripción</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold">Fee Consulta</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Fecha Creación</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
@@ -212,14 +217,21 @@ export default function SpecialtyManagement() {
               ) : (
                 filteredSpecialties.map((specialty) => (
                   <tr key={specialty.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {specialty.id.substring(0, 8)}...
-                    </td>
                     <td className="px-6 py-4">
                       <span className="font-semibold text-gray-900">{specialty.name}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {specialty.description || 'Sin descripción'}
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                      {specialty.description || <span className="italic text-gray-400">Sin descripción</span>}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {specialty.consultation_fee ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full font-semibold">
+                          <CurrencyDollarIcon className="w-4 h-4" />
+                          {parseFloat(specialty.consultation_fee).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">No definido</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {formatDate(specialty.created_at)}
@@ -283,12 +295,31 @@ export default function SpecialtyManagement() {
                   Descripción
                 </label>
                 <textarea
-                  rows="4"
+                  rows="3"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Descripción de la especialidad (opcional)"
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fee de Consulta ($)
+                </label>
+                <div className="relative">
+                  <CurrencyDollarIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.consultation_fee}
+                    onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })}
+                    placeholder="Ej: 50.00"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Precio base por consulta de esta especialidad</p>
               </div>
 
               <div className="flex gap-3 pt-4">

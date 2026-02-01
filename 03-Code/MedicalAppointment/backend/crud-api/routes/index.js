@@ -22,6 +22,7 @@ const doctorRatingRoutes = require('./doctorRating.routes');
 const medicalServiceRoutes = require('./medicalService.routes');
 const billingItemRoutes = require('./billingItem.routes');
 const insuranceProviderRoutes = require('./insuranceProvider.routes');
+const securityRoutes = require('./security.routes');
 
 /**
  * Register all routes
@@ -52,6 +53,9 @@ const registerRoutes = (app) => {
   app.use(`${API_PREFIX}/medical-services`, medicalServiceRoutes);
   app.use(`${API_PREFIX}/billing-items`, billingItemRoutes);
   app.use(`${API_PREFIX}/insurance-providers`, insuranceProviderRoutes);
+  
+  // Security & Access Management
+  app.use(`${API_PREFIX}/security`, securityRoutes);
 };
 
 module.exports = { registerRoutes };

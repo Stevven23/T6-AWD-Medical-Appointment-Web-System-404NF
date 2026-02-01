@@ -22,6 +22,12 @@ import AdminCalendar from './pages/admin/AdminCalendar';
 import AdminProfile from './pages/admin/AdminProfile';
 import AdminLogs from './pages/admin/AdminLogs';
 import BillingManagement from './pages/admin/BillingManagement';
+import InsuranceManagement from './pages/admin/InsuranceManagement';
+import LaboratoryManagement from './pages/admin/LaboratoryManagement';
+import ConsultationsManagement from './pages/admin/ConsultationsManagement';
+import QualityManagement from './pages/admin/QualityManagement';
+import NotificationsManagement from './pages/admin/NotificationsManagement';
+import SecurityManagement from './pages/admin/SecurityManagement';
 
 // Patient pages
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -175,6 +181,54 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <BillingManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/insurance"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <InsuranceManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/laboratory"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <LaboratoryManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/consultations"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ConsultationsManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/quality"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <QualityManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <NotificationsManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/security"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <SecurityManagement />
           </ProtectedRoute>
         }
       />

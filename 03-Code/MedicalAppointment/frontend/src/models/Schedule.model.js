@@ -121,6 +121,49 @@ class ScheduleModel {
     return response.data;
   }
 
+  // ==================== Schedule Exception Methods ====================
+
+  /**
+   * Get all pending exception requests (Admin)
+   * @returns {Promise<Object[]>}
+   */
+  static async getPendingExceptions() {
+    const response = await crudApi.get('/schedules/exceptions/pending');
+    return response.data;
+  }
+
+  /**
+   * Get all exceptions with optional filters
+   * @param {Object} params - Query parameters (status, doctor_id, etc.)
+   * @returns {Promise<Object[]>}
+   */
+  static async getAllExceptions(params = {}) {
+    const response = await crudApi.get('/schedules/exceptions', { params });
+    return response.data;
+  }
+
+  /**
+   * Approve a schedule exception request (Admin)
+   * @param {string} id - Exception ID
+   * @param {Object} data - { admin_notes }
+   * @returns {Promise<Object>}
+   */
+  static async approveException(id, data = {}) {
+    const response = await crudApi.put(`/schedules/exceptions/${id}/approve`, data);
+    return response.data;
+  }
+
+  /**
+   * Reject a schedule exception request (Admin)
+   * @param {string} id - Exception ID
+   * @param {Object} data - { admin_notes }
+   * @returns {Promise<Object>}
+   */
+  static async rejectException(id, data = {}) {
+    const response = await crudApi.put(`/schedules/exceptions/${id}/reject`, data);
+    return response.data;
+  }
+
   /**
    * Cleanup past appointments by marking them as no-show
    * Automatically updates appointments that are scheduled/confirmed but their date has passed
