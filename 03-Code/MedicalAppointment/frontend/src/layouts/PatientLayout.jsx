@@ -209,7 +209,7 @@ export default function PatientLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
       {/* Sidebar para Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-gradient-to-b from-blue-600 to-blue-700 pt-5 pb-4 overflow-y-auto">
@@ -403,15 +403,15 @@ export default function PatientLayout({ children }) {
       )}
 
       {/* Main Content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
-        <main className="flex-1">
-          <div className="py-6 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-6">
+      <div className="lg:pl-64 flex flex-col flex-1 w-full min-w-0 overflow-x-hidden" style={{ maxWidth: '100vw' }}>
+        <main className="flex-1 w-full min-w-0 overflow-x-hidden">
+          <div className="py-6 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-6 w-full min-w-0 overflow-x-hidden">
             {children}
           </div>
         </main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 py-4 px-4 sm:px-6 lg:px-8">
+        <footer className="bg-white border-t border-gray-200 py-4 px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center text-sm text-gray-600">
             <p>
               © {new Date().getFullYear()} MediCare - Sistema de Gestión de Citas Médicas

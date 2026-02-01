@@ -31,18 +31,18 @@ import QualityManagement from './pages/admin/QualityManagement';
 import NotificationsManagement from './pages/admin/NotificationsManagement';
 import SecurityManagement from './pages/admin/SecurityManagement';
 
-// Patient pages
-import PatientDashboard from './pages/patient/PatientDashboard';
-import PatientAppointments from './pages/patient/PatientAppointments';
+// Patient pages (refactored with Clean Code structure)
+import PatientDashboard from './pages/patient/Dashboard';
+import PatientAppointments from './pages/patient/Appointments';
 import NewAppointment from './pages/patient/NewAppointment';
-import MedicalRecord from './pages/patient/MedicalRecord';
-import PatientHistory from './pages/patient/PatientHistory';
-import PatientLab from './pages/patient/PatientLab';
-import PatientPrescriptions from './pages/patient/PatientPrescriptions';
-import PatientNotifications from './pages/patient/PatientNotifications';
-import PatientProfile from './pages/patient/PatientProfile';
-import RateAppointment from './pages/patient/RateAppointment';
-import PatientBilling from './pages/patient/PatientBilling';
+import PatientNotifications from './pages/patient/Notifications';
+import MedicalRecord from './pages/patient/Record';
+import PatientHistory from './pages/patient/History';
+import PatientLab from './pages/patient/Lab';
+import PatientPrescriptions from './pages/patient/Prescriptions';
+import PatientProfile from './pages/patient/Profile';
+import RateAppointment from './pages/patient/Rate';
+import PatientBilling from './pages/patient/Billing';
 
 // Doctor pages
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
