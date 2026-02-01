@@ -202,7 +202,17 @@ export default function ScheduleManagement() {
         if (schedule.length > 0) {
           const updatedSchedules = DAYS.map(day => {
             const existing = schedule.find(s => s.day_of_week === day.id);
-            return existing || {
+            if (existing) {
+              // Normalize null values to empty strings or defaults for inputs
+              return {
+                ...existing,
+                start_time: existing.start_time || '08:00',
+                end_time: existing.end_time || '17:00',
+                break_start_time: existing.break_start_time || '',
+                break_end_time: existing.break_end_time || '',
+              };
+            }
+            return {
               day_of_week: day.id,
               start_time: '08:00',
               end_time: '17:00',
@@ -654,7 +664,7 @@ export default function ScheduleManagement() {
                               <label className="block text-xs text-gray-500 mb-1">Hora inicio</label>
                               <input
                                 type="time"
-                                value={schedule.start_time}
+                                value={schedule.start_time || ''}
                                 onChange={(e) => {
                                   const updated = [...scheduleForm.schedules];
                                   updated[index].start_time = e.target.value;
@@ -667,7 +677,7 @@ export default function ScheduleManagement() {
                               <label className="block text-xs text-gray-500 mb-1">Hora fin</label>
                               <input
                                 type="time"
-                                value={schedule.end_time}
+                                value={schedule.end_time || ''}
                                 onChange={(e) => {
                                   const updated = [...scheduleForm.schedules];
                                   updated[index].end_time = e.target.value;
@@ -680,7 +690,7 @@ export default function ScheduleManagement() {
                               <label className="block text-xs text-gray-500 mb-1">Inicio descanso</label>
                               <input
                                 type="time"
-                                value={schedule.break_start_time}
+                                value={schedule.break_start_time || ''}
                                 onChange={(e) => {
                                   const updated = [...scheduleForm.schedules];
                                   updated[index].break_start_time = e.target.value;
@@ -693,7 +703,7 @@ export default function ScheduleManagement() {
                               <label className="block text-xs text-gray-500 mb-1">Fin descanso</label>
                               <input
                                 type="time"
-                                value={schedule.break_end_time}
+                                value={schedule.break_end_time || ''}
                                 onChange={(e) => {
                                   const updated = [...scheduleForm.schedules];
                                   updated[index].break_end_time = e.target.value;

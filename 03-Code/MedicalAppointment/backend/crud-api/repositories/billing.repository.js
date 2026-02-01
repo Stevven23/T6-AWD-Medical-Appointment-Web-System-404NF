@@ -14,6 +14,59 @@ class BillingRepository extends BaseRepository {
   }
 
   /**
+   * Find all billings with patient info
+   * @param {Object} options - Query options
+   * @returns {Promise<Array>}
+   */
+  async findAll(options = {}) {
+    const { status, limit, offset, filters = {} } = options;
+
+    let query = this.db
+      .from(this.tableName)
+      .select(`
+        *,
+        patient:users!billings_patient_user_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        doctor:doctors (
+          users (
+            first_name,
+            last_name
+          )
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    // Apply status filter from options or filters object
+    const statusValue = status || filters.status;
+    if (statusValue) {
+      query = query.eq('status', statusValue);
+    }
+
+    // Apply other filters
+    if (filters.patient_user_id) {
+      query = query.eq('patient_user_id', filters.patient_user_id);
+    }
+    if (filters.doctor_id) {
+      query = query.eq('doctor_id', filters.doctor_id);
+    }
+
+    if (limit) query = query.limit(limit);
+    if (offset) query = query.range(offset, offset + (limit || 20) - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
+  /**
    * Find billing with full details
    * @param {string} id - Billing ID
    * @returns {Promise<Object|null>}

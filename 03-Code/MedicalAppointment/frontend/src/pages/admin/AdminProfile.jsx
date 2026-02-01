@@ -27,7 +27,7 @@ export default function AdminProfile() {
     first_name: '',
     last_name: '',
     email: '',
-    phone: '',
+    phone_number: '',
   });
   
   // Password change
@@ -66,7 +66,7 @@ export default function AdminProfile() {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: profile.email || '',
-        phone: profile.phone || '',
+        phone_number: profile.phone_number || '',
       });
       setSessions(sessionsRes.data.data || sessionsRes.data || []);
     } catch (error) {
@@ -245,8 +245,8 @@ export default function AdminProfile() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
                     <input
                       type="tel"
-                      value={profileForm.phone}
-                      onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                      value={profileForm.phone_number}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, phone_number: e.target.value }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
@@ -281,7 +281,7 @@ export default function AdminProfile() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Teléfono</label>
-                    <p className="font-medium text-gray-800">{adminData?.phone || '-'}</p>
+                    <p className="font-medium text-gray-800">{adminData?.phone_number || '-'}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Miembro desde</label>

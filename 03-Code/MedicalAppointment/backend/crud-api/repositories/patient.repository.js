@@ -57,6 +57,7 @@ class PatientRepository extends BaseRepository {
           state,
           postal_code,
           country,
+          insurance_provider_id,
           insurance_plan,
           insurance_number,
           emergency_contact_name,
@@ -68,7 +69,13 @@ class PatientRepository extends BaseRepository {
           blood_type,
           height,
           weight,
-          home_phone
+          home_phone,
+          insurance_providers (
+            id,
+            name,
+            code,
+            discount_percentage
+          )
         )
       `)
       .eq('id', userId)
@@ -148,7 +155,15 @@ class PatientRepository extends BaseRepository {
           id,
           date_of_birth,
           gender,
-          insurance_plan
+          insurance_provider_id,
+          insurance_plan,
+          insurance_number,
+          insurance_providers (
+            id,
+            name,
+            code,
+            discount_percentage
+          )
         ),
         roles!inner (name)
       `)
@@ -175,6 +190,28 @@ class PatientRepository extends BaseRepository {
       delete user.roles;
       return { ...user, ...patient };
     });
+  }
+
+  /**
+   * Get patient statistics
+   * @returns {Promise<{total: number, active: number, inactive: number}>}
+   */
+  async getStats() {
+    // Simple approach - count from roles join
+    const { data: allPatients, error: countError } = await this.db
+      .from('users')
+      .select('id, is_active, roles!inner(name)')
+      .eq('roles.name', 'patient');
+
+    if (countError) {
+      throw new Error(`Database error: ${countError.message}`);
+    }
+
+    const total = allPatients?.length || 0;
+    const active = allPatients?.filter(p => p.is_active).length || 0;
+    const inactive = total - active;
+
+    return { total, active, inactive };
   }
 }
 

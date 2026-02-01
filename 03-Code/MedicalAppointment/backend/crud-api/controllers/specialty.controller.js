@@ -21,6 +21,15 @@ class SpecialtyController {
   });
 
   /**
+   * GET /specialties/stats
+   * Get specialty statistics
+   */
+  getStats = asyncHandler(async (req, res) => {
+    const stats = await specialtyRepository.getStats();
+    return ResponseBuilder.success(res, stats);
+  });
+
+  /**
    * GET /specialties/:id
    * Get specialty by ID
    */

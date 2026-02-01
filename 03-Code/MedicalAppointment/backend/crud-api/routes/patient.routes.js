@@ -14,6 +14,13 @@ const { authMiddleware, requireRole } = require('../../shared/middleware/auth.mi
 router.use(authMiddleware);
 
 /**
+ * @route   GET /api/v1/patients/stats
+ * @desc    Get patient statistics
+ * @access  Admin
+ */
+router.get('/stats', requireRole('admin'), patientController.getStats);
+
+/**
  * @route   GET /api/v1/patients
  * @desc    Get all patients (admin/doctor)
  * @access  Admin, Doctor
@@ -26,6 +33,13 @@ router.get('/', requireRole(['admin', 'doctor']), patientController.getAll);
  * @access  Patient
  */
 router.get('/me', requireRole('patient'), patientController.getProfile);
+
+/**
+ * @route   POST /api/v1/patients/with-user
+ * @desc    Create patient with user account
+ * @access  Admin
+ */
+router.post('/with-user', requireRole('admin'), patientController.createWithUser);
 
 /**
  * @route   GET /api/v1/patients/user/:userId

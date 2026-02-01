@@ -15,6 +15,7 @@ const { NotFoundError, ValidationError } = require('../../shared/errors');
 const { parsePaginationQuery, createPagination } = require('../../shared/utils/helpers.utils');
 const bcrypt = require('bcrypt');
 const { supabase } = require('../../shared/config/database.config');
+const { createAuditLog, AuditActions } = require('../../shared/utils/audit.utils');
 
 class DoctorController {
   /**
@@ -120,6 +121,17 @@ class DoctorController {
       professional_id,
       bio,
       active: true
+    });
+
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.DOCTOR_CREATED,
+      tableName: 'doctors',
+      recordId: doctor.id,
+      newValues: { user_id, specialty_id, professional_id },
+      description: `Doctor creado para usuario ${user_id}`,
+      req
     });
 
     return ResponseBuilder.created(res, doctor, 'Doctor creado exitosamente');
@@ -318,6 +330,17 @@ class DoctorController {
       active: status === 'active'
     });
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.DOCTOR_CREATED,
+      tableName: 'doctors',
+      recordId: doctor.id,
+      newValues: { email, first_name, last_name, specialty_id },
+      description: `Doctor ${first_name} ${last_name} creado con nueva cuenta`,
+      req
+    });
+
     return ResponseBuilder.created(res, {
       ...doctor,
       user: newUser,
@@ -343,6 +366,18 @@ class DoctorController {
       specialty_id,
       professional_id,
       bio
+    });
+
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.DOCTOR_UPDATED,
+      tableName: 'doctors',
+      recordId: id,
+      oldValues: { specialty_id: existing.specialty_id, professional_id: existing.professional_id },
+      newValues: { specialty_id, professional_id, bio },
+      description: `Doctor ${id} actualizado`,
+      req
     });
 
     return ResponseBuilder.success(res, updated, 200, 'Doctor actualizado exitosamente');

@@ -12,6 +12,57 @@ const { authMiddleware, requireRole } = require('../../shared/middleware/auth.mi
 router.use(authMiddleware);
 
 /**
+ * @route GET /notifications/user
+ * @desc Get notifications for the authenticated user (broadcasts + direct)
+ * @access All authenticated users
+ */
+router.get(
+  '/user',
+  notificationController.getUserNotifications
+);
+
+/**
+ * @route GET /notifications/user/unread-count
+ * @desc Get unread notification count for the authenticated user
+ * @access All authenticated users
+ */
+router.get(
+  '/user/unread-count',
+  notificationController.getUnreadCount
+);
+
+/**
+ * @route PUT /notifications/:id/read
+ * @desc Mark a notification as read
+ * @access All authenticated users
+ */
+router.put(
+  '/:id/read',
+  notificationController.markAsRead
+);
+
+/**
+ * @route DELETE /notifications/:id
+ * @desc Delete a notification
+ * @access All authenticated users
+ */
+router.delete(
+  '/:id',
+  notificationController.deleteNotification
+);
+
+/**
+ * @route GET /notifications/broadcasts
+ * @desc Get all broadcast notifications (for admin management)
+ * @access Admin
+ */
+router.get(
+  '/broadcasts',
+  requireRole('admin'),
+  notificationController.getBroadcasts
+);
+
+/**
  * @route POST /notifications/appointment-confirmation
  * @desc Send appointment confirmation email
  * @access Admin, Doctor
@@ -46,7 +97,7 @@ router.post(
 
 /**
  * @route POST /notifications/custom
- * @desc Send custom notification email
+ * @desc Send custom notification email AND save to database
  * @access Admin
  */
 router.post(

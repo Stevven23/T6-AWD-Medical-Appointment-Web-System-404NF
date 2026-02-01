@@ -203,14 +203,13 @@ export default function SpecialtyManagement() {
                 <th className="px-6 py-4 text-left text-sm font-semibold">Nombre</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Descripción</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold">Fee Consulta</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Fecha Creación</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredSpecialties.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
                     No se encontraron especialidades
                   </td>
                 </tr>
@@ -232,9 +231,6 @@ export default function SpecialtyManagement() {
                       ) : (
                         <span className="text-gray-400 italic">No definido</span>
                       )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(specialty.created_at)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">

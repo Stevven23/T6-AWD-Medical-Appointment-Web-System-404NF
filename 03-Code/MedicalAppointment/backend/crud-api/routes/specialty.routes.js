@@ -18,6 +18,13 @@ const { authMiddleware, requireRole } = require('../../shared/middleware/auth.mi
 router.get('/', specialtyController.getAll);
 
 /**
+ * @route   GET /api/v1/specialties/stats
+ * @desc    Get specialty statistics
+ * @access  Public
+ */
+router.get('/stats', specialtyController.getStats);
+
+/**
  * @route   GET /api/v1/specialties/:id
  * @desc    Get specialty by ID
  * @access  Public

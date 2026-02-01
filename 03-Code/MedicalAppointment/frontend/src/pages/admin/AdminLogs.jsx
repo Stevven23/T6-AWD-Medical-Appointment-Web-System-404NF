@@ -48,7 +48,7 @@ export default function AdminLogs() {
       if (dateFrom) params.from = dateFrom;
       if (dateTo) params.to = dateTo;
       
-      const response = await crudApi.get('/audit-logs', { params });
+      const response = await crudApi.get('/security/audit-logs', { params });
       const data = response.data.data || response.data || [];
       setLogs(Array.isArray(data) ? data : []);
       setTotalPages(response.data.totalPages || 1);
@@ -65,8 +65,8 @@ export default function AdminLogs() {
     const csvContent = [
       headers.join(','),
       ...logs.map(log => [
-        formatDate(log.created_at),
-        log.user?.email || log.user_id,
+        formatDate(log.timestamp),
+        log.users?.email || log.user_id,
         log.action,
         log.table_name,
         log.record_id,
@@ -308,13 +308,13 @@ export default function AdminLogs() {
                         }}
                       >
                         <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                          {formatDate(log.created_at)}
+                          {formatDate(log.timestamp)}
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {log.user?.first_name} {log.user?.last_name}
+                            {log.users?.first_name} {log.users?.last_name}
                           </div>
-                          <div className="text-xs text-gray-500">{log.user?.email}</div>
+                          <div className="text-xs text-gray-500">{log.users?.email}</div>
                         </td>
                         <td className="px-4 py-3">
                           {getActionBadge(log.action)}
@@ -378,14 +378,14 @@ export default function AdminLogs() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-gray-500">Fecha y Hora</label>
-                    <p className="font-medium text-gray-800">{formatDate(selectedLog.created_at)}</p>
+                    <p className="font-medium text-gray-800">{formatDate(selectedLog.timestamp)}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Usuario</label>
                     <p className="font-medium text-gray-800">
-                      {selectedLog.user?.first_name} {selectedLog.user?.last_name}
+                      {selectedLog.users?.first_name} {selectedLog.users?.last_name}
                     </p>
-                    <p className="text-sm text-gray-500">{selectedLog.user?.email}</p>
+                    <p className="text-sm text-gray-500">{selectedLog.users?.email}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Tabla</label>

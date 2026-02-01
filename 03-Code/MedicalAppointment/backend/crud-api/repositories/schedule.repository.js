@@ -75,30 +75,58 @@ class ScheduleRepository extends BaseRepository {
 
   /**
    * Upsert schedule (create or update)
+   * Uses delete + insert pattern to avoid requiring unique constraint
    * @param {string} doctorId - Doctor ID
    * @param {number} dayOfWeek - Day of week
    * @param {Object} scheduleData - Schedule data
    * @returns {Promise<Object>}
    */
   async upsert(doctorId, dayOfWeek, scheduleData) {
-    const { data, error } = await this.db
+    // First, check if record exists
+    const { data: existing } = await this.db
       .from(this.tableName)
-      .upsert({
-        doctor_id: doctorId,
-        day_of_week: dayOfWeek,
-        ...scheduleData,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'doctor_id,day_of_week'
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('doctor_id', doctorId)
+      .eq('day_of_week', dayOfWeek)
+      .maybeSingle();
 
-    if (error) {
-      throw new Error(`Database error: ${error.message}`);
+    const now = new Date().toISOString();
+
+    if (existing) {
+      // Update existing record
+      const { data, error } = await this.db
+        .from(this.tableName)
+        .update({
+          ...scheduleData,
+          updated_at: now
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+      return data;
+    } else {
+      // Insert new record
+      const { data, error } = await this.db
+        .from(this.tableName)
+        .insert({
+          doctor_id: doctorId,
+          day_of_week: dayOfWeek,
+          ...scheduleData,
+          created_at: now,
+          updated_at: now
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+      return data;
     }
-
-    return data;
   }
 
   /**

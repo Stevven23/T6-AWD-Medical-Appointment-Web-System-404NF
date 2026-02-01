@@ -49,10 +49,6 @@ class BillingCalculationService {
             name,
             consultation_fee
           )
-        ),
-        patient:patient_user_id(
-          id,
-          patients(insurance_provider_id)
         )
       `)
       .eq('id', appointmentId)
@@ -62,6 +58,27 @@ class BillingCalculationService {
     if (error || !appointment) {
       throw new NotFoundError('Cita', appointmentId);
     }
+
+    // Get patient info separately to check for insurance
+    const { data: patientData } = await supabase
+      .from('patients')
+      .select('insurance_plan, insurance_number')
+      .eq('user_id', appointment.patient_user_id)
+      .single();
+
+    // Check if patient has insurance by looking up provider by plan name
+    let insuranceProviderId = null;
+    if (patientData?.insurance_plan) {
+      const { data: provider } = await supabase
+        .from('insurance_providers')
+        .select('id')
+        .ilike('name', `%${patientData.insurance_plan}%`)
+        .eq('is_active', true)
+        .single();
+      insuranceProviderId = provider?.id;
+    }
+
+    const hasInsurance = !!insuranceProviderId;
 
     // Calculate duration from scheduled_start and scheduled_end
     let durationMinutes = 30; // default
@@ -76,8 +93,6 @@ class BillingCalculationService {
     const durationMultiplier = this._getDurationMultiplier(durationMinutes);
     
     // Get insurance discount from DB if patient has insurance
-    const insuranceProviderId = appointment.patient?.patients?.insurance_provider_id;
-    const hasInsurance = !!insuranceProviderId;
     const insuranceDiscount = hasInsurance 
       ? await this._getInsuranceDiscount(insuranceProviderId)
       : 0;
@@ -130,6 +145,17 @@ class BillingCalculationService {
     // billings.status is varchar, not FK - use status string directly
     const status = this._getBillingStatus('pending');
 
+    // Check if billing already exists for this appointment
+    const { data: existingBilling } = await supabase
+      .from('billings')
+      .select('id')
+      .eq('appointment_id', appointmentId)
+      .single();
+
+    if (existingBilling) {
+      throw new BusinessError('Ya existe una factura para esta cita');
+    }
+
     // Create billing record using correct schema
     // Note: billings table uses 'status' varchar column, NOT 'status_id'
     const { data: billing, error } = await supabase
@@ -137,11 +163,15 @@ class BillingCalculationService {
       .insert({
         appointment_id: appointmentId,
         patient_user_id: appointment.patient_user_id,
+        doctor_id: appointment.doctors?.id,
         invoice_number: invoiceNumber,
         subtotal: calculation.breakdown.subtotal,
-        discount_amount: calculation.breakdown.insuranceDiscountAmount,
+        insurance_discount_amount: calculation.breakdown.insuranceDiscountAmount,
+        insurance_discount_percentage: calculation.breakdown.insuranceDiscountPercentage,
         tax_amount: 0,
         total_amount: calculation.breakdown.totalAmount,
+        base_amount: calculation.breakdown.baseAmount,
+        duration_multiplier: calculation.breakdown.durationMultiplier,
         status: status,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

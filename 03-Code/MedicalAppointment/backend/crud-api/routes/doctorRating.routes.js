@@ -14,6 +14,20 @@ const { authMiddleware, requireRole } = require('../../shared/middleware/auth.mi
 router.use(authMiddleware);
 
 /**
+ * @route   GET /api/v1/doctor-ratings
+ * @desc    Get all ratings (admin view)
+ * @access  Admin
+ */
+router.get('/', requireRole('admin'), doctorRatingController.getAll);
+
+/**
+ * @route   GET /api/v1/doctor-ratings/averages
+ * @desc    Get average ratings for all doctors
+ * @access  Admin
+ */
+router.get('/averages', requireRole('admin'), doctorRatingController.getAllAverages);
+
+/**
  * @route   GET /api/v1/doctor-ratings/doctor/:doctorId
  * @desc    Get all ratings for a doctor
  * @access  All authenticated

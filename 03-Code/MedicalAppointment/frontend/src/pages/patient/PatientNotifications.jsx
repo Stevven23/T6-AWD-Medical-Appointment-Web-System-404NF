@@ -3,7 +3,7 @@
  * Displays all notifications for the patient including:
  * - Appointment confirmations, reminders, cancellations
  * - Prescription renewals (approved/rejected)
- * - System messages
+ * - System messages and admin announcements
  * 
  * @module pages/patient/PatientNotifications
  */
@@ -13,11 +13,13 @@ import { useAuth } from '../../context/AuthContext';
 import PatientLayout from '../../layouts/PatientLayout';
 import AppointmentModel from '../../models/Appointment.model';
 import PrescriptionModel from '../../models/Prescription.model';
+import NotificationModel from '../../models/Notification.model';
 import {
   BellIcon,
   CalendarIcon,
   DocumentTextIcon,
   CheckCircleIcon,
+  MegaphoneIcon,
   XCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -95,6 +97,12 @@ const NOTIFICATION_TYPES = {
     bgColor: 'bg-red-100',
     iconColor: 'text-red-600',
     label: 'Renovación Rechazada'
+  },
+  announcement: {
+    icon: MegaphoneIcon,
+    bgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    label: 'Anuncio'
   },
   system: {
     icon: BellIcon,
@@ -246,6 +254,28 @@ export default function PatientNotifications() {
       } catch (renewalError) {
         console.log('[Notifications] Could not fetch renewals:', renewalError.message);
         // Continue without renewals
+      }
+
+      // Fetch system/admin notifications from database
+      try {
+        const dbNotifications = await NotificationModel.getUserNotifications({ limit: 50 });
+        
+        dbNotifications.forEach(notif => {
+          generatedNotifications.push({
+            id: `db-${notif.id}`,
+            type: notif.notification_type || 'system',
+            title: notif.title,
+            message: notif.message,
+            date: notif.created_at,
+            relatedId: notif.id,
+            relatedType: 'notification',
+            priority: notif.priority,
+            isFromDb: true
+          });
+        });
+      } catch (dbError) {
+        console.log('[Notifications] Could not fetch system notifications:', dbError.message);
+        // Continue without db notifications
       }
 
     } catch (err) {

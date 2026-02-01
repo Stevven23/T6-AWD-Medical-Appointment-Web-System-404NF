@@ -598,11 +598,13 @@ export default function AdminDashboard() {
           <div className="bg-gradient-to-br from-red-500 to-orange-500 text-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold mb-4"> Horas Pico de Mayor Demanda</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Object.entries(advancedStats.peakHours || {}).map(([hour, count], idx) => (
+              {Object.entries(advancedStats.peakHours || {})
+                .sort((a, b) => b[1] - a[1])
+                .map(([hour, count], idx) => (
                 <div key={hour} className="bg-white/20 backdrop-blur rounded-lg p-4">
                   <div className="text-2xl font-bold">#{idx + 1}</div>
-                  <div className="text-lg font-semibold">{hour}</div>
-                  <div className="text-sm opacity-90">{count} citas programadas</div>
+                  <div className="text-lg font-semibold">{String(hour).padStart(2, '0')}:00</div>
+                  <div className="text-sm opacity-90">{count} {count === 1 ? 'cita programada' : 'citas programadas'}</div>
                 </div>
               ))}
             </div>

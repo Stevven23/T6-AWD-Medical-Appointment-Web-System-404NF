@@ -3,7 +3,6 @@ import AdminLayout from '../../layouts/AdminLayout';
 import { crudApi } from '../../services/httpClient';
 import {
   StarIcon,
-  ChartBarIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
@@ -18,7 +17,6 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 export default function QualityManagement() {
   const [ratings, setRatings] = useState([]);
   const [doctorAverages, setDoctorAverages] = useState([]);
-  const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   
@@ -36,23 +34,18 @@ export default function QualityManagement() {
 
   useEffect(() => {
     loadData();
-  }, [activeTab]);
+  }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
       
-      if (activeTab === 'ratings') {
-        const [ratingsRes, averagesRes] = await Promise.all([
-          crudApi.get('/doctor-ratings'),
-          crudApi.get('/doctors/average-ratings').catch(() => ({ data: [] })),
-        ]);
-        setRatings(ratingsRes.data.data || ratingsRes.data || []);
-        setDoctorAverages(averagesRes.data.data || averagesRes.data || []);
-      } else if (activeTab === 'surveys') {
-        const surveysRes = await crudApi.get('/satisfaction-surveys');
-        setSurveys(surveysRes.data.data || surveysRes.data || []);
-      }
+      const [ratingsRes, averagesRes] = await Promise.all([
+        crudApi.get('/doctor-ratings'),
+        crudApi.get('/doctor-ratings/averages').catch(() => ({ data: { data: [] } })),
+      ]);
+      setRatings(ratingsRes.data.data || ratingsRes.data || []);
+      setDoctorAverages(averagesRes.data.data || averagesRes.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -139,7 +132,7 @@ export default function QualityManagement() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Gestión de Calidad</h2>
-            <p className="text-gray-600">Calificaciones de doctores y encuestas de satisfacción</p>
+            <p className="text-gray-600">Calificaciones y ranking de doctores</p>
           </div>
           <button
             onClick={loadData}
@@ -163,17 +156,6 @@ export default function QualityManagement() {
             >
               <StarIcon className="w-5 h-5 inline mr-2" />
               Calificaciones
-            </button>
-            <button
-              onClick={() => setActiveTab('surveys')}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'surveys'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <ChartBarIcon className="w-5 h-5 inline mr-2" />
-              Encuestas
             </button>
             <button
               onClick={() => setActiveTab('ranking')}
@@ -364,75 +346,6 @@ export default function QualityManagement() {
           </>
         )}
 
-        {activeTab === 'surveys' && (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {loading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-              </div>
-            ) : surveys.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <ChartBarIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No se encontraron encuestas de satisfacción</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cita</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Satisfacción</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recomendaría</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {surveys.map((survey) => (
-                      <tr key={survey.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900">
-                            {survey.patient?.first_name} {survey.patient?.last_name}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          #{survey.appointment_id}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full ${
-                                  survey.overall_satisfaction >= 4 ? 'bg-green-500' :
-                                  survey.overall_satisfaction >= 3 ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}
-                                style={{ width: `${(survey.overall_satisfaction / 5) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium">{survey.overall_satisfaction}/5</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            survey.would_recommend 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {survey.would_recommend ? 'Sí' : 'No'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {formatDate(survey.created_at)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
         {activeTab === 'ranking' && (
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4 border-b border-gray-200">
@@ -452,7 +365,7 @@ export default function QualityManagement() {
                 {doctorAverages
                   .sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
                   .map((doctor, index) => (
-                    <div key={doctor.id} className="p-4 flex items-center gap-4 hover:bg-gray-50">
+                    <div key={doctor.doctor_id || index} className="p-4 flex items-center gap-4 hover:bg-gray-50">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                         index === 0 ? 'bg-yellow-100 text-yellow-700' :
                         index === 1 ? 'bg-gray-100 text-gray-700' :
@@ -465,7 +378,7 @@ export default function QualityManagement() {
                         <p className="font-medium text-gray-900">
                           Dr. {doctor.first_name} {doctor.last_name}
                         </p>
-                        <p className="text-sm text-gray-500">{doctor.specialty?.name}</p>
+                        <p className="text-sm text-gray-500">{doctor.specialty_name || doctor.specialty?.name}</p>
                       </div>
                       <div className="text-right">
                         <div className="flex items-center gap-2 justify-end">

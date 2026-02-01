@@ -5,22 +5,21 @@
  * @module shared/constants/app.constants
  */
 
+// These IDs MUST match the appointment_status table in database
 const AppointmentStatus = Object.freeze({
-  SCHEDULED: 1,
-  CONFIRMED: 2,
-  IN_PROGRESS: 3,
-  COMPLETED: 4,
-  CANCELLED: 5,
-  NO_SHOW: 6
+  SCHEDULED: 1,    // id=1, code='scheduled', label='Programada'
+  COMPLETED: 2,    // id=2, code='completed', label='Completada'
+  CANCELLED: 3,    // id=3, code='cancelled', label='Cancelada'
+  NO_SHOW: 4,      // id=4, code='no_show', label='No asistió'
+  CONFIRMED: 5     // id=5, code='confirmed', label='Confirmado'
 });
 
 const AppointmentStatusCode = Object.freeze({
   SCHEDULED: 'scheduled',
-  CONFIRMED: 'confirmed',
-  CANCELLED: 'cancelled',
   COMPLETED: 'completed',
-  NO_SHOW: 'no_show'
-  // Note: 'rescheduled' status does NOT exist in database
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  CONFIRMED: 'confirmed'
 });
 
 const UserRole = Object.freeze({

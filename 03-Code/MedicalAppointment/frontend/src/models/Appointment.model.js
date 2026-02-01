@@ -36,6 +36,15 @@ class AppointmentModel {
   }
 
   /**
+   * Get completed appointments without billing (for invoice generation)
+   * @returns {Promise<Appointment[]>}
+   */
+  static async getUnbilled() {
+    const response = await crudApi.get('/appointments/unbilled');
+    return response.data;
+  }
+
+  /**
    * Get appointment by ID
    * @param {string} id - Appointment ID
    * @param {boolean} includeCancelled - Include cancelled appointments (default: true for viewing details)

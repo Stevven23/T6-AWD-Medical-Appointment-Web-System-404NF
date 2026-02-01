@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { AppointmentModel, PrescriptionModel } from '../../models';
+import { AppointmentModel, PrescriptionModel, NotificationModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import { 
   BellIcon, 
@@ -13,7 +13,8 @@ import {
   StarIcon,
   CheckIcon,
   TrashIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
 
@@ -78,6 +79,12 @@ const NOTIFICATION_TYPES = {
     bgColor: 'bg-purple-100',
     iconColor: 'text-purple-600',
     label: 'Cita Hoy'
+  },
+  announcement: {
+    icon: MegaphoneIcon,
+    bgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    label: 'Anuncio'
   },
   system: {
     icon: BellIcon,
@@ -255,6 +262,28 @@ export default function DoctorNotifications() {
         });
       } catch (ratingError) {
         console.log('[DoctorNotifications] Could not fetch ratings:', ratingError.message);
+      }
+
+      // Fetch system/admin notifications from database
+      try {
+        const dbNotifications = await NotificationModel.getUserNotifications({ limit: 50 });
+        
+        dbNotifications.forEach(notif => {
+          generatedNotifications.push({
+            id: `db-${notif.id}`,
+            type: notif.notification_type || 'system',
+            title: notif.title,
+            message: notif.message,
+            date: notif.created_at,
+            relatedId: notif.id,
+            relatedType: 'notification',
+            priority: notif.priority,
+            isFromDb: true
+          });
+        });
+      } catch (dbError) {
+        console.log('[DoctorNotifications] Could not fetch system notifications:', dbError.message);
+        // Continue without db notifications
       }
 
     } catch (err) {

@@ -442,6 +442,115 @@ class AppointmentRepository extends BaseRepository {
     return Array.from(patientsMap.values());
   }
 
+  /**
+   * Find all appointments with full relations (for admin)
+   * @param {Object} [options={}] - Query options
+   * @returns {Promise<Array>}
+   */
+  async findAll(options = {}) {
+    const { filters = {}, limit, offset } = options;
+
+    let query = this.db
+      .from(this.tableName)
+      .select(`
+        id,
+        patient_user_id,
+        doctor_id,
+        scheduled_start,
+        scheduled_end,
+        status_id,
+        reason,
+        created_at,
+        completed_at,
+        checked_in_at,
+        consultation_room_id,
+        appointment_status (
+          id,
+          code,
+          label
+        ),
+        patient:patient_user_id (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        doctors!appointments_doctor_id_fkey (
+          id,
+          users (
+            first_name,
+            last_name
+          ),
+          specialties (
+            id,
+            name
+          )
+        ),
+        consultation_rooms!appointments_consultation_room_id_fkey (
+          id,
+          name,
+          room_number
+        ),
+        consultation_notes (
+          id,
+          diagnosis,
+          follow_up_required
+        )
+      `);
+
+    // Apply filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        query = query.eq(key, value);
+      }
+    });
+
+    query = query.order('scheduled_start', { ascending: false });
+
+    if (limit) query = query.limit(limit);
+    if (offset) query = query.range(offset, offset + (limit || 20) - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    // Transform the data with flattened fields for frontend
+    return (data || []).map(apt => ({
+      ...apt,
+      // Flattened patient fields
+      patient_name: apt.patient 
+        ? `${apt.patient.first_name || ''} ${apt.patient.last_name || ''}`.trim() || 'N/A'
+        : 'N/A',
+      patient_email: apt.patient?.email || null,
+      // Flattened doctor fields  
+      doctor_name: apt.doctors?.users
+        ? `${apt.doctors.users.first_name || ''} ${apt.doctors.users.last_name || ''}`.trim() || 'N/A'
+        : 'N/A',
+      // Specialty
+      specialty_name: apt.doctors?.specialties?.name || 'N/A',
+      specialty_id: apt.doctors?.specialties?.id || null,
+      // Status fields
+      status_code: apt.appointment_status?.code || 'unknown',
+      status_label: apt.appointment_status?.label || 'Desconocido',
+      // Room fields
+      room_name: apt.consultation_rooms?.name || null,
+      room_number: apt.consultation_rooms?.room_number || null,
+      // Legacy fields for compatibility
+      appointment_date: apt.scheduled_start,
+      start_time: apt.scheduled_start ? new Date(apt.scheduled_start).toTimeString().slice(0, 5) : null,
+      patient: apt.patient,
+      doctor: apt.doctors ? {
+        id: apt.doctors.id,
+        first_name: apt.doctors.users?.first_name,
+        last_name: apt.doctors.users?.last_name
+      } : null,
+      specialty: apt.doctors?.specialties || null,
+      consultation_note: apt.consultation_notes?.[0] || null
+    }));
+  }
+
   hasSoftDelete() {
     return false; // Uses status_id = CANCELLED instead of is_deleted column
   }

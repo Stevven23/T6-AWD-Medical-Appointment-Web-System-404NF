@@ -12,6 +12,7 @@ const ResponseBuilder = require('../../shared/utils/responseBuilder.utils');
 const { asyncHandler } = require('../../shared/middleware/errorHandler.middleware');
 const { NotFoundError, ValidationError } = require('../../shared/errors');
 const { parsePaginationQuery, createPagination } = require('../../shared/utils/helpers.utils');
+const { createAuditLog, AuditActions } = require('../../shared/utils/audit.utils');
 
 class BillingController {
   /**
@@ -137,6 +138,17 @@ class BillingController {
       notes
     });
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.BILLING_CREATED,
+      tableName: 'billings',
+      recordId: billing.id,
+      newValues: { invoice_number: billing.invoice_number, total_amount: totalAmount, patient_user_id },
+      description: `Factura ${billing.invoice_number} creada por $${totalAmount.toFixed(2)}`,
+      req
+    });
+
     return ResponseBuilder.created(res, billing, 'Factura creada exitosamente');
   });
 
@@ -159,6 +171,18 @@ class BillingController {
 
     const updated = await billingRepository.updateStatus(id, status, payment_date);
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.BILLING_STATUS_CHANGED,
+      tableName: 'billings',
+      recordId: id,
+      oldValues: { status: existing.status },
+      newValues: { status, payment_date },
+      description: `Estado de factura ${existing.invoice_number} cambiado a ${status}`,
+      req
+    });
+
     return ResponseBuilder.success(res, updated, 200, 'Estado de factura actualizado');
   });
 
@@ -175,6 +199,18 @@ class BillingController {
     }
 
     await billingRepository.softDelete(id);
+
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.BILLING_CANCELLED,
+      tableName: 'billings',
+      recordId: id,
+      oldValues: { status: existing.status, invoice_number: existing.invoice_number },
+      newValues: { cancelled: true },
+      description: `Factura ${existing.invoice_number} cancelada`,
+      req
+    });
 
     return ResponseBuilder.success(res, { id }, 200, 'Factura cancelada exitosamente');
   });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { PatientModel } from '../../models';
+import InsuranceProviderModel from '../../models/InsuranceProvider.model';
 import { crudApi } from '../../services/httpClient';
 import { 
   PlusIcon, 
@@ -43,7 +44,7 @@ export default function PatientManagement() {
     address: '',
     emergency_contact: '',
     emergency_phone: '',
-    insurance_provider: '',
+    insurance_provider_id: '',
     insurance_policy_number: '',
     allergies: '',
     chronic_conditions: '',
@@ -55,10 +56,21 @@ export default function PatientManagement() {
   const [patientBillings, setPatientBillings] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [detailTab, setDetailTab] = useState('info');
+  const [insuranceProviders, setInsuranceProviders] = useState([]);
 
   useEffect(() => {
     loadData();
+    loadInsuranceProviders();
   }, []);
+
+  const loadInsuranceProviders = async () => {
+    try {
+      const providers = await InsuranceProviderModel.getAll();
+      setInsuranceProviders(providers);
+    } catch (error) {
+      console.error('Error loading insurance providers:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -114,8 +126,39 @@ export default function PatientManagement() {
         await PatientModel.update(currentPatient.id, formData);
         showNotification('Paciente actualizado exitosamente', 'success');
       } else {
-        await PatientModel.create(formData);
-        showNotification('Paciente creado exitosamente', 'success');
+        // Use createWithUser for new patients
+        const result = await PatientModel.createWithUser({
+          ...formData,
+          emergency_contact_name: formData.emergency_contact,
+          emergency_contact_phone: formData.emergency_phone,
+          insurance_provider_id: formData.insurance_provider_id || null,
+          insurance_number: formData.insurance_policy_number,
+          medical_conditions: formData.chronic_conditions,
+          status: 'active'
+        });
+        
+        // Check if requires promotion
+        if (result.data?.requires_promotion) {
+          if (window.confirm(`${result.data.message}\n\n¿Desea agregar el perfil de paciente a este usuario?`)) {
+            const promoted = await PatientModel.createWithUser({
+              ...formData,
+              emergency_contact_name: formData.emergency_contact,
+              emergency_contact_phone: formData.emergency_phone,
+              insurance_provider_id: formData.insurance_provider_id || null,
+              insurance_number: formData.insurance_policy_number,
+              medical_conditions: formData.chronic_conditions,
+              status: 'active',
+              promote_existing: true
+            });
+            showNotification('Paciente agregado exitosamente', 'success');
+          } else {
+            return;
+          }
+        } else if (result.data?.temporary_password) {
+          showNotification(`Paciente creado. Contraseña temporal: ${result.data.temporary_password}`, 'success');
+        } else {
+          showNotification('Paciente creado exitosamente', 'success');
+        }
       }
       
       setShowModal(false);
@@ -152,7 +195,7 @@ export default function PatientManagement() {
       address: patient.address || '',
       emergency_contact: patient.emergency_contact || '',
       emergency_phone: patient.emergency_phone || '',
-      insurance_provider: patient.insurance_provider || '',
+      insurance_provider_id: patient.insurance_provider_id || '',
       insurance_policy_number: patient.insurance_policy_number || '',
       allergies: patient.allergies || '',
       chronic_conditions: patient.chronic_conditions || '',
@@ -199,7 +242,7 @@ export default function PatientManagement() {
       address: '',
       emergency_contact: '',
       emergency_phone: '',
-      insurance_provider: '',
+      insurance_provider_id: '',
       insurance_policy_number: '',
       allergies: '',
       chronic_conditions: '',
@@ -364,7 +407,7 @@ export default function PatientManagement() {
                     <td className="px-6 py-4 text-gray-600">{patient.cedula || 'N/A'}</td>
                     <td className="px-6 py-4 text-gray-600">{calculateAge(patient.date_of_birth)} años</td>
                     <td className="px-6 py-4 text-gray-600">{patient.phone_number || 'N/A'}</td>
-                    <td className="px-6 py-4 text-gray-600">{patient.insurance_provider || 'Sin seguro'}</td>
+                    <td className="px-6 py-4 text-gray-600">{patient.insurance_providers?.name || 'Sin seguro'}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         patient.is_active !== false
@@ -566,12 +609,18 @@ export default function PatientManagement() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                    <input
-                      type="text"
-                      value={formData.insurance_provider}
-                      onChange={(e) => setFormData({...formData, insurance_provider: e.target.value})}
+                    <select
+                      value={formData.insurance_provider_id}
+                      onChange={(e) => setFormData({...formData, insurance_provider_id: e.target.value})}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                      <option value="">Sin seguro médico</option>
+                      {insuranceProviders.map((provider) => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   
                   <div>
@@ -749,11 +798,11 @@ export default function PatientManagement() {
                     <dl className="space-y-2">
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Proveedor:</dt>
-                        <dd className="text-gray-900">{currentPatient.insurance_provider || 'Sin seguro'}</dd>
+                        <dd className="text-gray-900">{currentPatient.insurance_providers?.name || 'Sin seguro'}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Póliza:</dt>
-                        <dd className="text-gray-900">{currentPatient.insurance_policy_number || 'N/A'}</dd>
+                        <dd className="text-gray-900">{currentPatient.insurance_number || 'N/A'}</dd>
                       </div>
                     </dl>
                   </div>

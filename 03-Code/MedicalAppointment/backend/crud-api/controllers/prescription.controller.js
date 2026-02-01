@@ -12,6 +12,7 @@ const { asyncHandler } = require('../../shared/middleware/errorHandler.middlewar
 const { NotFoundError, ValidationError } = require('../../shared/errors');
 const { parsePaginationQuery, createPagination } = require('../../shared/utils/helpers.utils');
 const qrCodeService = require('../../external-api/services/qrCode.service');
+const { createAuditLog, AuditActions } = require('../../shared/utils/audit.utils');
 
 class PrescriptionController {
   /**
@@ -161,6 +162,17 @@ class PrescriptionController {
       console.error(`Failed to generate QR for prescription ${prescription.id}:`, qrError);
     }
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.PRESCRIPTION_CREATED,
+      tableName: 'prescriptions',
+      recordId: prescription.id,
+      newValues: { patient_user_id, doctor_id: doctor.id, diagnosis, medications_count: medications?.length },
+      description: `Receta creada para paciente con ${medications?.length || 0} medicamentos`,
+      req
+    });
+
     return ResponseBuilder.created(res, prescription, 'Receta creada exitosamente');
   });
 
@@ -189,6 +201,18 @@ class PrescriptionController {
       duration
     });
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.PRESCRIPTION_UPDATED,
+      tableName: 'prescriptions',
+      recordId: id,
+      oldValues: { diagnosis: existing.diagnosis },
+      newValues: { diagnosis, medications, instructions, duration },
+      description: `Receta ${id} actualizada`,
+      req
+    });
+
     return ResponseBuilder.success(res, updated, 200, 'Receta actualizada exitosamente');
   });
 
@@ -206,7 +230,31 @@ class PrescriptionController {
 
     await prescriptionRepository.softDelete(id);
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.PRESCRIPTION_CANCELLED,
+      tableName: 'prescriptions',
+      recordId: id,
+      oldValues: { patient_user_id: existing.patient_user_id },
+      newValues: { cancelled: true },
+      description: `Receta ${id} desactivada`,
+      req
+    });
+
     return ResponseBuilder.success(res, { id }, 200, 'Receta desactivada exitosamente');
+  });
+
+  /**
+   * GET /prescriptions/appointment/:appointmentId
+   * Get prescriptions for an appointment
+   */
+  getByAppointment = asyncHandler(async (req, res) => {
+    const { appointmentId } = req.params;
+    
+    const prescriptions = await prescriptionRepository.findByAppointment(appointmentId);
+    
+    return ResponseBuilder.success(res, prescriptions);
   });
 
   /**

@@ -198,7 +198,8 @@ export default function DoctorPatients() {
           medical_conditions: details.medical_conditions,
           address: details.address,
           city: details.city,
-          insurance_plan: details.insurance_plan,
+          insurance_provider_id: details.insurance_provider_id,
+          insurance_providers: details.insurance_providers,
           insurance_number: details.insurance_number,
           emergency_contact_name: details.emergency_contact_name,
           emergency_contact_phone: details.emergency_contact_phone,
@@ -422,14 +423,14 @@ export default function DoctorPatients() {
               {/* Additional Info Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
                 {/* Insurance Info */}
-                {(selectedPatient.insurance_plan || selectedPatient.insurance_number) && (
+                {(selectedPatient.insurance_providers || selectedPatient.insurance_number) && (
                   <div>
                     <h4 className="font-semibold text-gray-700 mb-4">Información de Seguro</h4>
                     <div className="space-y-3">
-                      {selectedPatient.insurance_plan && (
+                      {selectedPatient.insurance_providers && (
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Plan</span>
-                          <span className="font-medium text-gray-900">{selectedPatient.insurance_plan}</span>
+                          <span className="text-sm text-gray-600">Proveedor</span>
+                          <span className="font-medium text-gray-900">{selectedPatient.insurance_providers.name}</span>
                         </div>
                       )}
                       {selectedPatient.insurance_number && (

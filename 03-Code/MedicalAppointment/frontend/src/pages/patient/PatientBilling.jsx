@@ -79,183 +79,211 @@ export default function PatientBilling() {
 
   const pendingTotal = billings
     .filter(b => b.status === 'pending')
-    .reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+    .reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
 
   const paidTotal = billings
     .filter(b => b.status === 'paid')
-    .reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+    .reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
 
   const openDetail = (billing) => {
     setSelectedBilling(billing);
     setShowDetailModal(true);
   };
 
-  // Generate PDF for a billing
+  // Generate PDF for a billing using jsPDF
   const downloadBillingPDF = (billing) => {
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 20;
     let y = 20;
 
-    const primaryColor = [41, 128, 185];
-    const secondaryColor = [52, 73, 94];
-    const accentColor = [46, 204, 113];
-
-    // Header
-    pdf.setFillColor(...primaryColor);
-    pdf.rect(0, 0, pageWidth, 45, 'F');
-
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(24);
-    pdf.setFont(undefined, 'bold');
-    pdf.text('CLÍNICA SAN MIGUEL', margin, 20);
+    const patientName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+    const patientEmail = user?.email || '';
+    const doctorName = billing.doctor_first_name 
+      ? `Dr. ${billing.doctor_first_name} ${billing.doctor_last_name}`
+      : billing.doctor?.users?.first_name
+        ? `Dr. ${billing.doctor.users.first_name} ${billing.doctor.users.last_name}`
+        : 'N/A';
+    const specialty = billing.specialty_name || billing.doctor?.specialties?.name || 'Consulta General';
+    const paymentMethodLabels = {
+      cash: 'Efectivo',
+      card: 'Tarjeta de Crédito/Débito',
+      transfer: 'Transferencia Bancaria',
+      insurance: 'Seguro Médico'
+    };
     
+    // Calculate correct amounts
+    const subtotal = parseFloat(billing.subtotal) || parseFloat(billing.base_amount) || parseFloat(billing.total_amount) || 0;
+    const discount = parseFloat(billing.insurance_discount_amount) || 0;
+    const total = parseFloat(billing.total_amount) || (subtotal - discount);
+
+    // Colors
+    const primaryColor = [59, 130, 246]; // blue-500
+    const textDark = [31, 41, 55]; // gray-800
+    const textLight = [107, 114, 128]; // gray-500
+    const greenColor = [22, 163, 74]; // green-600
+    const yellowColor = [202, 138, 4]; // yellow-600
+
+    // Header background
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
+
+    // Logo and clinic name
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Clínica Médica', margin, 18);
     pdf.setFontSize(10);
     pdf.setFont(undefined, 'normal');
-    pdf.text('Centro Médico Especializado', margin, 28);
-    pdf.text('Tel: (02) 2XXX-XXXX | Email: info@clinicasanmiguel.ec', margin, 34);
+    pdf.text('Sistema de Facturación', margin, 26);
+    pdf.text('Tel: (02) 2XXX-XXXX | info@clinicamedica.com', margin, 32);
 
-    // Title
-    y = 55;
-    pdf.setTextColor(...secondaryColor);
-    pdf.setFontSize(18);
+    // Invoice number on the right
+    pdf.setFontSize(12);
     pdf.setFont(undefined, 'bold');
-    pdf.text('FACTURA', margin, y);
-    
-    y += 3;
-    pdf.setDrawColor(...accentColor);
-    pdf.setLineWidth(1);
-    pdf.line(margin, y, pageWidth - margin, y);
+    pdf.text(billing.invoice_number || 'BORRADOR', pageWidth - margin, 18, { align: 'right' });
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Emitida: ${formatDate(billing.created_at)}`, pageWidth - margin, 26, { align: 'right' });
 
-    // Invoice info
-    y += 12;
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(margin, y, pageWidth - 2 * margin, 35, 'F');
+    // Status badge
+    y = 50;
+    if (billing.status === 'paid') {
+      pdf.setFillColor(220, 252, 231);
+      pdf.roundedRect(pageWidth - margin - 35, y - 6, 35, 10, 2, 2, 'F');
+      pdf.setTextColor(...greenColor);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('PAGADA', pageWidth - margin - 17.5, y + 1, { align: 'center' });
+    } else {
+      pdf.setFillColor(254, 243, 199);
+      pdf.roundedRect(pageWidth - margin - 35, y - 6, 35, 10, 2, 2, 'F');
+      pdf.setTextColor(...yellowColor);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('PENDIENTE', pageWidth - margin - 17.5, y + 1, { align: 'center' });
+    }
+
+    // Patient and Doctor sections
+    y = 55;
     
-    y += 8;
-    pdf.setTextColor(...secondaryColor);
+    // Patient section
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(margin, y, (pageWidth - margin * 2 - 5) / 2, 35, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DATOS DEL PACIENTE', margin + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textLight);
+    pdf.text('Nombre:', margin + 5, y + 16);
+    pdf.text('Correo:', margin + 5, y + 24);
+    pdf.setTextColor(...textDark);
+    pdf.text(patientName, margin + 25, y + 16);
+    pdf.text(patientEmail, margin + 25, y + 24);
+
+    // Doctor section
+    const rightColX = margin + (pageWidth - margin * 2 - 5) / 2 + 5;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(rightColX, y, (pageWidth - margin * 2 - 5) / 2, 35, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('SERVICIO MÉDICO', rightColX + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textLight);
+    pdf.text('Médico:', rightColX + 5, y + 16);
+    pdf.text('Especialidad:', rightColX + 5, y + 24);
+    pdf.setTextColor(...textDark);
+    pdf.text(doctorName, rightColX + 30, y + 16);
+    pdf.text(specialty, rightColX + 30, y + 24);
+
+    // Billing breakdown
+    y = 100;
+    pdf.setTextColor(...textDark);
     pdf.setFontSize(11);
     pdf.setFont(undefined, 'bold');
-    pdf.text('INFORMACIÓN DE LA FACTURA', margin + 5, y);
+    pdf.text('DESGLOSE DE FACTURACIÓN', margin, y);
     
     y += 8;
-    pdf.setFontSize(10);
-    pdf.setFont(undefined, 'normal');
-    pdf.text(`Número de Factura: ${billing.invoice_number || `FAC-${billing.id?.slice(0, 8)}`}`, margin + 5, y);
-    y += 6;
-    pdf.text(`Fecha de Emisión: ${formatDate(billing.created_at)}`, margin + 5, y);
-    y += 6;
-    pdf.text(`Estado: ${billing.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}`, margin + 5, y);
+    pdf.setDrawColor(229, 231, 235);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, y, pageWidth - margin, y);
 
-    // Patient info
-    y += 15;
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
-    
-    y += 8;
-    pdf.setFont(undefined, 'bold');
-    pdf.text('DATOS DEL PACIENTE', margin + 5, y);
-    
-    y += 8;
-    pdf.setFont(undefined, 'normal');
-    pdf.text(`Paciente: ${user?.first_name || ''} ${user?.last_name || ''}`, margin + 5, y);
-
-    // Doctor info (if available)
-    if (billing.doctor_first_name || billing.specialty_name) {
-      y += 15;
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
-      
-      y += 8;
-      pdf.setFont(undefined, 'bold');
-      pdf.text('SERVICIO MÉDICO', margin + 5, y);
-      
-      y += 8;
-      pdf.setFont(undefined, 'normal');
-      if (billing.doctor_first_name) {
-        pdf.text(`Doctor: Dr. ${billing.doctor_first_name} ${billing.doctor_last_name}`, margin + 5, y);
-        y += 6;
-      }
-      if (billing.specialty_name) {
-        pdf.text(`Especialidad: ${billing.specialty_name}`, margin + 5, y);
-      }
-    }
-
-    // Billing details
-    y += 20;
-    pdf.setFillColor(240, 248, 255);
-    pdf.rect(margin, y, pageWidth - 2 * margin, 50, 'F');
-    
-    y += 10;
-    pdf.setFont(undefined, 'bold');
-    pdf.setFontSize(12);
-    pdf.setTextColor(...primaryColor);
-    pdf.text('DETALLE DE FACTURACIÓN', margin + 5, y);
-
-    y += 10;
-    pdf.setTextColor(...secondaryColor);
-    pdf.setFontSize(10);
-    pdf.setFont(undefined, 'normal');
-    
     // Table header
-    pdf.setFont(undefined, 'bold');
-    pdf.text('Concepto', margin + 5, y);
-    pdf.text('Monto', pageWidth - margin - 30, y);
-    y += 6;
-    pdf.setLineWidth(0.5);
-    pdf.line(margin + 5, y, pageWidth - margin - 5, y);
-    
-    // Table content
     y += 8;
-    pdf.setFont(undefined, 'normal');
-    pdf.text('Consulta Médica', margin + 5, y);
-    pdf.text(formatCurrency(billing.subtotal || billing.amount), pageWidth - margin - 30, y);
-    
-    if (billing.discount_amount > 0) {
-      y += 8;
-      pdf.text('Descuento Seguro', margin + 5, y);
-      pdf.text(`-${formatCurrency(billing.discount_amount)}`, pageWidth - margin - 30, y);
-    }
-    
-    y += 12;
-    pdf.setLineWidth(0.5);
-    pdf.line(margin + 5, y, pageWidth - margin - 5, y);
-    
-    y += 8;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(margin, y - 4, pageWidth - margin * 2, 10, 'F');
+    pdf.setFontSize(9);
     pdf.setFont(undefined, 'bold');
-    pdf.setFontSize(12);
-    pdf.text('TOTAL', margin + 5, y);
-    pdf.text(formatCurrency(billing.amount), pageWidth - margin - 30, y);
+    pdf.text('Concepto', margin + 5, y + 2);
+    pdf.text('Monto', pageWidth - margin - 5, y + 2, { align: 'right' });
 
-    // Payment info if paid
-    if (billing.status === 'paid') {
-      y += 20;
-      pdf.setFillColor(220, 252, 231);
-      pdf.rect(margin, y, pageWidth - 2 * margin, 25, 'F');
-      
+    // Consultation row
+    y += 14;
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Consulta Médica (${specialty})`, margin + 5, y);
+    pdf.text(formatCurrency(subtotal), pageWidth - margin - 5, y, { align: 'right' });
+
+    // Discount row
+    if (discount > 0) {
       y += 10;
+      pdf.setTextColor(...greenColor);
+      pdf.text(`Descuento Seguro (${billing.insurance_discount_percentage || 0}%)`, margin + 5, y);
+      pdf.text(`-${formatCurrency(discount)}`, pageWidth - margin - 5, y, { align: 'right' });
+    }
+
+    // Total row
+    y += 12;
+    pdf.setDrawColor(...primaryColor);
+    pdf.setLineWidth(0.8);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 10;
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('TOTAL A PAGAR', margin + 5, y);
+    pdf.setTextColor(...primaryColor);
+    pdf.setFontSize(16);
+    pdf.text(formatCurrency(total), pageWidth - margin - 5, y, { align: 'right' });
+
+    // Payment info section
+    y += 20;
+    if (billing.status === 'paid') {
+      pdf.setFillColor(220, 252, 231);
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, 30, 3, 3, 'F');
+      pdf.setTextColor(...greenColor);
       pdf.setFontSize(11);
-      pdf.setTextColor(22, 101, 52);
-      pdf.text('✓ FACTURA PAGADA', pageWidth / 2, y, { align: 'center' });
-      y += 8;
-      pdf.setFontSize(10);
-      if (billing.payment_date) {
-        pdf.text(`Fecha de pago: ${formatDate(billing.payment_date)}`, pageWidth / 2, y, { align: 'center' });
-      }
+      pdf.setFont(undefined, 'bold');
+      pdf.text('✓ PAGO REGISTRADO', margin + 10, y + 12);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`Fecha de pago: ${formatDate(billing.payment_date)}`, margin + 10, y + 20);
+      pdf.text(`Método: ${paymentMethodLabels[billing.payment_method] || billing.payment_method || 'N/A'}`, margin + 80, y + 20);
+    } else {
+      pdf.setFillColor(254, 243, 199);
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, 45, 3, 3, 'F');
+      pdf.setTextColor(...yellowColor);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('FACTURA PENDIENTE DE PAGO', margin + 10, y + 12);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'normal');
+      pdf.setTextColor(120, 80, 20);
+      pdf.text('Para realizar el pago, acérquese a la recepción de la clínica con esta factura.', margin + 10, y + 22);
+      pdf.text('Métodos aceptados: Efectivo, Tarjeta de Crédito/Débito, Transferencia Bancaria', margin + 10, y + 30);
+      pdf.text('Horario: Lunes a Viernes 8:00-18:00 | Sábados 8:00-13:00', margin + 10, y + 38);
     }
 
     // Footer
+    pdf.setTextColor(...textLight);
     pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
-    pdf.text('Este documento es un comprobante oficial de facturación', pageWidth / 2, 280, { align: 'center' });
-    pdf.text('Clínica San Miguel - Todos los derechos reservados', pageWidth / 2, 285, { align: 'center' });
+    pdf.text('Este documento es un comprobante oficial de facturación médica', pageWidth / 2, 280, { align: 'center' });
+    pdf.text('Clínica Médica - Gracias por su confianza', pageWidth / 2, 285, { align: 'center' });
 
-    // Open in new tab
+    // Open PDF in new tab
     const pdfBlob = pdf.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
@@ -387,11 +415,11 @@ export default function PatientBilling() {
 
                       <div className="text-right">
                         <p className="text-2xl font-bold text-gray-800">
-                          {formatCurrency(billing.amount)}
+                          {formatCurrency(billing.total_amount)}
                         </p>
-                        {billing.status === 'paid' && billing.paid_at && (
+                        {billing.status === 'paid' && billing.payment_date && (
                           <p className="text-xs text-green-600 mt-1">
-                            Pagado el {formatDate(billing.paid_at)}
+                            Pagado el {formatDate(billing.payment_date)}
                           </p>
                         )}
                       </div>
@@ -508,28 +536,38 @@ export default function PatientBilling() {
                     Desglose de Facturación
                   </h4>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Consulta Médica</span>
-                      <span className="font-medium">{formatCurrency(selectedBilling.subtotal || selectedBilling.amount)}</span>
-                    </div>
-                    {selectedBilling.discount_amount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Descuento Seguro</span>
-                        <span className="font-medium text-green-600">-{formatCurrency(selectedBilling.discount_amount)}</span>
-                      </div>
-                    )}
-                    {selectedBilling.tax_amount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Impuestos</span>
-                        <span className="font-medium">{formatCurrency(selectedBilling.tax_amount)}</span>
-                      </div>
-                    )}
-                    <div className="border-t pt-2 mt-2">
-                      <div className="flex justify-between">
-                        <span className="font-bold text-gray-900">Total</span>
-                        <span className="font-bold text-xl text-gray-900">{formatCurrency(selectedBilling.amount)}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const subtotal = parseFloat(selectedBilling.subtotal) || parseFloat(selectedBilling.base_amount) || parseFloat(selectedBilling.total_amount) || 0;
+                      const discount = parseFloat(selectedBilling.insurance_discount_amount) || 0;
+                      const total = parseFloat(selectedBilling.total_amount) || (subtotal - discount);
+                      
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Consulta Médica</span>
+                            <span className="font-medium">{formatCurrency(subtotal)}</span>
+                          </div>
+                          {discount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Descuento Seguro ({selectedBilling.insurance_discount_percentage || 0}%)</span>
+                              <span className="font-medium text-green-600">-{formatCurrency(discount)}</span>
+                            </div>
+                          )}
+                          {selectedBilling.tax_amount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Impuestos</span>
+                              <span className="font-medium">{formatCurrency(selectedBilling.tax_amount)}</span>
+                            </div>
+                          )}
+                          <div className="border-t pt-2 mt-2">
+                            <div className="flex justify-between">
+                              <span className="font-bold text-gray-900">Total</span>
+                              <span className="font-bold text-xl text-gray-900">{formatCurrency(total)}</span>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 

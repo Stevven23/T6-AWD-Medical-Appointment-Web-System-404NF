@@ -11,6 +11,13 @@ const scheduleController = require('../controllers/schedule.controller');
 const { authMiddleware, requireRole } = require('../../shared/middleware/auth.middleware');
 
 /**
+ * @route   GET /api/v1/schedules
+ * @desc    Get all schedules or by doctor_id query param
+ * @access  Public
+ */
+router.get('/', scheduleController.getAll);
+
+/**
  * @route   GET /api/v1/schedules/doctor/:doctorId
  * @desc    Get doctor's schedule
  * @access  Public
@@ -45,6 +52,13 @@ router.get('/:id', authMiddleware, requireRole(['doctor', 'admin']), scheduleCon
  * @access  Doctor, Admin
  */
 router.post('/', authMiddleware, requireRole(['doctor', 'admin']), scheduleController.create);
+
+/**
+ * @route   POST /api/v1/schedules/bulk
+ * @desc    Bulk create/update schedules for a doctor
+ * @access  Doctor, Admin
+ */
+router.post('/bulk', authMiddleware, requireRole(['doctor', 'admin']), scheduleController.bulkCreate);
 
 /**
  * @route   PUT /api/v1/schedules/:id

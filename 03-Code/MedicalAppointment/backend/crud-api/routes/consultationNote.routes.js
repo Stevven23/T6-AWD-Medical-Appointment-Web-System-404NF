@@ -25,7 +25,7 @@ router.get('/', requireRole(['patient', 'doctor']), consultationNoteController.g
  * @desc    Get consultation note by appointment
  * @access  Patient, Doctor, Admin
  */
-router.get('/appointment/:appointmentId', consultationNoteController.getByAppointment);
+router.get('/appointment/:appointmentId', requireRole(['patient', 'doctor', 'admin']), consultationNoteController.getByAppointment);
 
 /**
  * @route   GET /api/v1/consultation-notes/:id

@@ -28,6 +28,13 @@ router.get('/', requireRole(['patient', 'doctor']), prescriptionController.getBy
 router.post('/generate-qr-codes', requireRole('admin'), prescriptionController.generateMissingQRCodes);
 
 /**
+ * @route   GET /api/v1/prescriptions/appointment/:appointmentId
+ * @desc    Get prescriptions for an appointment
+ * @access  Doctor, Admin
+ */
+router.get('/appointment/:appointmentId', requireRole(['doctor', 'admin']), prescriptionController.getByAppointment);
+
+/**
  * @route   GET /api/v1/prescriptions/:id
  * @desc    Get prescription by ID with QR code
  * @access  Patient, Doctor, Admin

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
+import jsPDF from 'jspdf';
 import {
   CurrencyDollarIcon,
   DocumentTextIcon,
@@ -11,8 +12,9 @@ import {
   EyeIcon,
   BanknotesIcon,
   PrinterIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
-import { BillingModel } from '../../models';
+import { BillingModel, AppointmentModel } from '../../models';
 
 export default function BillingManagement() {
   const [billings, setBillings] = useState([]);
@@ -31,7 +33,11 @@ export default function BillingManagement() {
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedBilling, setSelectedBilling] = useState(null);
+  const [completedAppointments, setCompletedAppointments] = useState([]);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState('');
+  const [generating, setGenerating] = useState(false);
   
   // Payment form
   const [paymentData, setPaymentData] = useState({
@@ -70,8 +76,8 @@ export default function BillingManagement() {
       total: data.length,
       pending: pending.length,
       paid: paid.length,
-      totalAmount: data.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0),
-      pendingAmount: pending.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0),
+      totalAmount: data.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0),
+      pendingAmount: pending.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0),
     });
   };
 
@@ -90,6 +96,42 @@ export default function BillingManagement() {
     }
   };
 
+  const openGenerateModal = async () => {
+    try {
+      // Load completed appointments that don't have a billing yet
+      const response = await AppointmentModel.getUnbilled();
+      const appointments = response.data || response || [];
+      
+      setCompletedAppointments(appointments);
+      setShowGenerateModal(true);
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      showNotification('Error al cargar citas', 'error');
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!selectedAppointmentId) {
+      showNotification('Seleccione una cita', 'error');
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      await BillingModel.generateInvoice(selectedAppointmentId);
+      showNotification('Factura generada exitosamente', 'success');
+      setShowGenerateModal(false);
+      setSelectedAppointmentId('');
+      loadBillings();
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      const message = error.message || 'Error al generar factura';
+      showNotification(message.includes('ya existe') ? 'Ya existe una factura para esta cita' : message, 'error');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const openPaymentModal = (billing) => {
     setSelectedBilling(billing);
     setShowPaymentModal(true);
@@ -98,6 +140,200 @@ export default function BillingManagement() {
   const openDetailModal = (billing) => {
     setSelectedBilling(billing);
     setShowDetailModal(true);
+  };
+
+  const printInvoice = (billing) => {
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 20;
+
+    const patientName = `${billing.patient?.first_name || ''} ${billing.patient?.last_name || ''}`.trim() || 'N/A';
+    const patientEmail = billing.patient?.email || 'N/A';
+    const doctorName = billing.doctor?.users?.first_name 
+      ? `Dr. ${billing.doctor.users.first_name} ${billing.doctor.users.last_name}`
+      : billing.doctor_name || 'N/A';
+    const specialty = billing.doctor?.specialties?.name || billing.specialty_name || 'Consulta General';
+    const paymentMethodLabels = {
+      cash: 'Efectivo',
+      card: 'Tarjeta de Crédito/Débito',
+      transfer: 'Transferencia Bancaria',
+      insurance: 'Seguro Médico'
+    };
+    
+    // Calculate correct amounts
+    const subtotal = parseFloat(billing.subtotal) || parseFloat(billing.base_amount) || parseFloat(billing.total_amount) || 0;
+    const discount = parseFloat(billing.insurance_discount_amount) || 0;
+    const total = parseFloat(billing.total_amount) || (subtotal - discount);
+
+    // Colors
+    const primaryColor = [59, 130, 246]; // blue-500
+    const textDark = [31, 41, 55]; // gray-800
+    const textLight = [107, 114, 128]; // gray-500
+    const greenColor = [22, 163, 74]; // green-600
+    const yellowColor = [202, 138, 4]; // yellow-600
+
+    // Header background
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
+
+    // Logo and clinic name
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Clínica Médica', margin, 18);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text('Sistema de Facturación', margin, 26);
+    pdf.text('Tel: (02) 2XXX-XXXX | info@clinicamedica.com', margin, 32);
+
+    // Invoice number on the right
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, 'bold');
+    pdf.text(billing.invoice_number || 'BORRADOR', pageWidth - margin, 18, { align: 'right' });
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Emitida: ${formatDate(billing.created_at)}`, pageWidth - margin, 26, { align: 'right' });
+
+    // Status badge
+    y = 50;
+    if (billing.status === 'paid') {
+      pdf.setFillColor(220, 252, 231);
+      pdf.roundedRect(pageWidth - margin - 35, y - 6, 35, 10, 2, 2, 'F');
+      pdf.setTextColor(...greenColor);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('PAGADA', pageWidth - margin - 17.5, y + 1, { align: 'center' });
+    } else {
+      pdf.setFillColor(254, 243, 199);
+      pdf.roundedRect(pageWidth - margin - 35, y - 6, 35, 10, 2, 2, 'F');
+      pdf.setTextColor(...yellowColor);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('PENDIENTE', pageWidth - margin - 17.5, y + 1, { align: 'center' });
+    }
+
+    // Patient and Doctor sections
+    y = 55;
+    
+    // Patient section
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(margin, y, (pageWidth - margin * 2 - 5) / 2, 35, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DATOS DEL PACIENTE', margin + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textLight);
+    pdf.text('Nombre:', margin + 5, y + 16);
+    pdf.text('Correo:', margin + 5, y + 24);
+    pdf.setTextColor(...textDark);
+    pdf.text(patientName, margin + 25, y + 16);
+    pdf.text(patientEmail, margin + 25, y + 24);
+
+    // Doctor section
+    const rightColX = margin + (pageWidth - margin * 2 - 5) / 2 + 5;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(rightColX, y, (pageWidth - margin * 2 - 5) / 2, 35, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('SERVICIO MÉDICO', rightColX + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...textLight);
+    pdf.text('Médico:', rightColX + 5, y + 16);
+    pdf.text('Especialidad:', rightColX + 5, y + 24);
+    pdf.setTextColor(...textDark);
+    pdf.text(doctorName, rightColX + 30, y + 16);
+    pdf.text(specialty, rightColX + 30, y + 24);
+
+    // Billing breakdown
+    y = 100;
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('DESGLOSE DE FACTURACIÓN', margin, y);
+    
+    y += 8;
+    pdf.setDrawColor(229, 231, 235);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, y, pageWidth - margin, y);
+
+    // Table header
+    y += 8;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(margin, y - 4, pageWidth - margin * 2, 10, 'F');
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Concepto', margin + 5, y + 2);
+    pdf.text('Monto', pageWidth - margin - 5, y + 2, { align: 'right' });
+
+    // Consultation row
+    y += 14;
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Consulta Médica (${specialty})`, margin + 5, y);
+    pdf.text(formatCurrency(subtotal), pageWidth - margin - 5, y, { align: 'right' });
+
+    // Discount row
+    if (discount > 0) {
+      y += 10;
+      pdf.setTextColor(...greenColor);
+      pdf.text(`Descuento Seguro (${billing.insurance_discount_percentage || 0}%)`, margin + 5, y);
+      pdf.text(`-${formatCurrency(discount)}`, pageWidth - margin - 5, y, { align: 'right' });
+    }
+
+    // Total row
+    y += 12;
+    pdf.setDrawColor(...primaryColor);
+    pdf.setLineWidth(0.8);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 10;
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(12);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('TOTAL A PAGAR', margin + 5, y);
+    pdf.setTextColor(...primaryColor);
+    pdf.setFontSize(16);
+    pdf.text(formatCurrency(total), pageWidth - margin - 5, y, { align: 'right' });
+
+    // Payment info section
+    y += 20;
+    if (billing.status === 'paid') {
+      pdf.setFillColor(220, 252, 231);
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, 30, 3, 3, 'F');
+      pdf.setTextColor(...greenColor);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('✓ PAGO REGISTRADO', margin + 10, y + 12);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`Fecha de pago: ${formatDate(billing.payment_date)}`, margin + 10, y + 20);
+      pdf.text(`Método: ${paymentMethodLabels[billing.payment_method] || billing.payment_method || 'N/A'}`, margin + 80, y + 20);
+    } else {
+      pdf.setFillColor(254, 243, 199);
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, 25, 3, 3, 'F');
+      pdf.setTextColor(...yellowColor);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('FACTURA PENDIENTE DE PAGO', margin + 10, y + 10);
+      pdf.setFontSize(9);
+      pdf.setFont(undefined, 'normal');
+      pdf.setTextColor(120, 80, 20);
+      pdf.text('Esta factura está pendiente de pago. Realizar pago en recepción.', margin + 10, y + 18);
+    }
+
+    // Footer
+    pdf.setTextColor(...textLight);
+    pdf.setFontSize(8);
+    pdf.text('Este documento es un comprobante oficial de facturación médica', pageWidth / 2, 280, { align: 'center' });
+    pdf.text('Clínica Médica - Gracias por su confianza', pageWidth / 2, 285, { align: 'center' });
+
+    // Open PDF in new tab
+    const pdfBlob = pdf.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
 
   const showNotification = (message, type = 'info') => {
@@ -166,6 +402,13 @@ export default function BillingManagement() {
             <h2 className="text-2xl font-bold text-gray-800">Gestión de Facturación</h2>
             <p className="text-gray-600">Administra facturas y pagos</p>
           </div>
+          <button
+            onClick={openGenerateModal}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Generar Factura
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -301,7 +544,7 @@ export default function BillingManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(billing.amount)}
+                        {formatCurrency(billing.total_amount)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -325,12 +568,6 @@ export default function BillingManagement() {
                             <BanknotesIcon className="w-5 h-5" />
                           </button>
                         )}
-                        <button
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="Imprimir"
-                        >
-                          <PrinterIcon className="w-5 h-5" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -355,7 +592,7 @@ export default function BillingManagement() {
                 <div className="bg-blue-50 rounded-lg p-4">
                   <p className="text-sm text-blue-600">Monto a Pagar</p>
                   <p className="text-2xl font-bold text-blue-800">
-                    {formatCurrency(selectedBilling.amount)}
+                    {formatCurrency(selectedBilling.total_amount)}
                   </p>
                 </div>
 
@@ -443,16 +680,29 @@ export default function BillingManagement() {
                     <p className="text-sm text-gray-500">{selectedBilling.patient?.email}</p>
                   </div>
                   <div>
+                    <p className="text-xs text-gray-500 uppercase">Médico</p>
+                    <p className="font-medium">
+                      {selectedBilling.doctor?.users?.first_name 
+                        ? `Dr. ${selectedBilling.doctor.users.first_name} ${selectedBilling.doctor.users.last_name}`
+                        : selectedBilling.doctor_name || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {selectedBilling.doctor?.specialties?.name || selectedBilling.specialty_name || 'Consulta General'}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-xs text-gray-500 uppercase">Fecha de Emisión</p>
                     <p className="font-medium">{formatDate(selectedBilling.created_at)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Fecha de Vencimiento</p>
-                    <p className="font-medium">{formatDate(selectedBilling.due_date) || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">Método de Pago</p>
-                    <p className="font-medium">{selectedBilling.payment_method || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 uppercase">Estado del Pago</p>
+                    <p className="font-medium">
+                      {selectedBilling.status === 'paid' ? (
+                        <span className="text-green-600">✓ Pagado</span>
+                      ) : (
+                        <span className="text-yellow-600">⏳ Pendiente</span>
+                      )}
+                    </p>
                   </div>
                 </div>
 
@@ -505,10 +755,10 @@ export default function BillingManagement() {
                   </div>
                 )}
 
-                {selectedBilling.paid_at && (
+                {selectedBilling.payment_date && (
                   <div className="bg-green-50 rounded-lg p-4">
                     <p className="text-sm text-green-600">Pagado el</p>
-                    <p className="font-medium text-green-800">{formatDate(selectedBilling.paid_at)}</p>
+                    <p className="font-medium text-green-800">{formatDate(selectedBilling.payment_date)}</p>
                     {selectedBilling.payment_method && (
                       <p className="text-sm text-green-700 mt-1">Método: {selectedBilling.payment_method}</p>
                     )}
@@ -525,17 +775,92 @@ export default function BillingManagement() {
 
               <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
                 <button
-                  onClick={() => window.print()}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  onClick={() => printInvoice(selectedBilling)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   <PrinterIcon className="w-4 h-4" />
-                  Imprimir
+                  Imprimir Factura
                 </button>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
                 >
                   Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Generate Invoice Modal */}
+        {showGenerateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold text-gray-800">Generar Factura</h3>
+                <p className="text-sm text-gray-500">
+                  Seleccione una cita completada para generar su factura
+                </p>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                {completedAppointments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <DocumentTextIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No hay citas completadas disponibles</p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Seleccione una cita
+                    </label>
+                    <select
+                      value={selectedAppointmentId}
+                      onChange={(e) => setSelectedAppointmentId(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Seleccione una cita --</option>
+                      {completedAppointments.map((apt) => {
+                        const patientName = apt.patient_first_name && apt.patient_last_name 
+                          ? `${apt.patient_first_name} ${apt.patient_last_name}`
+                          : apt.patient?.first_name 
+                            ? `${apt.patient.first_name} ${apt.patient.last_name}`
+                            : 'Paciente';
+                        const doctorName = apt.doctor_first_name && apt.doctor_last_name
+                          ? `Dr. ${apt.doctor_first_name} ${apt.doctor_last_name}`
+                          : apt.doctors?.users?.first_name
+                            ? `Dr. ${apt.doctors.users.first_name} ${apt.doctors.users.last_name}`
+                            : '';
+                        const specialty = apt.specialty_name || apt.doctors?.specialties?.name || '';
+                        const dateStr = formatDate(apt.scheduled_start);
+                        
+                        return (
+                          <option key={apt.id || apt.appointment_id} value={apt.id || apt.appointment_id}>
+                            {dateStr} | {patientName} | {doctorName}{specialty ? ` (${specialty})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowGenerateModal(false);
+                    setSelectedAppointmentId('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGenerateInvoice}
+                  disabled={!selectedAppointmentId || generating}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {generating ? 'Generando...' : 'Generar Factura'}
                 </button>
               </div>
             </div>

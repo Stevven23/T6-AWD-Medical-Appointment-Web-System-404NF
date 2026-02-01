@@ -15,6 +15,7 @@ const { parsePaginationQuery, createPagination } = require('../../shared/utils/h
 const { AppointmentStatus } = require('../../shared/constants/app.constants');
 const emailService = require('../../external-api/services/email.service');
 const { supabase } = require('../../shared/config/database.config');
+const { createAuditLog, AuditActions } = require('../../shared/utils/audit.utils');
 
 class AppointmentController {
   /**
@@ -31,7 +32,20 @@ class AppointmentController {
       filters: {}
     };
 
-    if (status) options.filters.status_id = status;
+    // Convert status code string to status_id
+    if (status) {
+      const statusMap = {
+        'scheduled': AppointmentStatus.SCHEDULED,
+        'completed': AppointmentStatus.COMPLETED,
+        'cancelled': AppointmentStatus.CANCELLED,
+        'no_show': AppointmentStatus.NO_SHOW,
+        'confirmed': AppointmentStatus.CONFIRMED
+      };
+      const statusId = statusMap[status.toLowerCase()];
+      if (statusId) {
+        options.filters.status_id = statusId;
+      }
+    }
     if (doctorId) options.filters.doctor_id = doctorId;
     if (patientId) options.filters.patient_user_id = patientId;
 
@@ -40,6 +54,35 @@ class AppointmentController {
 
     const pagination = createPagination(total, page, limit);
     return ResponseBuilder.paginated(res, appointments, pagination);
+  });
+
+  /**
+   * GET /appointments/unbilled
+   * Get completed appointments without billing (for invoice generation)
+   */
+  getUnbilled = asyncHandler(async (req, res) => {
+    // Get completed appointments that don't have a billing record
+    const { data: appointments, error } = await supabase
+      .from('vw_appointments_full')
+      .select('*')
+      .eq('status_code', 'completed')
+      .order('scheduled_start', { ascending: false });
+
+    if (error) throw error;
+
+    // Get all appointment IDs that have billings
+    const { data: billings } = await supabase
+      .from('billings')
+      .select('appointment_id');
+
+    const billedAppointmentIds = new Set(billings?.map(b => b.appointment_id) || []);
+
+    // Filter out appointments that already have billings
+    const unbilledAppointments = appointments.filter(apt => 
+      !billedAppointmentIds.has(apt.appointment_id)
+    );
+
+    return ResponseBuilder.success(res, unbilledAppointments);
   });
 
   /**
@@ -212,6 +255,17 @@ class AppointmentController {
       console.error('[Appointments] Error sending confirmation email:', err.message);
     });
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_CREATED,
+      tableName: 'appointments',
+      recordId: appointment.id,
+      newValues: { doctor_id, scheduled_start, scheduled_end, reason },
+      description: `Cita creada para ${new Date(scheduled_start).toLocaleDateString('es-ES')}`,
+      req
+    });
+
     return ResponseBuilder.created(res, appointment, 'Cita creada exitosamente');
   });
 
@@ -250,12 +304,25 @@ class AppointmentController {
       consultation_room_id
     });
 
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_UPDATED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { reason: existing.reason, room_id: existing.room_id },
+      newValues: { reason, room_id, consultation_room_id },
+      description: `Cita ${id} actualizada`,
+      req
+    });
+
     return ResponseBuilder.success(res, updated, 200, 'Cita actualizada exitosamente');
   });
 
   /**
    * PATCH /appointments/:id/status
    * Update appointment status
+   * Auto-generates billing when status changes to COMPLETED
    */
   updateStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -277,7 +344,217 @@ class AppointmentController {
 
     const updated = await appointmentRepository.updateStatus(id, status_id);
 
-    return ResponseBuilder.success(res, updated, 200, 'Estado de cita actualizado');
+    // Auto-generate billing when appointment is marked as completed
+    let billingGenerated = null;
+    if (parseInt(status_id) === AppointmentStatus.COMPLETED) {
+      try {
+        // Check if billing already exists
+        const { data: existingBilling } = await supabase
+          .from('billings')
+          .select('id')
+          .eq('appointment_id', id)
+          .single();
+
+        if (!existingBilling) {
+          // Generate billing via business-api service
+          const BillingCalculationService = require('../../business-api/services/billingCalculation.service');
+          const billingService = new BillingCalculationService();
+          billingGenerated = await billingService.generateBillingRecord(id);
+          console.log(`[Appointments] Auto-generated billing ${billingGenerated.invoice_number} for appointment ${id}`);
+        }
+      } catch (billingError) {
+        console.error(`[Appointments] Failed to auto-generate billing for appointment ${id}:`, billingError.message);
+        // Don't fail the status update if billing generation fails
+      }
+    }
+
+    // Audit log for status change
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_STATUS_CHANGED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { status_id: existing.status_id },
+      newValues: { status_id },
+      description: `Estado de cita cambiado de ${existing.status_id} a ${status_id}`,
+      req
+    });
+
+    return ResponseBuilder.success(res, {
+      ...updated,
+      billing_generated: billingGenerated ? true : false,
+      billing_id: billingGenerated?.id
+    }, 200, billingGenerated ? 'Estado actualizado y factura generada' : 'Estado de cita actualizado');
+  });
+
+  /**
+   * PATCH /appointments/:id
+   * Partial update appointment (for admin - reassign doctor, room)
+   */
+  partialUpdate = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { doctor_id, consultation_room_id, room_id } = req.body;
+
+    const existing = await appointmentRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Cita', id);
+    }
+
+    if (existing.status_id === AppointmentStatus.CANCELLED) {
+      throw new ValidationError('No se puede actualizar una cita cancelada');
+    }
+
+    const updateData = {};
+    
+    if (doctor_id) {
+      const doctor = await doctorRepository.findById(doctor_id);
+      if (!doctor) {
+        throw new NotFoundError('Doctor', doctor_id);
+      }
+      updateData.doctor_id = doctor_id;
+    }
+    
+    if (consultation_room_id) {
+      const room = await consultationRoomRepository.findById(consultation_room_id);
+      if (!room) {
+        throw new NotFoundError('Sala de consulta', consultation_room_id);
+      }
+      updateData.consultation_room_id = consultation_room_id;
+    }
+
+    if (room_id) {
+      updateData.room_id = room_id;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new ValidationError('No hay datos para actualizar');
+    }
+
+    const updated = await appointmentRepository.update(id, updateData);
+
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_UPDATED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { doctor_id: existing.doctor_id, consultation_room_id: existing.consultation_room_id },
+      newValues: updateData,
+      description: `Cita ${id} actualizada por admin`,
+      req
+    });
+
+    return ResponseBuilder.success(res, updated, 200, 'Cita actualizada exitosamente');
+  });
+
+  /**
+   * PATCH /appointments/:id/confirm
+   * Confirm an appointment
+   */
+  confirm = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const existing = await appointmentRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Cita', id);
+    }
+
+    if (existing.status_id === AppointmentStatus.CANCELLED) {
+      throw new ValidationError('No se puede confirmar una cita cancelada');
+    }
+
+    if (existing.status_id === AppointmentStatus.CONFIRMED) {
+      throw new ValidationError('La cita ya está confirmada');
+    }
+
+    const updated = await appointmentRepository.updateStatus(id, AppointmentStatus.CONFIRMED);
+
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_STATUS_CHANGED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { status_id: existing.status_id },
+      newValues: { status_id: AppointmentStatus.CONFIRMED },
+      description: `Cita confirmada`,
+      req
+    });
+
+    return ResponseBuilder.success(res, updated, 200, 'Cita confirmada exitosamente');
+  });
+
+  /**
+   * PATCH /appointments/:id/check-in
+   * Register patient check-in
+   */
+  checkIn = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const existing = await appointmentRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Cita', id);
+    }
+
+    if (existing.status_id === AppointmentStatus.CANCELLED) {
+      throw new ValidationError('No se puede hacer check-in de una cita cancelada');
+    }
+
+    if (existing.checked_in_at) {
+      throw new ValidationError('El paciente ya hizo check-in');
+    }
+
+    const updated = await appointmentRepository.update(id, {
+      checked_in_at: new Date().toISOString()
+    });
+
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_UPDATED,
+      tableName: 'appointments',
+      recordId: id,
+      newValues: { checked_in_at: updated.checked_in_at },
+      description: `Check-in registrado para cita`,
+      req
+    });
+
+    return ResponseBuilder.success(res, updated, 200, 'Check-in registrado exitosamente');
+  });
+
+  /**
+   * PATCH /appointments/:id/cancel
+   * Cancel an appointment (admin)
+   */
+  cancel = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const existing = await appointmentRepository.findWithDetails(id, true);
+    if (!existing) {
+      throw new NotFoundError('Cita', id);
+    }
+
+    if (existing.status_id === AppointmentStatus.CANCELLED) {
+      throw new ValidationError('La cita ya está cancelada');
+    }
+
+    await appointmentRepository.softDelete(id);
+
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_CANCELLED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { status_id: existing.status_id },
+      newValues: { cancelled: true, reason: reason || 'Cancelada por administración' },
+      description: `Cita cancelada: ${reason || 'Sin motivo especificado'}`,
+      req
+    });
+
+    // Send cancellation email
+    this._sendCancellationEmail(existing, reason || 'Cancelada por administración').catch(err => {
+      console.error('[Appointments] Error sending cancellation email:', err.message);
+    });
+
+    return ResponseBuilder.success(res, { id }, 200, 'Cita cancelada exitosamente');
   });
 
   /**
@@ -299,6 +576,18 @@ class AppointmentController {
     }
 
     await appointmentRepository.softDelete(id);
+
+    // Audit log for cancellation
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.APPOINTMENT_CANCELLED,
+      tableName: 'appointments',
+      recordId: id,
+      oldValues: { status_id: existing.status_id, scheduled_start: existing.scheduled_start },
+      newValues: { cancelled: true, cancellation_reason: reason || 'Cancelada por el usuario' },
+      description: `Cita cancelada: ${reason || 'Sin motivo especificado'}`,
+      req
+    });
 
     // Send cancellation email asynchronously
     this._sendCancellationEmail(existing, reason || 'Cancelada por el usuario').catch(err => {

@@ -207,6 +207,43 @@ class PrescriptionRepository extends BaseRepository {
     return true;
   }
 
+  /**
+   * Find prescriptions by appointment
+   * @param {string} appointmentId - Appointment ID
+   * @returns {Promise<Array>}
+   */
+  async findByAppointment(appointmentId) {
+    const { data, error } = await this.db
+      .from(this.tableName)
+      .select(`
+        id,
+        doctor_id,
+        diagnosis,
+        medications,
+        instructions,
+        duration,
+        created_at,
+        doctors (
+          id,
+          users (
+            first_name,
+            last_name
+          ),
+          specialties (
+            name
+          )
+        )
+      `)
+      .eq('appointment_id', appointmentId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return data || [];
+  }
+
   hasSoftDelete() {
     return false; // prescriptions table has no is_active column
   }

@@ -29,7 +29,9 @@ export default function DoctorManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [currentDoctor, setCurrentDoctor] = useState(null);
+  const [doctorToReset, setDoctorToReset] = useState(null);
   
   // Password modal data
   const [passwordData, setPasswordData] = useState({ name: '', email: '', password: '' });
@@ -191,14 +193,21 @@ export default function DoctorManagement() {
     }
   };
 
-  const handleResetPassword = async (doctor) => {
+  const handleResetPassword = (doctor) => {
+    setDoctorToReset(doctor);
+    setShowResetPasswordModal(true);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!doctorToReset) return;
+    
     try {
-      const result = await DoctorModel.resetPassword(doctor.id);
+      const result = await DoctorModel.resetPassword(doctorToReset.id);
       const tempPassword = result.data?.temporary_password || result.temporary_password;
       if (tempPassword) {
         setPasswordData({
-          name: `${doctor.first_name} ${doctor.last_name}`,
-          email: doctor.email,
+          name: `${doctorToReset.first_name} ${doctorToReset.last_name}`,
+          email: doctorToReset.email,
           password: tempPassword
         });
         setShowPasswordModal(true);
@@ -209,6 +218,9 @@ export default function DoctorManagement() {
         error.message || 'Error al restablecer contraseña',
         'error'
       );
+    } finally {
+      setShowResetPasswordModal(false);
+      setDoctorToReset(null);
     }
   };
 
@@ -661,6 +673,51 @@ export default function DoctorManagement() {
                   className="flex-1 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold transition-colors"
                 >
                   Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Confirmation Modal */}
+      {showResetPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-6 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <KeyIcon className="w-8 h-8" />
+                <h2 className="text-2xl font-bold">Confirmar Restablecimiento</h2>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <p className="text-yellow-800 text-sm font-medium">
+                  ⚠️ Esta acción generará una nueva contraseña temporal y la actual dejará de funcionar.
+                </p>
+              </div>
+              
+              <p className="text-gray-700 mb-6">
+                ¿Está seguro que desea restablecer la contraseña del doctor{' '}
+                <strong>{doctorToReset?.first_name} {doctorToReset?.last_name}</strong>?
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowResetPasswordModal(false);
+                    setDoctorToReset(null);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmResetPassword}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 font-semibold transition-colors"
+                >
+                  Restablecer
                 </button>
               </div>
             </div>

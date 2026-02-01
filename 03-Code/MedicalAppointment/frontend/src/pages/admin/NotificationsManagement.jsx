@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { crudApi } from '../../services/httpClient';
+import { externalApi, crudApi } from '../../services/httpClient';
 import {
   BellIcon,
   ClockIcon,
@@ -12,7 +12,6 @@ import {
   PaperAirplaneIcon,
   CalendarIcon,
   EnvelopeIcon,
-  DevicePhoneMobileIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
 
@@ -23,31 +22,53 @@ export default function NotificationsManagement() {
   
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Modal states
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [announcementForm, setAnnouncementForm] = useState({
-    title: '',
+    subject: '',
     message: '',
     target: 'all', // all, patients, doctors
-    channels: ['email'],
+    sendEmail: false, // Optional email sending
   });
 
   useEffect(() => {
     loadReminders();
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter]);
 
   const loadReminders = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (statusFilter !== 'all') params.status = statusFilter;
-      if (typeFilter !== 'all') params.type = typeFilter;
+      // Get pending reminders count and due appointments for reminders
+      const [pendingRes, dueRes] = await Promise.all([
+        externalApi.get('/reminders/pending/count').catch(() => ({ data: { data: { pendingCount: 0 } } })),
+        externalApi.get('/reminders/due/24').catch(() => ({ data: { data: { appointments: [] } } }))
+      ]);
       
-      const response = await crudApi.get('/reminders', { params });
-      setReminders(response.data.data || response.data || []);
+      // Extract appointments from the response
+      const dueAppointments = dueRes.data?.data?.appointments || dueRes.data?.appointments || [];
+      
+      // Transform appointments to display format
+      const remindersList = dueAppointments.map(apt => ({
+        id: apt.id,
+        appointment_id: apt.id,
+        reminder_type: 'email',
+        scheduled_send_time: apt.scheduled_start,
+        send_status: 'pending', // These are appointments that need reminders
+        sent_at: null,
+        patient: apt.patient || {
+          first_name: apt.patient?.first_name || '',
+          last_name: apt.patient?.last_name || '',
+          email: apt.patient?.email || ''
+        },
+        doctor: apt.doctors?.users ? 
+          `${apt.doctors.users.first_name || ''} ${apt.doctors.users.last_name || ''}`.trim() :
+          'Doctor',
+        specialty: apt.doctors?.specialties?.name || 'Medicina General',
+        room: apt.consultation_rooms?.name || ''
+      }));
+      setReminders(remindersList);
     } catch (error) {
       console.error('Error loading reminders:', error);
       setReminders([]);
@@ -56,9 +77,10 @@ export default function NotificationsManagement() {
     }
   };
 
-  const retryReminder = async (reminderId) => {
+  const retryReminder = async (appointmentId) => {
     try {
-      await crudApi.post(`/reminders/${reminderId}/retry`);
+      // Create a new reminder for this appointment
+      await externalApi.post('/reminders/create', { appointment_id: appointmentId });
       showNotificationMessage('Recordatorio reenviado', 'success');
       loadReminders();
     } catch (error) {
@@ -67,9 +89,9 @@ export default function NotificationsManagement() {
     }
   };
 
-  const cancelReminder = async (reminderId) => {
+  const cancelReminder = async (appointmentId) => {
     try {
-      await crudApi.patch(`/reminders/${reminderId}`, { status: 'cancelled' });
+      await externalApi.delete(`/reminders/appointment/${appointmentId}`);
       showNotificationMessage('Recordatorio cancelado', 'success');
       loadReminders();
     } catch (error) {
@@ -80,18 +102,34 @@ export default function NotificationsManagement() {
 
   const sendAnnouncement = async () => {
     try {
-      await crudApi.post('/notifications/broadcast', announcementForm);
-      showNotificationMessage('Anuncio enviado exitosamente', 'success');
+      // Use the custom notification endpoint - saves to DB and optionally sends email
+      const response = await externalApi.post('/notifications/custom', {
+        target: announcementForm.target, // 'all', 'patients', or 'doctors'
+        subject: announcementForm.subject,
+        message: announcementForm.message,
+        type: 'announcement',
+        sendEmail: announcementForm.sendEmail // Optional email sending
+      });
+      
+      const result = response.data?.data || response.data || {};
+      let successMsg = 'Anuncio publicado';
+      if (announcementForm.sendEmail && result.emailsSentCount > 0) {
+        successMsg += ` y ${result.emailsSentCount} correo(s) enviado(s)`;
+      } else if (announcementForm.sendEmail && result.emailsSentCount === 0) {
+        successMsg += ' (no se encontraron usuarios para enviar correo)';
+      }
+      
+      showNotificationMessage(successMsg, 'success');
       setShowAnnouncementModal(false);
       setAnnouncementForm({
-        title: '',
+        subject: '',
         message: '',
         target: 'all',
-        channels: ['email'],
+        sendEmail: false,
       });
     } catch (error) {
       console.error('Error sending announcement:', error);
-      showNotificationMessage('Error al enviar anuncio', 'error');
+      showNotificationMessage(error.message || 'Error al enviar anuncio', 'error');
     }
   };
 
@@ -126,15 +164,8 @@ export default function NotificationsManagement() {
     );
   };
 
-  const getReminderTypeIcon = (type) => {
-    switch (type) {
-      case 'email':
-        return <EnvelopeIcon className="w-4 h-4" />;
-      case 'sms':
-        return <DevicePhoneMobileIcon className="w-4 h-4" />;
-      default:
-        return <BellIcon className="w-4 h-4" />;
-    }
+  const getReminderTypeIcon = () => {
+    return <EnvelopeIcon className="w-4 h-4" />;
   };
 
   const filteredReminders = reminders.filter(reminder => {
@@ -145,9 +176,9 @@ export default function NotificationsManagement() {
 
   const stats = {
     total: reminders.length,
-    pending: reminders.filter(r => r.status === 'pending').length,
-    sent: reminders.filter(r => r.status === 'sent').length,
-    failed: reminders.filter(r => r.status === 'failed').length,
+    pending: reminders.filter(r => r.send_status === 'pending').length,
+    sent: reminders.filter(r => r.send_status === 'sent').length,
+    failed: reminders.filter(r => r.send_status === 'failed').length,
   };
 
   return (
@@ -265,17 +296,6 @@ export default function NotificationsManagement() {
             <option value="failed">Fallidos</option>
             <option value="cancelled">Cancelados</option>
           </select>
-          
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todos los tipos</option>
-            <option value="email">Email</option>
-            <option value="sms">SMS</option>
-            <option value="push">Push</option>
-          </select>
         </div>
 
         {/* Reminders Table */}
@@ -309,10 +329,10 @@ export default function NotificationsManagement() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="p-1 bg-gray-100 rounded">
-                            {getReminderTypeIcon(reminder.reminder_type)}
+                            {getReminderTypeIcon()}
                           </span>
                           <span className="text-sm text-gray-700 capitalize">
-                            {reminder.reminder_type}
+                            Email
                           </span>
                         </div>
                       </td>
@@ -331,17 +351,17 @@ export default function NotificationsManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {formatDate(reminder.scheduled_time)}
+                        {formatDate(reminder.scheduled_send_time)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {reminder.sent_at ? formatDate(reminder.sent_at) : '-'}
                       </td>
                       <td className="px-4 py-3">
-                        {getStatusBadge(reminder.status)}
+                        {getStatusBadge(reminder.send_status)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {reminder.status === 'failed' && (
+                          {reminder.send_status === 'failed' && (
                             <button
                               onClick={() => retryReminder(reminder.id)}
                               className="p-1 text-gray-400 hover:text-green-600 rounded"
@@ -350,7 +370,7 @@ export default function NotificationsManagement() {
                               <ArrowPathIcon className="w-5 h-5" />
                             </button>
                           )}
-                          {reminder.status === 'pending' && (
+                          {reminder.send_status === 'pending' && (
                             <button
                               onClick={() => cancelReminder(reminder.id)}
                               className="p-1 text-gray-400 hover:text-red-600 rounded"
@@ -381,14 +401,14 @@ export default function NotificationsManagement() {
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Título
+                    Asunto
                   </label>
                   <input
                     type="text"
-                    value={announcementForm.title}
-                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
+                    value={announcementForm.subject}
+                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, subject: e.target.value }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500"
-                    placeholder="Título del anuncio"
+                    placeholder="Asunto del correo"
                   />
                 </div>
 
@@ -420,57 +440,26 @@ export default function NotificationsManagement() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Canales
+                {/* Optional email sending */}
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="sendEmail"
+                    checked={announcementForm.sendEmail}
+                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, sendEmail: e.target.checked }))}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="sendEmail" className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <EnvelopeIcon className="w-5 h-5 text-gray-400" />
+                    También enviar por correo electrónico
                   </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={announcementForm.channels.includes('email')}
-                        onChange={(e) => {
-                          const channels = e.target.checked
-                            ? [...announcementForm.channels, 'email']
-                            : announcementForm.channels.filter(c => c !== 'email');
-                          setAnnouncementForm(prev => ({ ...prev, channels }));
-                        }}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <EnvelopeIcon className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">Email</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={announcementForm.channels.includes('sms')}
-                        onChange={(e) => {
-                          const channels = e.target.checked
-                            ? [...announcementForm.channels, 'sms']
-                            : announcementForm.channels.filter(c => c !== 'sms');
-                          setAnnouncementForm(prev => ({ ...prev, channels }));
-                        }}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <DevicePhoneMobileIcon className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">SMS</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={announcementForm.channels.includes('push')}
-                        onChange={(e) => {
-                          const channels = e.target.checked
-                            ? [...announcementForm.channels, 'push']
-                            : announcementForm.channels.filter(c => c !== 'push');
-                          setAnnouncementForm(prev => ({ ...prev, channels }));
-                        }}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <BellIcon className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">Push</span>
-                    </label>
-                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <BellIcon className="w-5 h-5 text-blue-500" />
+                  <span className="text-sm text-blue-700">
+                    El anuncio aparecerá en las notificaciones de {announcementForm.target === 'all' ? 'todos los usuarios' : announcementForm.target === 'patients' ? 'pacientes' : 'doctores'}
+                  </span>
                 </div>
               </div>
               
@@ -483,7 +472,7 @@ export default function NotificationsManagement() {
                 </button>
                 <button
                   onClick={sendAnnouncement}
-                  disabled={!announcementForm.title || !announcementForm.message}
+                  disabled={!announcementForm.subject || !announcementForm.message}
                   className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <PaperAirplaneIcon className="w-5 h-5" />

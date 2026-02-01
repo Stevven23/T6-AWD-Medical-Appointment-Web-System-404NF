@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { crudApi } from '../../services/httpClient';
+import jsPDF from 'jspdf';
 import {
   ClipboardDocumentListIcon,
   MagnifyingGlassIcon,
@@ -63,11 +64,11 @@ export default function ConsultationsManagement() {
     setLoadingDetails(true);
 
     try {
-      // Load consultation note details
+      // Load consultation note details - use correct API paths
       const [noteRes, prescriptionsRes, labReportsRes] = await Promise.all([
         crudApi.get(`/consultation-notes/appointment/${consultation.id}`).catch(() => ({ data: null })),
         crudApi.get(`/prescriptions/appointment/${consultation.id}`).catch(() => ({ data: [] })),
-        crudApi.get(`/lab-reports/appointment/${consultation.id}`).catch(() => ({ data: [] })),
+        crudApi.get(`/medical-records/lab-reports/appointment/${consultation.id}`).catch(() => ({ data: [] })),
       ]);
 
       setConsultationDetails({
@@ -99,6 +100,194 @@ export default function ConsultationsManagement() {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Helper to parse medications from prescription
+  const parseMedications = (prescription) => {
+    if (!prescription.medications) return [];
+    try {
+      // medications can be a JSON string or already an array
+      const meds = typeof prescription.medications === 'string' 
+        ? JSON.parse(prescription.medications) 
+        : prescription.medications;
+      return Array.isArray(meds) ? meds : [meds];
+    } catch (e) {
+      // If it's a plain string, treat it as a single medication name
+      return [{ medication: prescription.medications }];
+    }
+  };
+
+  // Get all medications from all prescriptions as flat array
+  const getAllMedications = (prescriptions) => {
+    if (!prescriptions || prescriptions.length === 0) return [];
+    return prescriptions.flatMap(rx => {
+      const meds = parseMedications(rx);
+      return meds.map(med => ({
+        ...med,
+        prescriptionInstructions: rx.instructions,
+        prescriptionDuration: rx.duration
+      }));
+    });
+  };
+
+  const exportConsultationPDF = () => {
+    if (!selectedConsultation) return;
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 20;
+
+    const patientName = `${selectedConsultation.patient?.first_name || ''} ${selectedConsultation.patient?.last_name || ''}`.trim() || 'N/A';
+    const doctorName = `Dr. ${selectedConsultation.doctor?.first_name || ''} ${selectedConsultation.doctor?.last_name || ''}`.trim();
+    const specialty = selectedConsultation.specialty?.name || 'Consulta General';
+
+    // Colors
+    const primaryColor = [59, 130, 246];
+    const textDark = [31, 41, 55];
+    const textLight = [107, 114, 128];
+
+    // Header
+    pdf.setFillColor(...primaryColor);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Resumen de Consulta', margin, 18);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'normal');
+    pdf.text('Clínica Médica - Sistema de Gestión', margin, 26);
+    pdf.text(`Fecha: ${formatDate(selectedConsultation.appointment_date || selectedConsultation.scheduled_start)}`, margin, 32);
+
+    // Patient and Doctor info
+    y = 50;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(margin, y, (pageWidth - margin * 2 - 5) / 2, 30, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('PACIENTE', margin + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.text(patientName, margin + 5, y + 16);
+    pdf.setTextColor(...textLight);
+    pdf.text(selectedConsultation.patient?.email || '', margin + 5, y + 23);
+
+    const rightColX = margin + (pageWidth - margin * 2 - 5) / 2 + 5;
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(rightColX, y, (pageWidth - margin * 2 - 5) / 2, 30, 'F');
+    pdf.setTextColor(...textDark);
+    pdf.setFontSize(10);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('MÉDICO', rightColX + 5, y + 8);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.text(doctorName, rightColX + 5, y + 16);
+    pdf.setTextColor(...textLight);
+    pdf.text(specialty, rightColX + 5, y + 23);
+
+    y = 90;
+
+    // Consultation notes
+    if (consultationDetails?.note) {
+      pdf.setTextColor(...textDark);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('NOTAS DE CONSULTA', margin, y);
+      y += 8;
+
+      const addSection = (title, content) => {
+        if (!content) return;
+        pdf.setFontSize(9);
+        pdf.setFont(undefined, 'bold');
+        pdf.setTextColor(...primaryColor);
+        pdf.text(title, margin, y);
+        y += 5;
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(...textDark);
+        const lines = pdf.splitTextToSize(content, pageWidth - margin * 2);
+        pdf.text(lines, margin, y);
+        y += lines.length * 4 + 5;
+      };
+
+      addSection('Subjetivo:', consultationDetails.note.subjective);
+      addSection('Objetivo:', consultationDetails.note.objective);
+      addSection('Diagnóstico:', consultationDetails.note.diagnosis);
+      addSection('Plan de Tratamiento:', consultationDetails.note.treatment_plan);
+
+      if (consultationDetails.note.follow_up_required) {
+        addSection('Seguimiento:', `Requerido - ${formatDate(consultationDetails.note.follow_up_date)}`);
+      }
+    }
+
+    // Prescriptions
+    const allMeds = getAllMedications(consultationDetails?.prescriptions);
+    if (allMeds.length > 0) {
+      y += 5;
+      pdf.setTextColor(...textDark);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('PRESCRIPCIONES', margin, y);
+      y += 10;
+
+      // Table header
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(margin, y - 4, pageWidth - margin * 2, 8, 'F');
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Medicamento', margin + 2, y);
+      pdf.text('Dosis', margin + 50, y);
+      pdf.text('Frecuencia', margin + 80, y);
+      pdf.text('Duración', margin + 115, y);
+      y += 6;
+
+      pdf.setFont(undefined, 'normal');
+      allMeds.forEach((med) => {
+        pdf.setFontSize(8);
+        pdf.text(med.medication || '-', margin + 2, y);
+        pdf.text(med.dosage || '-', margin + 50, y);
+        pdf.text(med.frequency || '-', margin + 80, y);
+        pdf.text(med.duration || med.prescriptionDuration || '-', margin + 115, y);
+        y += 5;
+        if (med.instructions) {
+          pdf.setTextColor(...textLight);
+          pdf.setFontSize(7);
+          const instrLines = pdf.splitTextToSize(`Instrucciones: ${med.instructions}`, pageWidth - margin * 2 - 10);
+          pdf.text(instrLines, margin + 5, y);
+          y += instrLines.length * 3 + 2;
+          pdf.setTextColor(...textDark);
+        }
+      });
+    }
+
+    // Lab reports
+    if (consultationDetails?.labReports?.length > 0) {
+      y += 5;
+      pdf.setTextColor(...textDark);
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('ÓRDENES DE LABORATORIO', margin, y);
+      y += 8;
+
+      consultationDetails.labReports.forEach((lab, idx) => {
+        pdf.setFontSize(9);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(`${idx + 1}. ${lab.test_name} - ${lab.status === 'completed' ? 'Completado' : 'Pendiente'}`, margin, y);
+        y += 5;
+      });
+    }
+
+    // Footer
+    pdf.setTextColor(...textLight);
+    pdf.setFontSize(8);
+    pdf.text('Este documento es un resumen de la consulta médica', pageWidth / 2, 280, { align: 'center' });
+    pdf.text('Clínica Médica - Documento generado automáticamente', pageWidth / 2, 285, { align: 'center' });
+
+    // Open PDF
+    const pdfBlob = pdf.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
 
   const filteredConsultations = consultations.filter(consultation => {
@@ -439,15 +628,17 @@ export default function ConsultationsManagement() {
                                 <th className="px-3 py-2 text-left text-xs text-gray-500">Dosis</th>
                                 <th className="px-3 py-2 text-left text-xs text-gray-500">Frecuencia</th>
                                 <th className="px-3 py-2 text-left text-xs text-gray-500">Duración</th>
+                                <th className="px-3 py-2 text-left text-xs text-gray-500">Instrucciones</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                              {consultationDetails.prescriptions.map((rx, idx) => (
+                              {getAllMedications(consultationDetails.prescriptions).map((med, idx) => (
                                 <tr key={idx}>
-                                  <td className="px-3 py-2 font-medium">{rx.medication_name}</td>
-                                  <td className="px-3 py-2">{rx.dosage}</td>
-                                  <td className="px-3 py-2">{rx.frequency}</td>
-                                  <td className="px-3 py-2">{rx.duration}</td>
+                                  <td className="px-3 py-2 font-medium">{med.medication || '-'}</td>
+                                  <td className="px-3 py-2">{med.dosage || '-'}</td>
+                                  <td className="px-3 py-2">{med.frequency || '-'}</td>
+                                  <td className="px-3 py-2">{med.duration || '-'}</td>
+                                  <td className="px-3 py-2 text-gray-500 text-xs max-w-xs truncate">{med.instructions || '-'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -495,6 +686,7 @@ export default function ConsultationsManagement() {
                   Cerrar
                 </button>
                 <button
+                  onClick={exportConsultationPDF}
                   className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center gap-2"
                 >
                   <DocumentArrowDownIcon className="w-5 h-5" />

@@ -114,14 +114,40 @@ class PatientModel {
 
   /**
    * Search patients
-   * @param {string} query - Search query
-   * @param {Object} params - Additional parameters
+   * @param {Object} params - Search parameters (search, status, etc.)
    * @returns {Promise<Patient[]>}
    */
-  static async search(query, params = {}) {
-    const response = await crudApi.get('/patients/search', {
-      params: { query, ...params }
-    });
+  static async search(params = {}) {
+    const response = await crudApi.get('/patients', { params });
+    return response.data;
+  }
+
+  /**
+   * Get patient statistics
+   * @returns {Promise<{total: number, active: number, inactive: number}>}
+   */
+  static async getStats() {
+    const response = await crudApi.get('/patients/stats');
+    return response.data;
+  }
+
+  /**
+   * Create a new patient with user account
+   * @param {Object} patientData - Patient data including user fields
+   * @returns {Promise<Patient>}
+   */
+  static async createWithUser(patientData) {
+    const response = await crudApi.post('/patients/with-user', patientData);
+    return response.data;
+  }
+
+  /**
+   * Filter patients by criteria
+   * @param {Object} params - Filter parameters
+   * @returns {Promise<Patient[]>}
+   */
+  static async filter(params = {}) {
+    const response = await crudApi.get('/patients', { params });
     return response.data;
   }
 }

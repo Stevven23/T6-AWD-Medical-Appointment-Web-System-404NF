@@ -46,17 +46,12 @@ export default function LaboratoryManagement() {
       if (statusFilter !== 'all') params.status = statusFilter;
       if (dateFilter) params.date = dateFilter;
       
-      const response = await crudApi.get('/medical-records/lab-reports', { params });
+      // Use admin-specific endpoint
+      const response = await crudApi.get('/medical-records/lab-reports/all', { params });
       setLabOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error loading lab orders:', error);
-      // Try alternative endpoint
-      try {
-        const response = await crudApi.get('/lab-reports', { params: {} });
-        setLabOrders(response.data.data || response.data || []);
-      } catch (e) {
-        setLabOrders([]);
-      }
+      setLabOrders([]);
     } finally {
       setLoading(false);
     }
@@ -64,7 +59,7 @@ export default function LaboratoryManagement() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await crudApi.patch(`/lab-reports/${orderId}/status`, { status: newStatus });
+      await crudApi.patch(`/medical-records/lab-reports/${orderId}/status`, { status: newStatus });
       showNotification('Estado actualizado', 'success');
       loadLabOrders();
     } catch (error) {
@@ -77,7 +72,7 @@ export default function LaboratoryManagement() {
     if (!selectedOrder) return;
     
     try {
-      await crudApi.post(`/lab-reports/${selectedOrder.id}/results`, {
+      await crudApi.post(`/medical-records/lab-reports/${selectedOrder.id}/results`, {
         results: resultForm.results,
         notes: resultForm.notes,
       });
@@ -169,15 +164,16 @@ export default function LaboratoryManagement() {
 
   const filteredOrders = labOrders.filter(order => {
     const search = searchTerm.toLowerCase();
-    const patientName = `${order.patient?.first_name || ''} ${order.patient?.last_name || ''}`.toLowerCase();
+    const patientName = (order.patient_name || '').toLowerCase();
     const testName = (order.test_name || '').toLowerCase();
-    return patientName.includes(search) || testName.includes(search);
+    const doctorName = (order.doctor_name || '').toLowerCase();
+    return patientName.includes(search) || testName.includes(search) || doctorName.includes(search);
   });
 
   const stats = {
     total: labOrders.length,
     pending: labOrders.filter(o => o.status === 'pending').length,
-    processing: labOrders.filter(o => o.status === 'processing').length,
+    processing: labOrders.filter(o => o.status === 'processing' || o.status === 'in_progress').length,
     completed: labOrders.filter(o => o.status === 'completed').length,
   };
 
@@ -324,10 +320,7 @@ export default function LaboratoryManagement() {
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">
-                          {order.patient?.first_name} {order.patient?.last_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {order.patient?.email}
+                          {order.patient_name || 'Paciente desconocido'}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -339,7 +332,7 @@ export default function LaboratoryManagement() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        Dr. {order.doctor?.first_name} {order.doctor?.last_name}
+                        {order.doctor_name || 'Doctor desconocido'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {formatDate(order.order_date)}

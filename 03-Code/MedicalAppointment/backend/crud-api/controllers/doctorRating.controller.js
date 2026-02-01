@@ -11,6 +11,33 @@ const ResponseBuilder = require('../../shared/utils/responseBuilder.utils');
 
 class DoctorRatingController {
   /**
+   * GET /doctor-ratings
+   * Get all ratings (admin)
+   */
+  getAll = asyncHandler(async (req, res) => {
+    const { limit, is_active } = req.query;
+    
+    const filters = { limit };
+    if (is_active !== undefined) {
+      filters.is_active = is_active === 'true';
+    }
+    
+    const ratings = await doctorRatingRepository.findAll(filters);
+
+    return ResponseBuilder.success(res, ratings);
+  });
+
+  /**
+   * GET /doctor-ratings/averages
+   * Get average ratings for all doctors
+   */
+  getAllAverages = asyncHandler(async (req, res) => {
+    const averages = await doctorRatingRepository.getAllAverageRatings();
+
+    return ResponseBuilder.success(res, averages);
+  });
+
+  /**
    * GET /doctor-ratings/doctor/:doctorId
    * Get all ratings for a doctor
    */

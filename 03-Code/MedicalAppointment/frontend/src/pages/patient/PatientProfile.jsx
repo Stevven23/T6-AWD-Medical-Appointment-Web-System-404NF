@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
 import { PatientModel, AuthModel } from '../../models';
+import InsuranceProviderModel from '../../models/InsuranceProvider.model';
 import { useAuth } from '../../context/AuthContext';
 import {
   UserCircleIcon,
@@ -17,6 +18,9 @@ export default function PatientProfile() {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [activeTab, setActiveTab] = useState('personal');
+
+  const [insuranceProviders, setInsuranceProviders] = useState([]);
+  const [loadingInsurance, setLoadingInsurance] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -38,7 +42,7 @@ export default function PatientProfile() {
     current_medications: '',
     height: '',
     weight: '',
-    insurance_plan: '',
+    insurance_provider_id: '',
     insurance_number: '',
     emergency_contact_name: '',
     emergency_contact_relation: '',
@@ -53,7 +57,20 @@ export default function PatientProfile() {
 
   useEffect(() => {
     loadProfileData();
+    loadInsuranceProviders();
   }, []);
+
+  const loadInsuranceProviders = async () => {
+    try {
+      setLoadingInsurance(true);
+      const providers = await InsuranceProviderModel.getAll();
+      setInsuranceProviders(providers);
+    } catch (error) {
+      console.error('Error loading insurance providers:', error);
+    } finally {
+      setLoadingInsurance(false);
+    }
+  };
 
   const loadProfileData = async () => {
     try {
@@ -487,15 +504,25 @@ export default function PatientProfile() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Plan de Seguro
+                        Proveedor de Seguro Médico
                       </label>
-                      <input
-                        type="text"
-                        name="insurance_plan"
-                        value={formData.insurance_plan}
+                      <select
+                        name="insurance_provider_id"
+                        value={formData.insurance_provider_id}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                        disabled={loadingInsurance}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      >
+                        <option value="">Sin seguro médico</option>
+                        {insuranceProviders.map((provider) => (
+                          <option key={provider.id} value={provider.id}>
+                            {provider.name} {provider.discount_percentage > 0 && `(${provider.discount_percentage}% descuento)`}
+                          </option>
+                        ))}
+                      </select>
+                      {loadingInsurance && (
+                        <p className="text-sm text-gray-500 mt-1">Cargando proveedores...</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -506,6 +533,7 @@ export default function PatientProfile() {
                         name="insurance_number"
                         value={formData.insurance_number}
                         onChange={handleInputChange}
+                        placeholder="Ingrese su número de póliza"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>

@@ -13,6 +13,63 @@ class DoctorRatingRepository {
   }
 
   /**
+   * Get all ratings (admin view)
+   * @param {Object} filters - Query filters
+   * @returns {Promise<Array>}
+   */
+  async findAll(filters = {}) {
+    let query = supabase
+      .from(this.tableName)
+      .select(`
+        *,
+        patient:users!doctor_ratings_patient_user_id_fkey(id, first_name, last_name, email),
+        doctor:doctors!doctor_ratings_doctor_id_fkey(
+          id,
+          user:users!doctors_user_id_fkey(first_name, last_name),
+          specialty:specialties(name)
+        ),
+        appointment:appointments(id, scheduled_start)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (filters.is_active !== undefined) {
+      query = query.eq('is_active', filters.is_active);
+    }
+
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    // Flatten doctor user data for frontend
+    return (data || []).map(rating => ({
+      ...rating,
+      doctor: rating.doctor ? {
+        id: rating.doctor.id,
+        first_name: rating.doctor.user?.first_name,
+        last_name: rating.doctor.user?.last_name,
+        specialty: rating.doctor.specialty?.name
+      } : null
+    }));
+  }
+
+  /**
+   * Get average ratings for all doctors (from view)
+   * @returns {Promise<Array>}
+   */
+  async getAllAverageRatings() {
+    const { data, error } = await supabase
+      .from('doctor_average_ratings')
+      .select('*')
+      .order('average_rating', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
    * Get all ratings for a doctor
    * @param {string} doctorId - Doctor ID
    * @param {Object} filters - Query filters

@@ -81,10 +81,8 @@ class ConsultationNoteController {
     
     const note = await consultationNoteRepository.findByAppointment(appointmentId);
     
-    if (!note) {
-      throw new NotFoundError('Nota de consulta para cita', appointmentId);
-    }
-
+    // Return null if no note exists instead of throwing error
+    // This allows the frontend to handle the case gracefully
     return ResponseBuilder.success(res, note);
   });
 

@@ -10,6 +10,7 @@ const ResponseBuilder = require('../../shared/utils/responseBuilder.utils');
 const { asyncHandler } = require('../../shared/middleware/errorHandler.middleware');
 const { NotFoundError } = require('../../shared/errors');
 const { supabase } = require('../../shared/config/database.config');
+const { createAuditLog, AuditActions } = require('../../shared/utils/audit.utils');
 
 class MedicalRecordController {
   /**
@@ -119,6 +120,17 @@ class MedicalRecordController {
     await medicalRecordRepository.findOrCreate(patientUserId);
 
     const updated = await medicalRecordRepository.updateByPatient(patientUserId, updateData);
+
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.MEDICAL_RECORD_UPDATED,
+      tableName: 'medical_records',
+      recordId: updated.id,
+      newValues: Object.keys(updateData),
+      description: `Historial médico actualizado por paciente`,
+      req
+    });
 
     return ResponseBuilder.success(res, updated, 200, 'Historial médico actualizado');
   });
@@ -584,6 +596,190 @@ class MedicalRecordController {
     }
 
     return ResponseBuilder.success(res, null, 200, 'Resultados subidos exitosamente');
+  });
+
+  /**
+   * GET /medical-records/lab-reports/all
+   * Get all lab reports (admin)
+   */
+  getAllLabReports = asyncHandler(async (req, res) => {
+    const { status, date } = req.query;
+
+    let query = supabase
+      .from('lab_reports')
+      .select(`
+        id,
+        test_name,
+        order_date,
+        doctor_notes,
+        status,
+        created_at,
+        patient_user_id,
+        doctor_id,
+        appointment_id
+      `)
+      .order('order_date', { ascending: false });
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    if (date) {
+      query = query.eq('order_date', date);
+    }
+
+    const { data: reports, error } = await query;
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    if (!reports || reports.length === 0) {
+      return ResponseBuilder.success(res, []);
+    }
+
+    // Get unique patient and doctor IDs
+    const patientUserIds = [...new Set(reports.map(r => r.patient_user_id).filter(Boolean))];
+    const doctorIds = [...new Set(reports.map(r => r.doctor_id).filter(Boolean))];
+
+    // Fetch patient names
+    const { data: patients } = await supabase
+      .from('users')
+      .select('id, first_name, last_name')
+      .in('id', patientUserIds);
+
+    const patientMap = {};
+    (patients || []).forEach(p => {
+      patientMap[p.id] = `${p.first_name} ${p.last_name}`;
+    });
+
+    // Fetch doctors with user info
+    const { data: doctors } = await supabase
+      .from('doctors')
+      .select('id, users(first_name, last_name)')
+      .in('id', doctorIds);
+
+    const doctorMap = {};
+    (doctors || []).forEach(d => {
+      const firstName = d.users?.first_name || '';
+      const lastName = d.users?.last_name || '';
+      doctorMap[d.id] = firstName && lastName ? `Dr. ${firstName} ${lastName}` : 'Dr. Desconocido';
+    });
+
+    // Fetch lab_results for all reports
+    const reportIds = reports.map(r => r.id);
+    const { data: allResults } = await supabase
+      .from('lab_results')
+      .select('id, report_id, parameter_name, result_value, unit, reference_range, status')
+      .in('report_id', reportIds);
+
+    const resultsMap = {};
+    (allResults || []).forEach(result => {
+      if (!resultsMap[result.report_id]) {
+        resultsMap[result.report_id] = [];
+      }
+      resultsMap[result.report_id].push(result);
+    });
+
+    // Transform data
+    const transformedReports = reports.map(report => ({
+      id: report.id,
+      test_name: report.test_name,
+      order_date: report.order_date,
+      doctor_notes: report.doctor_notes,
+      status: report.status,
+      created_at: report.created_at,
+      patient_user_id: report.patient_user_id,
+      doctor_id: report.doctor_id,
+      appointment_id: report.appointment_id,
+      patient_name: patientMap[report.patient_user_id] || 'Paciente desconocido',
+      doctor_name: doctorMap[report.doctor_id] || 'Doctor desconocido',
+      lab_results: resultsMap[report.id] || []
+    }));
+
+    return ResponseBuilder.success(res, transformedReports);
+  });
+
+  /**
+   * PATCH /medical-records/lab-reports/:reportId/status
+   * Update lab report status (admin)
+   */
+  updateLabReportStatus = asyncHandler(async (req, res) => {
+    const { reportId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return ResponseBuilder.error(res, 'Estado inválido', 400);
+    }
+
+    const { data, error } = await supabase
+      .from('lab_reports')
+      .update({ status })
+      .eq('id', reportId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return ResponseBuilder.success(res, data, 200, 'Estado actualizado');
+  });
+
+  /**
+   * POST /medical-records/lab-reports/:reportId/results (admin)
+   * Add results to a lab report
+   */
+  addLabReportResults = asyncHandler(async (req, res) => {
+    const { reportId } = req.params;
+    const { results, notes } = req.body;
+
+    // Verify lab report exists
+    const { data: report, error: reportError } = await supabase
+      .from('lab_reports')
+      .select('id')
+      .eq('id', reportId)
+      .single();
+
+    if (reportError || !report) {
+      return ResponseBuilder.error(res, 'Orden de laboratorio no encontrada', 404);
+    }
+
+    // Insert results
+    if (results && results.length > 0) {
+      const labResultsToInsert = results.map(r => ({
+        report_id: reportId,
+        parameter_name: r.parameter_name,
+        result_value: r.result_value,
+        unit: r.unit || '',
+        reference_range: r.reference_range || '',
+        status: r.status || 'normal'
+      }));
+
+      const { error: resultsError } = await supabase
+        .from('lab_results')
+        .insert(labResultsToInsert);
+
+      if (resultsError) {
+        throw new Error(`Error al insertar resultados: ${resultsError.message}`);
+      }
+    }
+
+    // Update notes and status
+    const { error: updateError } = await supabase
+      .from('lab_reports')
+      .update({ 
+        doctor_notes: notes || '',
+        status: 'completed'
+      })
+      .eq('id', reportId);
+
+    if (updateError) {
+      throw new Error(`Error al actualizar orden: ${updateError.message}`);
+    }
+
+    return ResponseBuilder.success(res, null, 200, 'Resultados guardados exitosamente');
   });
 }
 

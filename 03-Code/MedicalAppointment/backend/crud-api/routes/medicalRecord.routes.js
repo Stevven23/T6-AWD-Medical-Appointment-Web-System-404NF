@@ -21,6 +21,27 @@ router.use(authMiddleware);
 router.get('/', requireRole('patient'), medicalRecordController.getByPatient);
 
 /**
+ * @route   GET /api/v1/medical-records/lab-reports/all
+ * @desc    Get all lab reports (admin)
+ * @access  Admin
+ */
+router.get('/lab-reports/all', requireRole(['admin']), medicalRecordController.getAllLabReports);
+
+/**
+ * @route   PATCH /api/v1/medical-records/lab-reports/:reportId/status
+ * @desc    Update lab report status
+ * @access  Admin
+ */
+router.patch('/lab-reports/:reportId/status', requireRole(['admin']), medicalRecordController.updateLabReportStatus);
+
+/**
+ * @route   POST /api/v1/medical-records/lab-reports/:reportId/results
+ * @desc    Add results to a lab report
+ * @access  Admin
+ */
+router.post('/lab-reports/:reportId/results', requireRole(['admin']), medicalRecordController.addLabReportResults);
+
+/**
  * @route   GET /api/v1/medical-records/lab-reports
  * @desc    Get current patient's lab reports
  * @access  Patient
@@ -30,9 +51,9 @@ router.get('/lab-reports', requireRole('patient'), medicalRecordController.getLa
 /**
  * @route   GET /api/v1/medical-records/lab-reports/appointment/:appointmentId
  * @desc    Get lab reports for a specific appointment
- * @access  Doctor
+ * @access  Doctor, Admin
  */
-router.get('/lab-reports/appointment/:appointmentId', requireRole(['doctor']), medicalRecordController.getLabReportsByAppointment);
+router.get('/lab-reports/appointment/:appointmentId', requireRole(['doctor', 'admin']), medicalRecordController.getLabReportsByAppointment);
 
 /**
  * @route   GET /api/v1/medical-records/lab-reports/doctor

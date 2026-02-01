@@ -15,12 +15,21 @@ const { NotFoundError, ValidationError } = require('../../shared/errors');
 class ScheduleController {
   /**
    * GET /schedules
-   * Get all schedules (admin)
+   * Get all schedules (admin) or by doctor_id query param
    */
   getAll = asyncHandler(async (req, res) => {
-    const schedules = await scheduleRepository.findAll({
-      orderBy: 'doctor_id'
-    });
+    const { doctor_id } = req.query;
+    
+    let schedules;
+    if (doctor_id) {
+      // If doctor_id is provided, get schedules for that doctor
+      schedules = await scheduleRepository.findByDoctor(doctor_id);
+    } else {
+      // Otherwise get all schedules
+      schedules = await scheduleRepository.findAll({
+        orderBy: 'doctor_id'
+      });
+    }
     return ResponseBuilder.success(res, schedules);
   });
 
@@ -146,6 +155,47 @@ class ScheduleController {
     });
 
     return ResponseBuilder.created(res, schedule, 'Horario creado exitosamente');
+  });
+
+  /**
+   * POST /schedules/bulk
+   * Create or update multiple schedules for a doctor
+   */
+  bulkCreate = asyncHandler(async (req, res) => {
+    const { doctor_id, schedules } = req.body;
+
+    if (!doctor_id) {
+      throw new ValidationError('doctor_id es requerido');
+    }
+
+    if (!Array.isArray(schedules) || schedules.length === 0) {
+      throw new ValidationError('schedules debe ser un array no vacío');
+    }
+
+    // Verify doctor exists
+    const doctor = await doctorRepository.findById(doctor_id);
+    if (!doctor) {
+      throw new NotFoundError('Doctor', doctor_id);
+    }
+
+    // Upsert each schedule
+    const results = [];
+    for (const schedule of schedules) {
+      if (schedule.day_of_week === undefined) {
+        continue; // Skip invalid entries
+      }
+
+      const result = await scheduleRepository.upsert(doctor_id, schedule.day_of_week, {
+        start_time: schedule.start_time || '08:00',
+        end_time: schedule.end_time || '17:00',
+        break_start_time: schedule.break_start_time || null,
+        break_end_time: schedule.break_end_time || null,
+        is_working_day: schedule.is_working_day !== false
+      });
+      results.push(result);
+    }
+
+    return ResponseBuilder.success(res, results, 200, 'Horarios actualizados exitosamente');
   });
 
   /**
