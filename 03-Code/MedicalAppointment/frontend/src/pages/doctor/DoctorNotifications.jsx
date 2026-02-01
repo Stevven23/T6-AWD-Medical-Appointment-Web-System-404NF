@@ -497,17 +497,17 @@ export default function DoctorNotifications() {
 
   return (
     <DoctorLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BellSolidIcon className="h-8 w-8 text-blue-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BellSolidIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Notificaciones</h1>
+              <p className="text-xs sm:text-sm text-gray-500">
                 {unreadCount > 0 
-                  ? `${unreadCount} notificación${unreadCount !== 1 ? 'es' : ''} sin leer`
-                  : 'Todas las notificaciones leídas'}
+                  ? `${unreadCount} sin leer`
+                  : 'Todas leídas'}
               </p>
             </div>
           </div>
@@ -518,15 +518,15 @@ export default function DoctorNotifications() {
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
               title="Actualizar"
             >
-              <ArrowPathIcon className="h-5 w-5" />
+              <ArrowPathIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition"
               >
-                <CheckCircleIcon className="h-4 w-4" />
-                Marcar todas como leídas
+                <CheckCircleIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Marcar </span>todas
               </button>
             )}
           </div>
@@ -572,14 +572,14 @@ export default function DoctorNotifications() {
         )}
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Tabs">
+        <div className="border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
+          <nav className="flex gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide" aria-label="Tabs">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg whitespace-nowrap transition
+                  flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-t-lg whitespace-nowrap transition flex-shrink-0
                   ${activeTab === tab.id
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 hover:bg-gray-100'}
@@ -587,7 +587,7 @@ export default function DoctorNotifications() {
               >
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs ${
                     activeTab === tab.id 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-200 text-gray-600'
@@ -616,7 +616,7 @@ export default function DoctorNotifications() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {filteredNotifications.map(notification => {
               const config = NOTIFICATION_TYPES[notification.type] || NOTIFICATION_TYPES.system;
               const IconComponent = config.icon;
@@ -627,7 +627,7 @@ export default function DoctorNotifications() {
                   key={notification.id}
                   onClick={() => markAsRead(notification.id)}
                   className={`
-                    relative flex items-start gap-4 p-4 rounded-lg border cursor-pointer
+                    relative flex items-start gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border cursor-pointer
                     transition-all duration-200 bg-white shadow-sm
                     ${notificationIsRead 
                       ? 'border-gray-200 hover:bg-gray-50' 
@@ -636,49 +636,49 @@ export default function DoctorNotifications() {
                 >
                   {/* Unread indicator */}
                   {!notificationIsRead && (
-                    <div className="absolute top-4 left-0 w-1 h-8 bg-blue-500 rounded-r-full" />
+                    <div className="absolute top-3 sm:top-4 left-0 w-1 h-6 sm:h-8 bg-blue-500 rounded-r-full" />
                   )}
 
                   {/* Icon */}
-                  <div className={`flex-shrink-0 p-2 rounded-lg ${config.bgColor}`}>
-                    <IconComponent className={`h-5 w-5 ${config.iconColor}`} />
+                  <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg ${config.bgColor}`}>
+                    <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${config.iconColor}`} />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${config.bgColor} ${config.iconColor} font-medium mb-1`}>
+                      <div className="min-w-0">
+                        <span className={`inline-block text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${config.bgColor} ${config.iconColor} font-medium mb-1`}>
                           {config.label}
                         </span>
-                        <h3 className={`font-medium ${notificationIsRead ? 'text-gray-600' : 'text-gray-900'}`}>
+                        <h3 className={`font-medium text-sm sm:text-base ${notificationIsRead ? 'text-gray-600' : 'text-gray-900'}`}>
                           {notification.title}
                           {!notificationIsRead && (
-                            <span className="ml-2 w-2 h-2 bg-blue-600 rounded-full inline-block"></span>
+                            <span className="ml-1 sm:ml-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full inline-block"></span>
                           )}
                         </h3>
                       </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                      <span className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                         {getTimeAgo(notification.date)}
                       </span>
                     </div>
-                    <p className={`mt-1 text-sm ${notificationIsRead ? 'text-gray-500' : 'text-gray-700'}`}>
+                    <p className={`mt-1 text-xs sm:text-sm line-clamp-2 ${notificationIsRead ? 'text-gray-500' : 'text-gray-700'}`}>
                       {notification.message}
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex-shrink-0 flex items-center gap-1">
+                  <div className="flex-shrink-0 flex items-center gap-0.5 sm:gap-1">
                     {!notificationIsRead && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsRead(notification.id);
                         }}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded transition"
+                        className="p-1 sm:p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded transition"
                         title="Marcar como leída"
                       >
-                        <CheckIcon className="h-4 w-4" />
+                        <CheckIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                       </button>
                     )}
                     <button
@@ -686,10 +686,10 @@ export default function DoctorNotifications() {
                         e.stopPropagation();
                         deleteNotification(notification.id);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded transition"
+                      className="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded transition"
                       title="Eliminar"
                     >
-                      <TrashIcon className="h-4 w-4" />
+                      <TrashIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                     </button>
                   </div>
                 </div>

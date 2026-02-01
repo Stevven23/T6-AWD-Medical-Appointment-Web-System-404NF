@@ -14,6 +14,8 @@ import {
   ArrowRightOnRectangleIcon,
   BeakerIcon,
   Cog6ToothIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 // Storage key for tracking read notifications
@@ -24,6 +26,12 @@ export default function DoctorLayout({ children }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [notificationCount, setNotificationCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   // Function to calculate unread notification count
   const calculateUnreadCount = useCallback(async () => {
@@ -177,16 +185,35 @@ export default function DoctorLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg flex flex-col sticky top-0 h-screen">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg flex flex-col transform transition-transform duration-300 ease-in-out
+        lg:relative lg:translate-x-0 lg:z-auto
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-center">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
             <img 
               src="/logo.png" 
               alt="Clínica San Miguel" 
-              className="h-16 object-contain"
+              className="h-12 sm:h-16 object-contain"
             />
+            {/* Close button for mobile */}
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+            >
+              <XMarkIcon className="w-5 h-5 text-gray-600" />
+            </button>
           </div>
         </div>
 
@@ -238,19 +265,28 @@ export default function DoctorLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden w-full">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-8 py-4">
+        <header className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-4 sticky top-0 z-30">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-800">
-              {menuItems.find(item => item.path === location.pathname)?.label || 'Doctor'}
-            </h1>
-            
             <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-sm font-medium">
+              {/* Mobile menu button */}
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Bars3Icon className="w-6 h-6 text-gray-600" />
+              </button>
+              <h1 className="text-lg sm:text-2xl font-semibold text-gray-800 truncate">
+                {menuItems.find(item => item.path === location.pathname)?.label || 'Doctor'}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="hidden sm:block text-gray-600 text-sm font-medium truncate max-w-[150px]">
                 Dr. {user?.first_name} {user?.last_name}
               </span>
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
                 {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
               </div>
             </div>
@@ -258,7 +294,7 @@ export default function DoctorLayout({ children }) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-auto p-8">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

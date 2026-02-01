@@ -421,95 +421,95 @@ export default function DoctorDashboard() {
     <DoctorLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
                 ¡Buenos días, Doctor!
               </h2>
-              <p className="text-blue-100">
+              <p className="text-blue-100 text-sm sm:text-base">
                 {todayDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
-            <div className="mt-4 md:mt-0 flex items-center gap-4">
-              <div className="text-center px-4 py-2 bg-white/20 rounded-lg">
-                <p className="text-3xl font-bold">{stats.pendingToday}</p>
-                <p className="text-sm text-blue-100">Citas Pendientes</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="text-center flex-1 sm:flex-initial px-3 sm:px-4 py-2 bg-white/20 rounded-lg">
+                <p className="text-2xl sm:text-3xl font-bold">{stats.pendingToday}</p>
+                <p className="text-xs sm:text-sm text-blue-100">Pendientes</p>
               </div>
-              <div className="text-center px-4 py-2 bg-white/20 rounded-lg">
-                <p className="text-3xl font-bold">{stats.completedToday}</p>
-                <p className="text-sm text-blue-100">Completadas Hoy</p>
+              <div className="text-center flex-1 sm:flex-initial px-3 sm:px-4 py-2 bg-white/20 rounded-lg">
+                <p className="text-2xl sm:text-3xl font-bold">{stats.completedToday}</p>
+                <p className="text-xs sm:text-sm text-blue-100">Completadas</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
           <Link
             to="/doctor/appointments"
-            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+            className="bg-white rounded-xl shadow-sm p-3 sm:p-4 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <CalendarIcon className="w-5 h-5 text-blue-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <div>
-              <p className="font-semibold text-gray-800">Ver Citas</p>
-              <p className="text-xs text-gray-500">Gestionar agenda</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">Ver Citas</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Gestionar agenda</p>
             </div>
           </Link>
           
           <Link
             to="/doctor/patients"
-            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+            className="bg-white rounded-xl shadow-sm p-3 sm:p-4 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <UserGroupIcon className="w-5 h-5 text-green-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+              <UserGroupIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
-            <div>
-              <p className="font-semibold text-gray-800">Pacientes</p>
-              <p className="text-xs text-gray-500">Ver historial</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">Pacientes</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Ver historial</p>
             </div>
           </Link>
           
           <Link
             to="/doctor/prescriptions"
-            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+            className="bg-white rounded-xl shadow-sm p-3 sm:p-4 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <DocumentTextIcon className="w-5 h-5 text-purple-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+              <DocumentTextIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
             </div>
-            <div>
-              <p className="font-semibold text-gray-800">Recetas</p>
-              <p className="text-xs text-gray-500">Historial</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">Recetas</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Historial</p>
             </div>
           </Link>
           
           <Link
             to="/doctor/reports"
-            className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition flex items-center gap-3"
+            className="bg-white rounded-xl shadow-sm p-3 sm:p-4 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-              <ChartBarIcon className="w-5 h-5 text-orange-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <ChartBarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
             </div>
-            <div>
-              <p className="font-semibold text-gray-800">Reportes</p>
-              <p className="text-xs text-gray-500">Estadísticas</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">Reportes</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Estadísticas</p>
             </div>
           </Link>
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Today's Agenda */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 text-blue-600" />
-                Mi Agenda Hoy
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <span className="hidden xs:inline">Mi </span>Agenda Hoy
               </h3>
-              <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1">
-                Ver todas <ArrowRightIcon className="w-4 h-4" />
+              <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm flex items-center gap-1 flex-shrink-0">
+                Ver todas <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               </Link>
             </div>
 
@@ -533,7 +533,7 @@ export default function DoctorDashboard() {
                   return (
                     <div
                       key={apt.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg border transition ${
+                      className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border transition ${
                         isNow 
                           ? 'border-blue-300 bg-blue-50' 
                           : apt.status_code === 'completed'
@@ -541,8 +541,21 @@ export default function DoctorDashboard() {
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
-                      {/* Time */}
-                      <div className="text-center w-16">
+                      {/* Mobile: Time + Patient Row */}
+                      <div className="flex items-center gap-3 sm:hidden">
+                        <div className={`text-center min-w-[50px] px-2 py-1 rounded ${isNow ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          <p className={`text-sm font-bold ${isNow ? 'text-blue-600' : 'text-gray-700'}`}>
+                            {formatTime(apt.scheduled_start).split(':')[0]}:{formatTime(apt.scheduled_start).split(':')[1].split(' ')[0]}
+                          </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm truncate">{apt.patient_name || 'Paciente'}</p>
+                          <p className="text-xs text-gray-600 truncate">{apt.reason || 'Consulta general'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Desktop: Time */}
+                      <div className="hidden sm:block text-center w-16">
                         <p className={`text-lg font-bold ${isNow ? 'text-blue-600' : 'text-gray-700'}`}>
                           {formatTime(apt.scheduled_start).split(':')[0]}:{formatTime(apt.scheduled_start).split(':')[1].split(' ')[0]}
                         </p>
@@ -551,37 +564,37 @@ export default function DoctorDashboard() {
                         </p>
                       </div>
                       
-                      {/* Patient Info */}
-                      <div className="flex-1">
+                      {/* Desktop: Patient Info */}
+                      <div className="hidden sm:block flex-1">
                         <p className="font-semibold text-gray-800">{apt.patient_name || 'Paciente'}</p>
                         <p className="text-sm text-gray-600">{apt.reason || 'Consulta general'}</p>
                       </div>
                       
                       {/* Status & Action */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 sm:gap-2 justify-end sm:justify-start">
                         {apt.status_code === 'completed' ? (
-                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
-                            <CheckCircleIcon className="w-4 h-4" />
-                            Completada
+                          <span className="px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                            <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden xs:inline">Completada</span>
                           </span>
                         ) : apt.status_code === 'cancelled' ? (
-                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                          <span className="px-2 sm:px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                             Cancelada
                           </span>
                         ) : apt.status_code === 'in_progress' ? (
                           <button
                             onClick={() => handleStartConsultation(apt.id)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
+                            className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
                           >
-                            <PlayIcon className="w-4 h-4" />
+                            <PlayIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                             Continuar
                           </button>
                         ) : (
                           <button
                             onClick={() => handleStartConsultation(apt.id)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
+                            className="px-2 sm:px-3 py-1 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1 hover:bg-blue-700"
                           >
-                            <PlayIcon className="w-4 h-4" />
+                            <PlayIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                             Iniciar
                           </button>
                         )}
@@ -594,7 +607,7 @@ export default function DoctorDashboard() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Pending Actions */}
             {pendingActions.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm p-4">
@@ -752,10 +765,10 @@ export default function DoctorDashboard() {
         </div>
 
         {/* Upcoming Appointments */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Próximas Citas (7 días)</h3>
-            <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-sm">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800">Próximas Citas (7 días)</h3>
+            <Link to="/doctor/appointments" className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm">
               Ver calendario completo
             </Link>
           </div>
@@ -769,19 +782,19 @@ export default function DoctorDashboard() {
               <p>No hay citas próximas programadas</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {appointments.map((apt) => (
                 <div
                   key={apt.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer"
+                  className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer"
                   onClick={() => handleStartConsultation(apt.id)}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CalendarIcon className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{formatDate(apt.scheduled_start)}</span>
+                    <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                    <span className="text-xs sm:text-sm text-gray-600">{formatDate(apt.scheduled_start)}</span>
                   </div>
-                  <p className="font-semibold text-gray-800 mb-1">{apt.patient_name || 'Paciente'}</p>
-                  <p className="text-sm text-gray-500">{formatTime(apt.scheduled_start)}</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base mb-1 truncate">{apt.patient_name || 'Paciente'}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">{formatTime(apt.scheduled_start)}</p>
                   <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium ${
                     apt.status_code === 'confirmed'
                       ? 'bg-green-100 text-green-700'

@@ -124,8 +124,8 @@ export default function DoctorProfile() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Mi Perfil</h2>
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Mi Perfil</h2>
 
         {/* Notification */}
         {notification && (
@@ -141,20 +141,20 @@ export default function DoctorProfile() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-gray-200">
+        <div className="flex gap-2 sm:gap-4 border-b border-gray-200 overflow-x-auto scrollbar-hide">
           <button
             onClick={() => setActiveTab('personal')}
-            className={`px-6 py-3 font-medium transition ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 font-medium transition whitespace-nowrap text-sm sm:text-base ${
               activeTab === 'personal'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            Información Personal
+            <span className="hidden sm:inline">Información </span>Personal
           </button>
           <button
             onClick={() => setActiveTab('password')}
-            className={`px-6 py-3 font-medium transition ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 font-medium transition whitespace-nowrap text-sm sm:text-base ${
               activeTab === 'password'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-800'
@@ -166,11 +166,11 @@ export default function DoctorProfile() {
 
         {/* Personal Information Tab */}
         {activeTab === 'personal' && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Nombre
                   </label>
                   <input
@@ -178,12 +178,13 @@ export default function DoctorProfile() {
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    style={{ fontSize: '16px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Apellido
                   </label>
                   <input
@@ -191,13 +192,14 @@ export default function DoctorProfile() {
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    style={{ fontSize: '16px' }}
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email

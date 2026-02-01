@@ -204,26 +204,27 @@ export default function DoctorReports() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Reportes y Estadísticas</h2>
-            <p className="text-gray-600 mt-1">Analiza tu desempeño y actividad médica</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Reportes</h2>
+            <p className="text-gray-600 text-sm mt-1">Analiza tu desempeño</p>
           </div>
           
           {/* Date Range Filter */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-600">Período:</label>
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <label className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">Período:</label>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+              style={{ fontSize: '16px' }}
             >
               <option value="today">Hoy</option>
-              <option value="week">Esta Semana</option>
-              <option value="month">Este Mes</option>
-              <option value="year">Este Año</option>
+              <option value="week">Semana</option>
+              <option value="month">Mes</option>
+              <option value="year">Año</option>
               <option value="all">Todo</option>
             </select>
           </div>
@@ -242,22 +243,22 @@ export default function DoctorReports() {
 
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+          <div className="border-b border-gray-200 -mx-2 sm:mx-0 px-2 sm:px-0">
+            <nav className="flex -mb-px overflow-x-auto scrollbar-hide">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition ${
+                    className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
                       activeTab === tab.id
                         ? 'border-blue-600 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {tab.name}
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden xs:inline">{tab.name}</span>
                   </button>
                 );
               })}
@@ -269,94 +270,94 @@ export default function DoctorReports() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
           ) : (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {/* Tab: Summary */}
               {activeTab === 'summary' && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Main Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-blue-700">Total Citas</p>
-                        <CalendarIcon className="w-6 h-6 text-blue-500" />
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 sm:p-5 border border-blue-200">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <p className="text-xs font-medium text-blue-700">Total Citas</p>
+                        <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                       </div>
-                      <p className="text-3xl font-bold text-blue-900">{statistics?.total_appointments || 0}</p>
-                      <p className="text-xs text-blue-600 mt-1">En el período</p>
+                      <p className="text-xl sm:text-3xl font-bold text-blue-900">{statistics?.total_appointments || 0}</p>
+                      <p className="text-[10px] sm:text-xs text-blue-600 mt-1 hidden sm:block">En el período</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-green-700">Completadas</p>
-                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 sm:p-5 border border-green-200">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <p className="text-xs font-medium text-green-700">Completadas</p>
+                        <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
                       </div>
-                      <p className="text-3xl font-bold text-green-900">{statistics?.completed_appointments || 0}</p>
-                      <p className="text-xs text-green-600 mt-1">{completionRate}% tasa de éxito</p>
+                      <p className="text-xl sm:text-3xl font-bold text-green-900">{statistics?.completed_appointments || 0}</p>
+                      <p className="text-[10px] sm:text-xs text-green-600 mt-1 hidden sm:block">{completionRate}% éxito</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-5 border border-yellow-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-yellow-700">Pendientes</p>
-                        <ClockIcon className="w-6 h-6 text-yellow-500" />
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-3 sm:p-5 border border-yellow-200">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <p className="text-xs font-medium text-yellow-700">Pendientes</p>
+                        <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
                       </div>
-                      <p className="text-3xl font-bold text-yellow-900">{statistics?.pending_appointments || 0}</p>
-                      <p className="text-xs text-yellow-600 mt-1">Por atender</p>
+                      <p className="text-xl sm:text-3xl font-bold text-yellow-900">{statistics?.pending_appointments || 0}</p>
+                      <p className="text-[10px] sm:text-xs text-yellow-600 mt-1 hidden sm:block">Por atender</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-purple-700">Pacientes</p>
-                        <UserGroupIcon className="w-6 h-6 text-purple-500" />
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 sm:p-5 border border-purple-200">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <p className="text-xs font-medium text-purple-700">Pacientes</p>
+                        <UserGroupIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
                       </div>
-                      <p className="text-3xl font-bold text-purple-900">{statistics?.patients_treated || 0}</p>
-                      <p className="text-xs text-purple-600 mt-1">Pacientes únicos</p>
+                      <p className="text-xl sm:text-3xl font-bold text-purple-900">{statistics?.patients_treated || 0}</p>
+                      <p className="text-[10px] sm:text-xs text-purple-600 mt-1 hidden sm:block">Únicos</p>
                     </div>
                   </div>
 
                   {/* Secondary Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {/* Rating Card */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-gray-600">Calificación Promedio</p>
+                          <p className="text-xs sm:text-sm font-medium text-gray-600">Calificación</p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="text-3xl font-bold text-gray-900">
+                            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
                               {ratingsData.average?.toFixed(1) || '---'}
                             </span>
-                            {ratingsData.average && renderStars(ratingsData.average)}
+                            <span className="hidden sm:block">{ratingsData.average && renderStars(ratingsData.average)}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Basado en {ratingsData.total || 0} reseñas</p>
+                          <p className="text-[10px] sm:text-xs text-gray-500 mt-1">{ratingsData.total || 0} reseñas</p>
                         </div>
-                        <StarSolidIcon className="w-12 h-12 text-yellow-400 opacity-30" />
+                        <StarSolidIcon className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 opacity-30" />
                       </div>
                     </div>
 
                     {/* Completion Chart */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <p className="text-sm font-medium text-gray-600 mb-3">Tasa de Completación</p>
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-20 h-20">
-                          <svg className="w-20 h-20 -rotate-90">
-                            <circle cx="40" cy="40" r="36" stroke="#E5E7EB" strokeWidth="8" fill="none" />
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-3">Completación</p>
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                          <svg className="w-16 h-16 sm:w-20 sm:h-20 -rotate-90">
+                            <circle cx="50%" cy="50%" r="45%" stroke="#E5E7EB" strokeWidth="8" fill="none" />
                             <circle 
-                              cx="40" cy="40" r="36" 
+                              cx="50%" cy="50%" r="45%" 
                               stroke="#10B981" 
                               strokeWidth="8" 
                               fill="none"
                               strokeDasharray={`${completionRate * 2.26} 226`}
                             />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900">
+                          <span className="absolute inset-0 flex items-center justify-center text-sm sm:text-lg font-bold text-gray-900">
                             {completionRate}%
                           </span>
                         </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-green-600">Completadas</span>
+                        <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
+                          <div className="flex justify-between text-xs sm:text-sm">
+                            <span className="text-green-600 truncate">Completadas</span>
                             <span className="font-medium">{statistics?.completed_appointments || 0}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-red-600">Canceladas</span>
+                          <div className="flex justify-between text-xs sm:text-sm">
+                            <span className="text-red-600 truncate">Canceladas</span>
                             <span className="font-medium">{statistics?.cancelled_appointments || 0}</span>
                           </div>
                         </div>
@@ -366,24 +367,24 @@ export default function DoctorReports() {
 
                   {/* Additional Rating Details */}
                   {ratingsData.average && (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
-                      <h4 className="font-medium text-gray-800 mb-4">Desglose de Calificaciones</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-5 border border-blue-200">
+                      <h4 className="font-medium text-gray-800 mb-3 sm:mb-4 text-sm sm:text-base">Desglose</h4>
+                      <div className="grid grid-cols-4 gap-2 sm:gap-4">
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-blue-700">{ratingsData.average?.toFixed(1) || '-'}</p>
-                          <p className="text-xs text-gray-600">General</p>
+                          <p className="text-lg sm:text-2xl font-bold text-blue-700">{ratingsData.average?.toFixed(1) || '-'}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600">General</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-green-700">{ratingsData.averagePunctuality?.toFixed(1) || '-'}</p>
-                          <p className="text-xs text-gray-600">Puntualidad</p>
+                          <p className="text-lg sm:text-2xl font-bold text-green-700">{ratingsData.averagePunctuality?.toFixed(1) || '-'}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600">Puntual</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-purple-700">{ratingsData.averageAttention?.toFixed(1) || '-'}</p>
-                          <p className="text-xs text-gray-600">Atención</p>
+                          <p className="text-lg sm:text-2xl font-bold text-purple-700">{ratingsData.averageAttention?.toFixed(1) || '-'}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600">Atención</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-orange-700">{ratingsData.averageRecommendation?.toFixed(1) || '-'}</p>
-                          <p className="text-xs text-gray-600">Recomendación</p>
+                          <p className="text-lg sm:text-2xl font-bold text-orange-700">{ratingsData.averageRecommendation?.toFixed(1) || '-'}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600">Recomienda</p>
                         </div>
                       </div>
                     </div>
@@ -417,7 +418,38 @@ export default function DoctorReports() {
               {/* Tab: History */}
               {activeTab === 'history' && (
                 <div className="space-y-4">
-                  <div className="overflow-x-auto">
+                  {/* Mobile Card View */}
+                  <div className="block sm:hidden space-y-3">
+                    {appointments.length > 0 ? (
+                      appointments.map((apt, idx) => (
+                        <div key={apt.id || idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-900 text-sm truncate">{apt.patient_name || 'N/A'}</span>
+                            {getStatusBadge(apt.status)}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                            <div>
+                              <span className="text-gray-400">Fecha:</span> {formatDate(apt.scheduled_start)}
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Hora:</span> {formatTime(apt.scheduled_start)}
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500 truncate">
+                            {apt.reason || 'Consulta'}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <CalendarIcon className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No hay citas</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Desktop Table View */}
+                  <div className="overflow-x-auto hidden sm:block">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
@@ -471,18 +503,18 @@ export default function DoctorReports() {
 
               {/* Tab: Ratings */}
               {activeTab === 'ratings' && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Rating Overview */}
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 sm:p-6 border border-yellow-200">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                       <div className="text-center">
-                        <p className="text-5xl font-bold text-gray-900">{ratingsData.average?.toFixed(1) || '---'}</p>
-                        <div className="mt-2">{renderStars(ratingsData.average || 0, 'w-6 h-6')}</div>
-                        <p className="text-sm text-gray-600 mt-2">{ratingsData.total || 0} reseñas totales</p>
+                        <p className="text-4xl sm:text-5xl font-bold text-gray-900">{ratingsData.average?.toFixed(1) || '---'}</p>
+                        <div className="mt-2">{renderStars(ratingsData.average || 0, 'w-5 h-5 sm:w-6 sm:h-6')}</div>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-2">{ratingsData.total || 0} reseñas</p>
                       </div>
                       
                       {/* Rating Distribution */}
-                      <div className="flex-1 space-y-2 w-full md:w-auto">
+                      <div className="flex-1 space-y-1.5 sm:space-y-2 w-full sm:w-auto">
                         {[5, 4, 3, 2, 1].map((star) => {
                           const count = ratingsData.breakdown?.[star] || 0;
                           const percentage = ratingsData.total > 0 ? (count / ratingsData.total) * 100 : 0;

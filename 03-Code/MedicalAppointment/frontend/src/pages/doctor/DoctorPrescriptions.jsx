@@ -701,24 +701,25 @@ export default function DoctorPrescriptions() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <DocumentTextIcon className="w-8 h-8 text-blue-600" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <DocumentTextIcon className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Recetas Médicas</h2>
-              <p className="text-sm text-gray-600">
-                Historial de recetas emitidas
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Recetas</h2>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Historial de recetas
               </p>
             </div>
           </div>
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
           >
-            <PlusIcon className="w-5 h-5" />
-            Nueva Receta
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Nueva Receta</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         </div>
 
@@ -736,64 +737,64 @@ export default function DoctorPrescriptions() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-blue-100">
-                <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2.5 rounded-full bg-blue-100">
+                <DocumentTextIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Total</p>
-                <p className="text-xl font-bold text-gray-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-purple-100">
-                <ClockIcon className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Hoy</p>
-                <p className="text-xl font-bold text-gray-800">{stats.today}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium truncate">Total</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.total}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-green-100">
-                <CalendarIcon className="w-5 h-5 text-green-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2.5 rounded-full bg-purple-100">
+                <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Esta Semana</p>
-                <p className="text-xl font-bold text-gray-800">{stats.week}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium truncate">Hoy</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.today}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-yellow-100">
-                <CalendarIcon className="w-5 h-5 text-yellow-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2.5 rounded-full bg-green-100">
+                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">Este Mes</p>
-                <p className="text-xl font-bold text-gray-800">{stats.month}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium truncate">Sem.</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.week}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2.5 rounded-full bg-yellow-100">
+                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium truncate">Mes</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.month}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs and Search */}
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex overflow-x-auto gap-1 sm:gap-2 pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? tab.highlight ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'
                     : tab.highlight 
@@ -801,10 +802,11 @@ export default function DoctorPrescriptions() {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {tab.id === FILTER_TYPES.RENEWALS && <ArrowPathIcon className="w-4 h-4" />}
-                {tab.label}
+                {tab.id === FILTER_TYPES.RENEWALS && <ArrowPathIcon className="w-3 h-3 sm:w-4 sm:h-4" />}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.slice(0, 3)}</span>
                 {tab.count > 0 && (
-                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                  <span className={`px-1 sm:px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold ${
                     activeTab === tab.id
                       ? 'bg-white/30 text-white'
                       : tab.highlight ? 'bg-orange-600 text-white' : 'bg-gray-300 text-gray-700'
@@ -816,13 +818,14 @@ export default function DoctorPrescriptions() {
             ))}
           </div>
           
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1 md:max-w-xs">
-              <FunnelIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="relative flex-1 sm:max-w-xs">
+              <FunnelIcon className="absolute left-3 top-2.5 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <select
                 value={selectedPatient}
                 onChange={(e) => setSelectedPatient(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-sm"
+                style={{ fontSize: '16px' }}
               >
                 <option value="all">Todos los pacientes</option>
                 {uniquePatients.map(patient => (
@@ -833,14 +836,15 @@ export default function DoctorPrescriptions() {
               </select>
             </div>
             
-            <div className="relative flex-1 md:max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+            <div className="relative flex-1 sm:max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por paciente o diagnóstico..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>

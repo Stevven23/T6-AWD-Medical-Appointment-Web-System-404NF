@@ -227,15 +227,15 @@ export default function DoctorLab() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BeakerIcon className="w-8 h-8 text-blue-600" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BeakerIcon className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Laboratorio</h2>
-              <p className="text-sm text-gray-600">
-                {pendingCount} pendientes · {completedCount} completados
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Laboratorio</h2>
+              <p className="text-xs sm:text-sm text-gray-600">
+                {pendingCount} pend. · {completedCount} compl.
               </p>
             </div>
           </div>
@@ -244,7 +244,7 @@ export default function DoctorLab() {
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
             title="Actualizar"
           >
-            <ArrowPathIcon className="h-5 w-5" />
+            <ArrowPathIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
 
@@ -264,87 +264,90 @@ export default function DoctorLab() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-yellow-500">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-yellow-100">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5 border-l-4 border-yellow-500">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-full bg-yellow-100">
+                <ClockIcon className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Pendientes</p>
-                <p className="text-2xl font-bold text-gray-800">{pendingCount}</p>
+                <p className="text-xs text-gray-600">Pendientes</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{pendingCount}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-green-500">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-green-100">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5 border-l-4 border-green-500">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-full bg-green-100">
+                <CheckCircleIcon className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Completados</p>
-                <p className="text-2xl font-bold text-gray-800">{completedCount}</p>
+                <p className="text-xs text-gray-600">Completados</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{completedCount}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-orange-500">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-orange-100">
-                <ExclamationTriangleIcon className="w-6 h-6 text-orange-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5 border-l-4 border-orange-500">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-full bg-orange-100">
+                <ExclamationTriangleIcon className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Por revisar</p>
-                <p className="text-2xl font-bold text-gray-800">{needsReviewCount}</p>
+                <p className="text-xs text-gray-600">Por revisar</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{needsReviewCount}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-blue-500">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-100">
-                <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-5 border-l-4 border-blue-500">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-full bg-blue-100">
+                <DocumentTextIcon className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-800">{labOrders.length}</p>
+                <p className="text-xs text-gray-600">Total</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{labOrders.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search and Tabs */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex overflow-x-auto gap-1 sm:gap-2 pb-1 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0">
             {[
-              { id: 'pending', label: 'Pendientes', count: pendingCount },
-              { id: 'completed', label: 'Completados', count: completedCount },
-              { id: 'needs_review', label: 'Por revisar', count: needsReviewCount },
-              { id: 'all', label: 'Todos', count: labOrders.length }
+              { id: 'pending', label: 'Pend.', fullLabel: 'Pendientes', count: pendingCount },
+              { id: 'completed', label: 'Compl.', fullLabel: 'Completados', count: completedCount },
+              { id: 'needs_review', label: 'Revisar', fullLabel: 'Por revisar', count: needsReviewCount },
+              { id: 'all', label: 'Todos', fullLabel: 'Todos', count: labOrders.length }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {tab.label} ({tab.count})
+                <span className="sm:hidden">{tab.label}</span>
+                <span className="hidden sm:inline">{tab.fullLabel}</span>
+                <span className="ml-1">({tab.count})</span>
               </button>
             ))}
           </div>
           
-          <div className="relative w-full md:w-64">
-            <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          <div className="relative w-full sm:w-64">
+            <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar paciente o examen..."
+              placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ fontSize: '16px' }}
             />
           </div>
         </div>

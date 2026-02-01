@@ -313,9 +313,9 @@ export default function DoctorPatients() {
     <DoctorLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Mis Pacientes</h2>
-          <p className="text-sm text-gray-600">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Mis Pacientes</h2>
+          <p className="text-xs sm:text-sm text-gray-600">
             Pacientes con citas: {patients.length}
           </p>
         </div>
@@ -324,13 +324,14 @@ export default function DoctorPatients() {
         {!selectedPatient && (
           <div className="flex gap-4">
             <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-2.5 sm:top-3 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar paciente por nombre o cédula..."
+                placeholder="Buscar por nombre o cédula..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
@@ -422,28 +423,28 @@ export default function DoctorPatients() {
             </button>
 
             {/* Patient Info Card */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-start gap-6 mb-6">
-                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-2xl text-blue-600 font-bold">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-100 flex items-center justify-center text-xl sm:text-2xl text-blue-600 font-bold flex-shrink-0">
                   {selectedPatient.first_name?.charAt(0)}{selectedPatient.last_name?.charAt(0)}
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-800">
+                <div className="text-center sm:text-left">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                     {selectedPatient.first_name} {selectedPatient.last_name}
                   </h3>
-                  <p className="text-gray-600">Cédula: {selectedPatient.cedula || 'N/A'}</p>
-                  <p className="text-gray-500 text-sm mt-1">
+                  <p className="text-gray-600 text-sm sm:text-base">Cédula: {selectedPatient.cedula || 'N/A'}</p>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1">
                     {selectedPatient.email} • {selectedPatient.phone_number}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-4">Información Personal</h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Edad</span>
+                  <h4 className="font-semibold text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base">Información Personal</h4>
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Edad</span>
                       <span className="font-medium text-gray-900">
                         {selectedPatient.date_of_birth 
                           ? `${Math.floor((new Date() - new Date(selectedPatient.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000))} años`

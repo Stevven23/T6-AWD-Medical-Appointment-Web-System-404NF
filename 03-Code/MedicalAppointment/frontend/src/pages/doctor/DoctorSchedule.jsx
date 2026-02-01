@@ -194,18 +194,18 @@ export default function DoctorSchedule() {
 
   return (
     <DoctorLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Mi Horario</h1>
-            <p className="text-gray-600">
-              Visualiza tu horario base y solicita cambios temporales
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Mi Horario</h1>
+            <p className="text-gray-600 text-sm">
+              Visualiza tu horario y solicita cambios
             </p>
           </div>
           <button
             onClick={() => setShowRequestModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <span>📝</span>
             Nueva Solicitud
@@ -230,14 +230,14 @@ export default function DoctorSchedule() {
         ) : (
           <>
             {/* Weekly Schedule (Read Only) */}
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">📅</span>
-                <h2 className="text-lg font-semibold text-gray-800">Horario Semanal Base</h2>
-                <span className="text-sm text-gray-500">(Configurado por Administración)</span>
+                <span className="text-lg sm:text-xl">📅</span>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800">Horario Semanal</h2>
+                <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">(Por Administración)</span>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
                 {DAYS.map(day => {
                   const daySchedule = schedule[day.id];
                   const isWorking = daySchedule && daySchedule.is_working_day !== false && daySchedule.start_time;
@@ -245,26 +245,26 @@ export default function DoctorSchedule() {
                   return (
                     <div
                       key={day.id}
-                      className={`p-4 rounded-lg border-2 ${
+                      className={`p-3 sm:p-4 rounded-lg border-2 ${
                         isWorking
                           ? 'bg-green-50 border-green-300'
                           : 'bg-gray-50 border-gray-200'
                       }`}
                     >
-                      <h4 className="font-semibold text-gray-800 text-center">{day.short}</h4>
+                      <h4 className="font-semibold text-gray-800 text-center text-sm sm:text-base">{day.short}</h4>
                       {isWorking ? (
                         <div className="text-center mt-2">
-                          <p className="text-sm font-medium text-green-700">
+                          <p className="text-xs sm:text-sm font-medium text-green-700">
                             {formatTime(daySchedule.start_time)} - {formatTime(daySchedule.end_time)}
                           </p>
                           {daySchedule.break_start_time && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Descanso: {formatTime(daySchedule.break_start_time)} - {formatTime(daySchedule.break_end_time)}
+                            <p className="text-[10px] sm:text-xs text-gray-500 mt-1 hidden sm:block">
+                              Desc: {formatTime(daySchedule.break_start_time)} - {formatTime(daySchedule.break_end_time)}
                             </p>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500 text-center mt-2">No laboral</p>
+                        <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">Libre</p>
                       )}
                     </div>
                   );

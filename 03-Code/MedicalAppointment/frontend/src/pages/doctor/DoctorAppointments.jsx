@@ -342,20 +342,68 @@ export default function DoctorAppointments() {
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {appointments.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          <CalendarDaysIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p>No hay citas que mostrar con los filtros actuales</p>
+          <CalendarDaysIcon className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-sm sm:text-base">No hay citas que mostrar con los filtros actuales</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
+          {/* Mobile Card View */}
+          <div className="sm:hidden divide-y divide-gray-200">
+            {appointments.map((apt) => {
+              const status = apt.status || apt.status_code || apt.appointment_status?.code;
+              const patientName = apt.patient_name || 
+                `${apt.patient?.first_name || ''} ${apt.patient?.last_name || ''}`.trim() || 
+                'Paciente';
+              const actions = getAvailableActions(apt);
+              return (
+                <div key={apt.id} className="p-3 hover:bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white ${getStatusColor(status)}`}>
+                      {getStatusLabel(status)}
+                    </span>
+                    <span className="text-xs text-gray-500">{formatFullDate(apt.scheduled_start)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{patientName}</p>
+                      <p className="text-xs text-gray-500">{formatTime(apt.scheduled_start)} • {apt.reason || 'Consulta general'}</p>
+                    </div>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={() => setSelectedAppointment(apt)}
+                        className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                      >
+                        <EyeIcon className="w-4 h-4" />
+                      </button>
+                      {actions.slice(0, 1).map((action) => {
+                        const Icon = action.icon;
+                        return (
+                          <button
+                            key={action.key}
+                            onClick={() => action.handler(apt.id)}
+                            disabled={actionLoading}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition disabled:opacity-50"
+                          >
+                            <Icon className="w-4 h-4" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Desktop Table View */}
+          <table className="w-full hidden sm:table">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Hora</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Paciente</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Motivo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Hora</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Paciente</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">Motivo</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -368,20 +416,20 @@ export default function DoctorAppointments() {
                 const actions = getAvailableActions(apt);
                 return (
                   <tr key={apt.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
                       {formatFullDate(apt.scheduled_start)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 font-medium">
                       {formatTime(apt.scheduled_start)}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900">{patientName}</div>
-                      <div className="text-xs text-gray-500">{patientEmail}</div>
+                    <td className="px-3 sm:px-4 py-3">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">{patientName}</div>
+                      <div className="text-xs text-gray-500 hidden lg:block">{patientEmail}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {apt.reason || 'Consulta general'}
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 hidden md:table-cell">
+                      <span className="truncate block max-w-[150px]">{apt.reason || 'Consulta general'}</span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(status)}`}>
                         {getStatusLabel(status)}
                       </span>
@@ -565,41 +613,41 @@ export default function DoctorAppointments() {
 
       <div className="space-y-6">
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold text-gray-800">Mi Agenda</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Mi Agenda</h2>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode(VIEW_MODES.CALENDAR)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition ${
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md transition ${
                   viewMode === VIEW_MODES.CALENDAR
                     ? 'bg-white shadow text-blue-600'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <CalendarDaysIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">Calendario</span>
+                <CalendarDaysIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-xs sm:text-sm font-medium hidden xs:inline">Calendario</span>
               </button>
               <button
                 onClick={() => setViewMode(VIEW_MODES.LIST)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition ${
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md transition ${
                   viewMode === VIEW_MODES.LIST
                     ? 'bg-white shadow text-blue-600'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <ListBulletIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">Lista</span>
+                <ListBulletIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-xs sm:text-sm font-medium hidden xs:inline">Lista</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              <FunnelIcon className="w-5 h-5 text-gray-400" />
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+              <FunnelIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
               {[
                 { key: FILTER_TYPES.ALL, label: 'Todas' },
                 { key: FILTER_TYPES.TODAY, label: 'Hoy' },
@@ -610,7 +658,7 @@ export default function DoctorAppointments() {
                 <button
                   key={filter.key}
                   onClick={() => setFilterType(filter.key)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap flex-shrink-0 ${
                     filterType === filter.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -621,35 +669,36 @@ export default function DoctorAppointments() {
               ))}
             </div>
 
-            <div className="flex-1 md:max-w-xs">
+            <div className="w-full sm:max-w-xs">
               <input
                 type="text"
                 placeholder="Buscar paciente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
         </div>
 
         {viewMode === VIEW_MODES.CALENDAR && (
-          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-3 sm:p-4">
             <button
               onClick={goToPreviousWeek}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition"
             >
-              <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
+              <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             </button>
             
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-gray-700">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-xs sm:text-sm font-medium text-gray-700">
                 {weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} -{' '}
                 {weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
               </span>
               <button
                 onClick={goToToday}
-                className="px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition"
               >
                 Hoy
               </button>
@@ -657,20 +706,20 @@ export default function DoctorAppointments() {
             
             <button
               onClick={goToNextWeek}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition"
             >
-              <ChevronRightIcon className="w-5 h-5 text-gray-600" />
+              <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             </button>
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <p className="text-sm font-medium text-gray-600 mb-2">Estados:</p>
-          <div className="flex flex-wrap gap-3">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+          <p className="text-xs sm:text-sm font-medium text-gray-600 mb-2">Estados:</p>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {['scheduled', 'confirmed', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show'].map((status) => (
-              <div key={status} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${getStatusColor(status)}`}></div>
-                <span className="text-xs text-gray-600">{getStatusLabel(status)}</span>
+              <div key={status} className="flex items-center gap-1 sm:gap-2">
+                <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${getStatusColor(status)}`}></div>
+                <span className="text-[10px] sm:text-xs text-gray-600">{getStatusLabel(status)}</span>
               </div>
             ))}
           </div>

@@ -978,21 +978,21 @@ export default function DoctorConsultation() {
         )}
 
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={handleGoBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition"
                 title={fromPatientHistory ? 'Volver al historial del paciente' : fromAgenda ? 'Volver a Mi Agenda' : fromDashboard ? 'Volver al Dashboard' : 'Volver al Dashboard'}
               >
-                <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
+                <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
                   {isCompleted ? (
                     <>
-                      <EyeIcon className={`w-6 h-6 ${
+                      <EyeIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${
                         appointmentStatus === 'completed' 
                           ? 'text-blue-600' 
                           : appointmentStatus === 'cancelled'
@@ -1049,43 +1049,47 @@ export default function DoctorConsultation() {
             </div>
             
             {!isCompleted && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                   onClick={handleSaveProgress}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2"
+                  className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-1 sm:gap-2 text-sm"
                 >
-                <ClockIcon className="w-5 h-5" />
-                Guardar Progreso
+                <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Guardar Progreso</span>
+                <span className="sm:hidden">Guardar</span>
               </button>
               <button
                 onClick={handleCompleteConsultation}
                 disabled={saving}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                className="flex-1 sm:flex-none px-3 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-1 sm:gap-2 text-sm"
               >
-                <CheckCircleIcon className="w-5 h-5" />
-                {saving ? 'Guardando...' : 'Completar Consulta'}
+                <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">{saving ? 'Guardando...' : 'Completar Consulta'}</span>
+                <span className="sm:hidden">{saving ? 'Guardando...' : 'Completar'}</span>
               </button>
             </div>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* Sidebar - Patient Info */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4 order-2 lg:order-1">
             {/* Patient Card */}
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-center mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <UserIcon className="w-8 h-8 text-blue-600" />
+            <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4">
+              <div className="flex lg:flex-col items-center lg:text-center gap-3 lg:gap-0 lg:mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center lg:mx-auto lg:mb-3 flex-shrink-0">
+                  <UserIcon className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900">
-                  {patient?.first_name || patient?.user?.first_name} {patient?.last_name || patient?.user?.last_name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {calculateAge(patient?.date_of_birth)} años • {patient?.gender ? (patient.gender === 'male' ? 'Masculino' : 'Femenino') : 'N/A'}
-                </p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate">
+                    {patient?.first_name || patient?.user?.first_name} {patient?.last_name || patient?.user?.last_name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {calculateAge(patient?.date_of_birth)} años • {patient?.gender ? (patient.gender === 'male' ? 'M' : 'F') : 'N/A'}
+                  </p>
+                </div>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -1187,15 +1191,15 @@ export default function DoctorConsultation() {
           </div>
 
           {/* Main Content */}
-          <div className="col-span-12 lg:col-span-9">
+          <div className="lg:col-span-9 order-1 lg:order-2">
             {/* Step Indicator */}
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
                 {STEPS.map((step, index) => (
                   <React.Fragment key={step.id}>
                     <button
                       onClick={() => setCurrentStep(step.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm ${
+                      className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition text-xs sm:text-sm whitespace-nowrap flex-shrink-0 ${
                         currentStep === step.id
                           ? 'bg-blue-600 text-white'
                           : currentStep > step.id
@@ -1203,11 +1207,11 @@ export default function DoctorConsultation() {
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      <step.icon className="w-5 h-5" />
-                      <span className="font-medium hidden sm:inline">{step.name}</span>
+                      <step.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="font-medium hidden xs:inline sm:inline">{step.name}</span>
                     </button>
                     {index < STEPS.length - 1 && (
-                      <div className={`hidden sm:block flex-1 h-1 mx-2 rounded ${
+                      <div className={`hidden sm:block flex-1 h-1 mx-1 sm:mx-2 rounded min-w-[16px] ${
                         currentStep > step.id ? 'bg-green-400' : 'bg-gray-200'
                       }`} />
                     )}
@@ -1217,26 +1221,26 @@ export default function DoctorConsultation() {
             </div>
 
             {/* Step Content */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
               {/* Step 1: Vital Signs */}
               {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <HeartIcon className="w-6 h-6 text-red-500" />
+                <div className="space-y-4 sm:space-y-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <HeartIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                     Signos Vitales
                     {isCompleted && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-sm font-normal text-gray-500">
-                        <LockClosedIcon className="w-4 h-4" />
-                        Solo lectura
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs sm:text-sm font-normal text-gray-500">
+                        <LockClosedIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Solo lectura</span>
                       </span>
                     )}
                   </h3>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {/* Blood Pressure - Systolic */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Presión Sistólica (mmHg)
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        P. Sistólica <span className="hidden sm:inline">(mmHg)</span>
                       </label>
                       <input
                         type="number"
@@ -1244,14 +1248,15 @@ export default function DoctorConsultation() {
                         onChange={(e) => !isCompleted && setVitalSigns({...vitalSigns, blood_pressure_systolic: e.target.value})}
                         placeholder="120"
                         disabled={isCompleted}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        className={`w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
 
                     {/* Blood Pressure - Diastolic */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Presión Diastólica (mmHg)
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        P. Diastólica <span className="hidden sm:inline">(mmHg)</span>
                       </label>
                       <input
                         type="number"
@@ -1259,14 +1264,15 @@ export default function DoctorConsultation() {
                         onChange={(e) => !isCompleted && setVitalSigns({...vitalSigns, blood_pressure_diastolic: e.target.value})}
                         placeholder="80"
                         disabled={isCompleted}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        className={`w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
 
                     {/* Heart Rate */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Frecuencia Cardíaca (bpm)
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        F. Cardíaca <span className="hidden sm:inline">(bpm)</span>
                       </label>
                       <input
                         type="number"
@@ -1274,14 +1280,15 @@ export default function DoctorConsultation() {
                         onChange={(e) => !isCompleted && setVitalSigns({...vitalSigns, heart_rate: e.target.value})}
                         placeholder="60-100"
                         disabled={isCompleted}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        className={`w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
 
                     {/* Temperature */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Temperatura (°C)
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        Temp. <span className="hidden sm:inline">(°C)</span>
                       </label>
                       <input
                         type="number"
@@ -1290,14 +1297,15 @@ export default function DoctorConsultation() {
                         onChange={(e) => !isCompleted && setVitalSigns({...vitalSigns, temperature: e.target.value})}
                         placeholder="36.5"
                         disabled={isCompleted}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        className={`w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm ${isCompleted ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
 
                     {/* Respiratory Rate */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Frecuencia Respiratoria (rpm)
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                        F. Resp. <span className="hidden sm:inline">(rpm)</span>
                       </label>
                       <input
                         type="number"
