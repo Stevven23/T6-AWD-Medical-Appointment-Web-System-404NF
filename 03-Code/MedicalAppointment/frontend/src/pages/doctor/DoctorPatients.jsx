@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { DoctorModel, ConsultationModel, ScheduleModel, PatientModel } from '../../models';
+import { DoctorModel, ConsultationModel, ScheduleModel, PatientModel, MedicalRecordModel } from '../../models';
 import { 
   MagnifyingGlassIcon, 
   CalendarIcon, 
@@ -12,7 +12,10 @@ import {
   XCircleIcon,
   ClockIcon,
   FunnelIcon,
-  BellAlertIcon
+  BellAlertIcon,
+  PencilSquareIcon,
+  XMarkIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 // Filter types for patient history
@@ -36,6 +39,18 @@ export default function DoctorPatients() {
   const [patientHistory, setPatientHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyFilter, setHistoryFilter] = useState(HISTORY_FILTERS.COMPLETED); // Default to completed
+  
+  // Medical Record Edit Modal
+  const [showMedicalRecordModal, setShowMedicalRecordModal] = useState(false);
+  const [medicalRecordData, setMedicalRecordData] = useState({
+    allergies: '',
+    diagnoses: '',
+    treatments: '',
+    medical_history: '',
+    current_medications: ''
+  });
+  const [savingMedicalRecord, setSavingMedicalRecord] = useState(false);
+  const [notification, setNotification] = useState(null);
   
   // Check if we're returning from a consultation with a selected patient
   const returnToPatientId = location.state?.selectedPatientId;
@@ -229,6 +244,71 @@ export default function DoctorPatients() {
     return new Date(date).toLocaleDateString('es-ES');
   };
 
+  // Open medical record edit modal
+  const handleOpenMedicalRecordModal = async () => {
+    if (!selectedPatient) return;
+    
+    const patientId = selectedPatient.id || selectedPatient.user_id || selectedPatient.patient_user_id;
+    
+    try {
+      // Load current medical record
+      const record = await MedicalRecordModel.getByPatientId(patientId);
+      
+      setMedicalRecordData({
+        allergies: record?.allergies || '',
+        diagnoses: record?.diagnoses || '',
+        treatments: record?.treatments || '',
+        medical_history: record?.medical_history || '',
+        current_medications: record?.current_medications || ''
+      });
+    } catch (err) {
+      // If no record exists, start with empty form
+      setMedicalRecordData({
+        allergies: selectedPatient.allergies || '',
+        diagnoses: '',
+        treatments: '',
+        medical_history: '',
+        current_medications: ''
+      });
+    }
+    
+    setShowMedicalRecordModal(true);
+  };
+
+  // Save medical record
+  const handleSaveMedicalRecord = async () => {
+    if (!selectedPatient) return;
+    
+    const patientId = selectedPatient.id || selectedPatient.user_id || selectedPatient.patient_user_id;
+    
+    try {
+      setSavingMedicalRecord(true);
+      
+      await MedicalRecordModel.updateByPatientId(patientId, medicalRecordData);
+      
+      // Update local patient data
+      setSelectedPatient(prev => ({
+        ...prev,
+        allergies: medicalRecordData.allergies,
+        medical_conditions: medicalRecordData.diagnoses
+      }));
+      
+      setShowMedicalRecordModal(false);
+      showNotification('Historial médico actualizado exitosamente', 'success');
+    } catch (err) {
+      console.error('Error saving medical record:', err);
+      showNotification('Error al guardar el historial médico', 'error');
+    } finally {
+      setSavingMedicalRecord(false);
+    }
+  };
+
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
   return (
     <DoctorLayout>
       <div className="space-y-6">
@@ -406,7 +486,16 @@ export default function DoctorPatients() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-4">Información Médica</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-gray-700">Información Médica</h4>
+                    <button
+                      onClick={handleOpenMedicalRecordModal}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                      Editar Historial
+                    </button>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <span className="text-sm text-gray-600">Alergias</span>
@@ -662,6 +751,151 @@ export default function DoctorPatients() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Notification Toast */}
+        {notification && (
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
+            notification.type === 'success' 
+              ? 'bg-green-50 text-green-800 border border-green-200' 
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckCircleIcon className="w-5 h-5 text-green-500" />
+            ) : (
+              <XCircleIcon className="w-5 h-5 text-red-500" />
+            )}
+            <span>{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="ml-2 hover:opacity-70">
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Medical Record Edit Modal */}
+        {showMedicalRecordModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
+                <div className="flex items-center gap-3">
+                  <DocumentTextIcon className="w-6 h-6 text-white" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Editar Historial Médico</h3>
+                    <p className="text-blue-100 text-sm">
+                      {selectedPatient?.first_name} {selectedPatient?.last_name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMedicalRecordModal(false)}
+                  className="text-white/80 hover:text-white transition"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-5">
+                {/* Allergies */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Alergias
+                  </label>
+                  <textarea
+                    value={medicalRecordData.allergies}
+                    onChange={(e) => setMedicalRecordData(prev => ({ ...prev, allergies: e.target.value }))}
+                    placeholder="Ej: Penicilina, Mariscos, Polen..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Diagnoses */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Diagnósticos
+                  </label>
+                  <textarea
+                    value={medicalRecordData.diagnoses}
+                    onChange={(e) => setMedicalRecordData(prev => ({ ...prev, diagnoses: e.target.value }))}
+                    placeholder="Diagnósticos actuales y previos del paciente..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Treatments */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tratamientos
+                  </label>
+                  <textarea
+                    value={medicalRecordData.treatments}
+                    onChange={(e) => setMedicalRecordData(prev => ({ ...prev, treatments: e.target.value }))}
+                    placeholder="Tratamientos actuales y previos..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Medical History */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Historial Médico / Antecedentes
+                  </label>
+                  <textarea
+                    value={medicalRecordData.medical_history}
+                    onChange={(e) => setMedicalRecordData(prev => ({ ...prev, medical_history: e.target.value }))}
+                    placeholder="Antecedentes familiares, cirugías previas, hospitalizaciones..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Current Medications */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Medicamentos Actuales
+                  </label>
+                  <textarea
+                    value={medicalRecordData.current_medications}
+                    onChange={(e) => setMedicalRecordData(prev => ({ ...prev, current_medications: e.target.value }))}
+                    placeholder="Medicamentos que el paciente toma actualmente..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+                <button
+                  onClick={() => setShowMedicalRecordModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveMedicalRecord}
+                  disabled={savingMedicalRecord}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {savingMedicalRecord ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleIcon className="w-4 h-4" />
+                      Guardar Cambios
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}

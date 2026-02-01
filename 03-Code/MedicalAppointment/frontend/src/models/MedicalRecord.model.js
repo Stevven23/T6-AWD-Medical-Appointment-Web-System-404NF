@@ -84,6 +84,17 @@ class MedicalRecordModel {
   }
 
   /**
+   * Update medical record by patient user ID (for doctors/admins)
+   * @param {string} patientUserId - Patient user ID
+   * @param {Object} recordData - Record data
+   * @returns {Promise<MedicalRecord>}
+   */
+  static async updateByPatientId(patientUserId, recordData) {
+    const response = await crudApi.put(`/medical-records/${patientUserId}`, recordData);
+    return response.data;
+  }
+
+  /**
    * Get current patient's medical record
    * @returns {Promise<MedicalRecord>}
    */

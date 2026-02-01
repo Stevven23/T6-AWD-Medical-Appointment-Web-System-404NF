@@ -142,13 +142,42 @@ class MedicalRecordController {
   updateByPatient = asyncHandler(async (req, res) => {
     const { patientId } = req.params;
     const updateData = req.body;
+    const doctorUserId = req.user.id;
 
-    const existing = await medicalRecordRepository.findByPatient(patientId);
+    // Get doctor ID from doctors table (if user is a doctor)
+    const { data: doctor } = await supabase
+      .from('doctors')
+      .select('id')
+      .eq('user_id', doctorUserId)
+      .single();
+
+    // Find or create medical record
+    let existing = await medicalRecordRepository.findByPatient(patientId);
     if (!existing) {
-      throw new NotFoundError('Historial médico', patientId);
+      // Create if doesn't exist
+      existing = await medicalRecordRepository.create({
+        patient_user_id: patientId,
+        last_updated_by_doctor_id: doctor?.id
+      });
+    }
+
+    // Add last_updated_by_doctor_id to update data
+    if (doctor?.id) {
+      updateData.last_updated_by_doctor_id = doctor.id;
     }
 
     const updated = await medicalRecordRepository.updateByPatient(patientId, updateData);
+
+    // Audit log
+    createAuditLog({
+      userId: req.user.id,
+      action: AuditActions.MEDICAL_RECORD_UPDATED,
+      tableName: 'medical_records',
+      recordId: updated.id,
+      newValues: Object.keys(updateData),
+      description: `Historial médico del paciente ${patientId} actualizado por doctor/admin`,
+      req
+    });
 
     return ResponseBuilder.success(res, updated, 200, 'Historial médico actualizado');
   });
