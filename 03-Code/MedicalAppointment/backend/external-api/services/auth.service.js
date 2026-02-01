@@ -19,7 +19,16 @@ class AuthService {
    * @returns {Promise<Object>} Created user and token
    */
   async register(userData) {
-    const { email, password, first_name, last_name, phone_number, role = 'patient' } = userData;
+    const { 
+      email, 
+      password, 
+      first_name, 
+      last_name, 
+      phone_number, 
+      cedula,
+      date_of_birth,
+      role = 'patient' 
+    } = userData;
 
     // Validate email format
     if (!this._isValidEmail(email)) {
@@ -35,6 +44,19 @@ class AuthService {
 
     if (existingUser) {
       throw new ValidationError('El email ya está registrado');
+    }
+
+    // Check if cedula already exists (if provided)
+    if (cedula) {
+      const { data: existingCedula } = await supabase
+        .from('users')
+        .select('id')
+        .eq('cedula', cedula)
+        .single();
+
+      if (existingCedula) {
+        throw new ValidationError('La cédula ya está registrada');
+      }
     }
 
     // Validate password strength
@@ -55,7 +77,7 @@ class AuthService {
 
     const roleId = roleData?.id || 3; // Default to patient role (3)
 
-    // Create user using correct schema: role_id, phone_number
+    // Create user using correct schema: role_id, phone_number, cedula
     const { data: user, error } = await supabase
       .from('users')
       .insert({
@@ -64,13 +86,14 @@ class AuthService {
         first_name,
         last_name,
         phone_number,
+        cedula,
         role_id: roleId,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .select(`
-        id, email, first_name, last_name, role_id,
+        id, email, first_name, last_name, cedula, role_id,
         roles(id, name)
       `)
       .single();
@@ -79,7 +102,11 @@ class AuthService {
 
     // Create patient/doctor record if needed
     if (role === 'patient') {
-      await supabase.from('patients').insert({ user_id: user.id });
+      const patientData = { user_id: user.id };
+      if (date_of_birth) {
+        patientData.date_of_birth = date_of_birth;
+      }
+      await supabase.from('patients').insert(patientData);
     }
 
     // Flatten for response

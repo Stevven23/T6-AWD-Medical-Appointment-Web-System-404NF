@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { externalApi } from '../../services/httpClient';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -65,28 +66,15 @@ export default function Register() {
         first_name: form.first_name,
         last_name: form.last_name,
         cedula: form.cedula,
-        date_of_birth: form.date_of_birth,
-        phone_number: form.phone_number,
+        date_of_birth: form.date_of_birth || null,
+        phone_number: form.phone_number || null,
         email: form.email,
         password: form.password,
         role: form.role,
       };
 
-      const resp = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const contentType = resp.headers.get('content-type') || '';
-      let data = {};
-      if (contentType.includes('application/json')) data = await resp.json();
-      else data = { message: await resp.text() };
-
-      if (!resp.ok) throw new Error(data.error || data.message || 'Error al registrar');
+      const resp = await externalApi.post('/auth/register', payload);
+      const data = resp.data;
 
       setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
       setForm({

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { crudApi } from '../../services/httpClient';
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
@@ -11,8 +12,8 @@ export default function CompleteProfile() {
     cedula: '',
     first_name: '',
     last_name: '',
-    phone: '',
-    birthdate: '',
+    phone_number: '',
+    date_of_birth: '',
     gender: '',
     address: '',
   });
@@ -48,7 +49,8 @@ export default function CompleteProfile() {
         ...f,
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        phone: user.phone_number || user.phone || '',
+        phone_number: user.phone_number || user.phone || '',
+        cedula: user.cedula || '',
       }));
     }
 
@@ -61,12 +63,18 @@ export default function CompleteProfile() {
         return;
       }
       try {
-        const resp = await fetch('/api/patients/profile', {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        });
-        if (!resp.ok) return;
-        const data = await resp.json();
-        setForm((s) => ({ ...s, cedula: data.cedula || data.identification || '', phone: data.phone_number || data.phone || '', address: data.address || '', birthdate: data.date_of_birth || data.birthdate || '' }));
+        const resp = await crudApi.get('/patients/me');
+        const data = resp.data;
+        setForm((s) => ({ 
+          ...s, 
+          cedula: data.cedula || s.cedula || '', 
+          first_name: data.first_name || s.first_name || '',
+          last_name: data.last_name || s.last_name || '',
+          phone_number: data.phone_number || s.phone_number || '', 
+          address: data.address || '', 
+          date_of_birth: data.date_of_birth || '',
+          gender: data.gender || ''
+        }));
       } catch (err) {
         console.error('Error fetching profile', err);
       }
@@ -99,14 +107,8 @@ export default function CompleteProfile() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const resp = await fetch('/api/patients/complete-profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : undefined },
-        body: JSON.stringify(form),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Error al actualizar perfil');
+      const resp = await crudApi.put('/patients/me', form);
+      const data = resp.data;
       if (updateUser) updateUser(data.user || data);
       localStorage.setItem('user', JSON.stringify(data.user || data));
       navigate('/patient/dashboard');
@@ -135,11 +137,11 @@ export default function CompleteProfile() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input name="last_name" value={form.last_name} onChange={handleChange} placeholder="Apellido" className="border p-2 rounded w-full" required />
-            <input name="birthdate" value={form.birthdate} onChange={handleChange} type="date" placeholder="Fecha de nacimiento" className="border p-2 rounded w-full" />
+            <input name="date_of_birth" value={form.date_of_birth} onChange={handleChange} type="date" placeholder="Fecha de nacimiento" className="border p-2 rounded w-full" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input name="phone" value={form.phone} onChange={handleChange} placeholder="Teléfono" maxLength={10} className="border p-2 rounded w-full" />
+            <input name="phone_number" value={form.phone_number} onChange={handleChange} placeholder="Teléfono" maxLength={10} className="border p-2 rounded w-full" />
             <select name="gender" value={form.gender} onChange={handleChange} className="border p-2 rounded w-full">
               <option value="">Género</option>
               <option value="male">Masculino</option>
