@@ -109,8 +109,10 @@ export default function Register() {
   };
 
   const handleGoogleRegister = () => {
-    const API_URL = import.meta.env.VITE_API_URL || 'https://medical-appointment-backend-2xx0.onrender.com';
-    window.location.href = `${API_URL}/api/auth/google`;
+    // Use External API for OAuth
+    const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL || 'https://medical-external-api.onrender.com/api/v1';
+    const baseUrl = EXTERNAL_API_URL.replace('/api/v1', '');
+    window.location.href = `${baseUrl}/api/v1/auth/google`;
   };
 
   return (

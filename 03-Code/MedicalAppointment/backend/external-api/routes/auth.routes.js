@@ -6,8 +6,63 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
+const googleAuthService = require('../services/googleAuth.service');
 const { authMiddleware } = require('../../shared/middleware/auth.middleware');
 const { validate, schemas } = require('../../shared/middleware/validation.middleware');
+
+// =============================================================================
+// GOOGLE OAUTH ROUTES
+// =============================================================================
+
+/**
+ * @route GET /auth/google
+ * @desc Redirect to Google OAuth
+ * @access Public
+ */
+router.get('/google', (req, res) => {
+  const authUrl = googleAuthService.getGoogleAuthUrl();
+  res.redirect(authUrl);
+});
+
+/**
+ * @route GET /auth/google/callback
+ * @desc Google OAuth callback
+ * @access Public
+ */
+router.get('/google/callback', async (req, res) => {
+  try {
+    const { code, error } = req.query;
+
+    if (error) {
+      console.error('Google OAuth error:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/login?error=google_auth_failed`);
+    }
+
+    if (!code) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/login?error=no_code`);
+    }
+
+    const result = await googleAuthService.handleGoogleCallback(code);
+
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const userJson = encodeURIComponent(JSON.stringify(result.user));
+    
+    res.redirect(
+      `${frontendUrl}/auth/callback?token=${result.token}&user=${userJson}`
+    );
+  } catch (error) {
+    console.error('Google callback error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/login?error=auth_failed&message=${encodeURIComponent(error.message)}`);
+  }
+});
+
+// =============================================================================
+// LOCAL AUTH ROUTES
+// =============================================================================
 
 /**
  * @route POST /auth/register

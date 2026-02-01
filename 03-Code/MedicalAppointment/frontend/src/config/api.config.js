@@ -12,15 +12,15 @@ const isDevelopment = import.meta.env.DEV;
 const API_URLS = {
   crud: isDevelopment 
     ? 'http://localhost:3001/api/v1'
-    : import.meta.env.VITE_CRUD_API_URL || 'https://your-crud-api.onrender.com/api/v1',
+    : import.meta.env.VITE_CRUD_API_URL || 'https://medical-crud-api.onrender.com/api/v1',
   
   business: isDevelopment 
     ? 'http://localhost:3002/api/v1'
-    : import.meta.env.VITE_BUSINESS_API_URL || 'https://your-business-api.onrender.com/api/v1',
+    : import.meta.env.VITE_BUSINESS_API_URL || 'https://medical-business-api.onrender.com/api/v1',
   
   external: isDevelopment 
     ? 'http://localhost:3003/api/v1'
-    : import.meta.env.VITE_EXTERNAL_API_URL || 'https://your-external-api.onrender.com/api/v1',
+    : import.meta.env.VITE_EXTERNAL_API_URL || 'https://medical-external-api.onrender.com/api/v1',
 };
 
 // API Types

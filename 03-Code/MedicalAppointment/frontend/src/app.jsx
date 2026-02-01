@@ -8,6 +8,7 @@ import Login from './pages/public/login.jsx';
 import Register from './pages/public/Register';
 import CompleteProfile from './pages/public/CompleteProfile';
 import ConfirmAppointment from './pages/public/ConfirmAppointment';
+import AuthCallback from './pages/public/AuthCallback';
 import VerifyPrescriptionQR from './pages/VerifyPrescriptionQR';
 
 // Admin pages
@@ -94,6 +95,7 @@ function AppRoutes() {
         element={user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Register />} 
       />
       <Route path="/complete-profile" element={<CompleteProfile />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Admin Routes */}
       <Route
