@@ -336,7 +336,7 @@ export default function DoctorManagement() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
         <StatsCard title="Doctores Activos" value={stats.active || 0} color="green" />
         <StatsCard title="Especialidades" value={specialties.length} color="blue" />
         <StatsCard title="Total Doctores" value={stats.total || 0} color="yellow" />
@@ -344,21 +344,22 @@ export default function DoctorManagement() {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <FunnelIcon className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-800">Filtros de Búsqueda</h3>
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <FunnelIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800">Filtros de Búsqueda</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Especialidad</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Especialidad</label>
             <select
               value={specialtyFilter}
               onChange={(e) => setSpecialtyFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              style={{ fontSize: '16px' }}
             >
-              <option value="">Todas las Especialidades</option>
+              <option value="">Todas</option>
               {specialties.map(s => (
                 <option key={s.id} value={s.name}>{s.name}</option>
               ))}
@@ -366,11 +367,12 @@ export default function DoctorManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Estado</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              style={{ fontSize: '16px' }}
             >
               <option value="">Todos</option>
               <option value="active">Activo</option>
@@ -380,15 +382,16 @@ export default function DoctorManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar Doctor</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Buscar Doctor</label>
             <div className="relative">
-              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <MagnifyingGlassIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nombre o cédula..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
@@ -396,13 +399,13 @@ export default function DoctorManagement() {
           <div className="flex items-end gap-2">
             <button
               onClick={applyFilters}
-              className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium"
+              className="flex-1 px-3 sm:px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm"
             >
               Aplicar
             </button>
             <button
               onClick={clearFilters}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm"
             >
               Limpiar
             </button>
@@ -412,18 +415,71 @@ export default function DoctorManagement() {
 
       {/* Add Button and Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Lista de Doctores</h3>
+        <div className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800">Lista de Doctores</h3>
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base w-full sm:w-auto justify-center"
           >
-            <PlusIcon className="w-5 h-5" />
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Agregar Doctor
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Cards View */}
+        <div className="block lg:hidden">
+          {doctors.length === 0 ? (
+            <div className="px-4 py-12 text-center text-gray-500">
+              No se encontraron doctores
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {doctors.map((doctor) => (
+                <div key={doctor.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {doctor.first_name} {doctor.last_name}
+                      </p>
+                      <p className="text-sm text-gray-600">{doctor.cedula || 'Sin cédula'}</p>
+                    </div>
+                    {getStatusBadge(doctor.status || (doctor.active ? 'active' : 'inactive'))}
+                  </div>
+                  <div className="text-sm text-gray-600 mb-2">
+                    <p>{doctor.specialty_name || doctor.specialty?.name || 'Sin especialidad'}</p>
+                    <p className="truncate">{doctor.email || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => openEditModal(doctor)}
+                      className="flex-1 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleResetPassword(doctor)}
+                      className="flex-1 p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+                    >
+                      <KeyIcon className="w-4 h-4" />
+                      Clave
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(doctor)}
+                      className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
               <tr>
@@ -493,21 +549,21 @@ export default function DoctorManagement() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-8 py-6 flex justify-between items-center rounded-t-2xl sticky top-0">
-              <h2 className="text-2xl font-bold">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center rounded-t-2xl sticky top-0">
+              <h2 className="text-lg sm:text-2xl font-bold">
                 {currentDoctor ? 'Editar Doctor' : 'Agregar Doctor'}
               </h2>
               <button onClick={closeModal} className="hover:bg-white/20 rounded-full p-2 transition-colors">
-                <XMarkIcon className="w-6 h-6" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Cédula <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -518,12 +574,13 @@ export default function DoctorManagement() {
                     value={formData.cedula}
                     onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
                     placeholder="0123456789"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Nombres <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -532,12 +589,13 @@ export default function DoctorManagement() {
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                     placeholder="Juan"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Apellidos <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -546,12 +604,13 @@ export default function DoctorManagement() {
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                     placeholder="Pérez"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -560,12 +619,13 @@ export default function DoctorManagement() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="doctor@clinica.com"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Teléfono <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -576,19 +636,21 @@ export default function DoctorManagement() {
                     value={formData.phone_number}
                     onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                     placeholder="0987654321"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Especialidad <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
                     value={formData.specialty_id}
                     onChange={(e) => setFormData({ ...formData, specialty_id: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   >
                     <option value="">Seleccionar especialidad</option>
                     {specialties.map(s => (
@@ -598,7 +660,7 @@ export default function DoctorManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Número de Licencia
                   </label>
                   <input
@@ -606,19 +668,21 @@ export default function DoctorManagement() {
                     value={formData.license_number}
                     onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
                     placeholder="MSP-12345"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Estado <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                    style={{ fontSize: '16px' }}
                   >
                     <option value="active">Activo</option>
                     <option value="inactive">Inactivo</option>
@@ -627,17 +691,17 @@ export default function DoctorManagement() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors"
+                  className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors order-2 sm:order-1"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold transition-colors shadow-md hover:shadow-lg"
+                  className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold transition-colors shadow-md hover:shadow-lg order-1 sm:order-2"
                 >
                   Guardar
                 </button>
@@ -863,9 +927,9 @@ function StatsCard({ title, value, color }) {
   };
 
   return (
-    <div className={`bg-gradient-to-br ${colors[color]} text-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform`}>
-      <div className="text-3xl font-bold mb-2">{value}</div>
-      <div className="text-sm opacity-90">{title}</div>
+    <div className={`bg-gradient-to-br ${colors[color]} text-white rounded-xl shadow-lg p-4 sm:p-6 transform hover:scale-105 transition-transform`}>
+      <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">{value}</div>
+      <div className="text-xs sm:text-sm opacity-90">{title}</div>
     </div>
   );
 }

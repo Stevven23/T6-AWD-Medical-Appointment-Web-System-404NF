@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -18,12 +19,20 @@ import {
   StarIcon,
   EyeIcon,
   LockClosedIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
@@ -82,16 +91,35 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg flex flex-col sticky top-0 h-screen">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg flex flex-col transform transition-transform duration-300 ease-in-out
+        lg:relative lg:translate-x-0 lg:z-auto
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Logo */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-between">
             <img 
               src="/logo.png" 
               alt="Clínica San Miguel" 
-              className="h-12 object-contain"
+              className="h-10 sm:h-12 object-contain"
             />
+            {/* Close button for mobile */}
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+            >
+              <XMarkIcon className="w-5 h-5 text-gray-600" />
+            </button>
           </div>
         </div>
 
@@ -141,25 +169,34 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden w-full">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3">
+        <header className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 sticky top-0 z-30">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-gray-800">
-              {allMenuItems.find(item => item.path === location.pathname)?.label || 'Admin'}
-            </h1>
-            
             <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-sm font-medium">
+              {/* Mobile menu button */}
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Bars3Icon className="w-6 h-6 text-gray-600" />
+              </button>
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-800 truncate">
+                {allMenuItems.find(item => item.path === location.pathname)?.label || 'Admin'}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="hidden sm:block text-gray-600 text-sm font-medium truncate max-w-[150px]">
                 {user?.first_name} {user?.last_name}
               </span>
-              <UserCircleIcon className="w-7 h-7 text-primary-500" />
+              <UserCircleIcon className="w-6 h-6 sm:w-7 sm:h-7 text-primary-500 flex-shrink-0" />
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
           {children}
         </main>
       </div>

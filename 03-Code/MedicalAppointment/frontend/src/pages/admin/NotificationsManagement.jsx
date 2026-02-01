@@ -196,106 +196,112 @@ export default function NotificationsManagement() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Notificaciones y Recordatorios</h2>
-            <p className="text-gray-600">Gestión de recordatorios de citas y anuncios del sistema</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Notificaciones y Recordatorios</h2>
+            <p className="text-sm sm:text-base text-gray-600">Gestión de recordatorios de citas y anuncios del sistema</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={loadReminders}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <ArrowPathIcon className="w-5 h-5" />
-              Actualizar
+              <span className="hidden sm:inline">Actualizar</span>
             </button>
             <button
               onClick={() => setShowAnnouncementModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
             >
               <PaperAirplaneIcon className="w-5 h-5" />
-              Enviar Anuncio
+              <span className="hidden sm:inline">Enviar Anuncio</span>
             </button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <BellIcon className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <BellIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Recordatorios</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Pendientes</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Total</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.total}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-full">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-yellow-100 rounded-full">
+                <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Enviados</p>
-                <p className="text-2xl font-bold text-green-600">{stats.sent}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Pendientes</p>
+                <p className="text-lg sm:text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-red-100 rounded-full">
-                <ExclamationCircleIcon className="w-6 h-6 text-red-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Fallidos</p>
-                <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Enviados</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.sent}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-red-100 rounded-full">
+                <ExclamationCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Fallidos</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-600">{stats.failed}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Filtros:</span>
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <FunnelIcon className="w-5 h-5 text-gray-400" />
+              <span className="text-sm font-medium text-gray-700">Filtros:</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="relative">
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar paciente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+              
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                style={{ fontSize: '16px' }}
+              >
+                <option value="all">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="sent">Enviados</option>
+                <option value="failed">Fallidos</option>
+                <option value="cancelled">Cancelados</option>
+              </select>
+            </div>
           </div>
-          
-          <div className="relative flex-1 max-w-xs">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar paciente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="pending">Pendientes</option>
-            <option value="sent">Enviados</option>
-            <option value="failed">Fallidos</option>
-            <option value="cancelled">Cancelados</option>
-          </select>
         </div>
 
         {/* Reminders Table */}
@@ -310,7 +316,56 @@ export default function NotificationsManagement() {
               <p>No se encontraron recordatorios</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile Cards */}
+              <div className="lg:hidden divide-y divide-gray-200">
+                {filteredReminders.map((reminder) => (
+                  <div key={reminder.id} className="p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 truncate">
+                          {reminder.patient?.first_name} {reminder.patient?.last_name}
+                        </p>
+                        <p className="text-sm text-gray-500">{reminder.patient?.email}</p>
+                      </div>
+                      {getStatusBadge(reminder.send_status)}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div>
+                        <p className="text-gray-500">Cita</p>
+                        <p className="text-gray-700">#{reminder.appointment_id}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Programado</p>
+                        <p className="text-gray-700 text-xs">{formatDate(reminder.scheduled_send_time)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                      {reminder.send_status === 'failed' && (
+                        <button
+                          onClick={() => retryReminder(reminder.id)}
+                          className="flex-1 flex items-center justify-center gap-1 p-2 text-green-600 hover:bg-green-50 rounded bg-gray-50"
+                        >
+                          <ArrowPathIcon className="w-4 h-4" />
+                          <span className="text-xs">Reintentar</span>
+                        </button>
+                      )}
+                      {reminder.send_status === 'pending' && (
+                        <button
+                          onClick={() => cancelReminder(reminder.id)}
+                          className="flex-1 flex items-center justify-center gap-1 p-2 text-red-600 hover:bg-red-50 rounded bg-gray-50"
+                        >
+                          <XCircleIcon className="w-4 h-4" />
+                          <span className="text-xs">Cancelar</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -385,20 +440,21 @@ export default function NotificationsManagement() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
 
         {/* Announcement Modal */}
         {showAnnouncementModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800">Enviar Anuncio del Sistema</h3>
-                <p className="text-sm text-gray-500">Envía una notificación masiva a usuarios</p>
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">Enviar Anuncio del Sistema</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Envía una notificación masiva a usuarios</p>
               </div>
               
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Asunto
@@ -409,6 +465,7 @@ export default function NotificationsManagement() {
                     onChange={(e) => setAnnouncementForm(prev => ({ ...prev, subject: e.target.value }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="Asunto del correo"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 

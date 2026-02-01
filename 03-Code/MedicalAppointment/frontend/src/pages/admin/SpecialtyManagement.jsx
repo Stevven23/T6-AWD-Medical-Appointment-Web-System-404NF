@@ -147,9 +147,9 @@ export default function SpecialtyManagement() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
         <StatsCard
-          title="Total Especialidades"
+          title="Total"
           value={stats.total || 0}
           color="blue"
         />
@@ -171,31 +171,77 @@ export default function SpecialtyManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center sm:justify-between">
+          <div className="relative flex-1 max-w-full sm:max-w-md">
+            <MagnifyingGlassIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Buscar especialidad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              style={{ fontSize: '16px' }}
             />
           </div>
           
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
           >
-            <PlusIcon className="w-5 h-5" />
-            Agregar Especialidad
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Agregar Especialidad</span>
+            <span className="sm:hidden">Agregar</span>
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block lg:hidden bg-white rounded-xl shadow-md overflow-hidden">
+        {filteredSpecialties.length === 0 ? (
+          <div className="px-4 py-12 text-center text-gray-500">
+            No se encontraron especialidades
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {filteredSpecialties.map((specialty) => (
+              <div key={specialty.id} className="p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900">{specialty.name}</p>
+                    <p className="text-sm text-gray-600 truncate">{specialty.description || 'Sin descripción'}</p>
+                  </div>
+                  {specialty.consultation_fee && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold text-xs flex-shrink-0 ml-2">
+                      <CurrencyDollarIcon className="w-3 h-3" />
+                      {parseFloat(specialty.consultation_fee).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => openEditModal(specialty)}
+                    className="flex-1 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+                  >
+                    <PencilIcon className="w-4 h-4" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(specialty)}
+                    className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-xl shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
@@ -382,9 +428,9 @@ function StatsCard({ title, value, color }) {
   };
 
   return (
-    <div className={`bg-gradient-to-br ${colors[color]} text-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform`}>
-      <div className="text-3xl font-bold mb-2">{value}</div>
-      <div className="text-sm opacity-90">{title}</div>
+    <div className={`bg-gradient-to-br ${colors[color]} text-white rounded-xl shadow-lg p-4 sm:p-6 transform hover:scale-105 transition-transform`}>
+      <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">{value}</div>
+      <div className="text-xs sm:text-sm opacity-90">{title}</div>
     </div>
   );
 }

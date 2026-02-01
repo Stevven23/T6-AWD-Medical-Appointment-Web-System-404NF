@@ -274,10 +274,10 @@ export default function PatientManagement() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Notification */}
         {notification && (
-          <div className={`p-4 rounded-lg ${
+          <div className={`p-3 sm:p-4 rounded-lg text-sm ${
             notification.type === 'success' 
               ? 'bg-green-50 text-green-800 border border-green-200' 
               : 'bg-red-50 text-red-800 border border-red-200'
@@ -287,60 +287,62 @@ export default function PatientManagement() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Gestión de Pacientes</h2>
-            <p className="text-gray-600 mt-1">Administra la información de los pacientes</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Gestión de Pacientes</h2>
+            <p className="text-sm text-gray-600 mt-1">Administra la información de los pacientes</p>
           </div>
           <button
             onClick={() => { resetForm(); setShowModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base w-full sm:w-auto"
           >
-            <PlusIcon className="w-5 h-5" />
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Nuevo Paciente
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Total Pacientes</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total || patients.length}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500">Total</h3>
+            <p className="text-xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{stats.total || patients.length}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Activos</h3>
-            <p className="text-3xl font-bold text-green-600 mt-2">{stats.active || 0}</p>
+          <div className="bg-white rounded-lg shadow p-3 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500">Activos</h3>
+            <p className="text-xl sm:text-3xl font-bold text-green-600 mt-1 sm:mt-2">{stats.active || 0}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Inactivos</h3>
-            <p className="text-3xl font-bold text-red-600 mt-2">{stats.inactive || 0}</p>
+          <div className="bg-white rounded-lg shadow p-3 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500">Inactivos</h3>
+            <p className="text-xl sm:text-3xl font-bold text-red-600 mt-1 sm:mt-2">{stats.inactive || 0}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-64">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
+            <div className="flex-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Buscar por nombre o cédula..."
+                  placeholder="Nombre o cédula..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
             
-            <div className="w-40">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <div className="w-full sm:w-40">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Estado</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                style={{ fontSize: '16px' }}
               >
                 <option value="">Todos</option>
                 <option value="active">Activos</option>
@@ -348,23 +350,85 @@ export default function PatientManagement() {
               </select>
             </div>
 
-            <button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Buscar
-            </button>
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Limpiar
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSearch}
+                className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              >
+                Buscar
+              </button>
+              <button
+                onClick={clearFilters}
+                className="flex-1 sm:flex-none px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+              >
+                Limpiar
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        {/* Mobile Cards View */}
+        <div className="block lg:hidden bg-white rounded-lg shadow overflow-hidden">
+          {loading ? (
+            <div className="px-4 py-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            </div>
+          ) : patients.length === 0 ? (
+            <div className="px-4 py-8 text-center text-gray-500">
+              No se encontraron pacientes
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {patients.map((patient) => (
+                <div key={patient.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm flex-shrink-0">
+                      {patient.first_name?.charAt(0)}{patient.last_name?.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 truncate">{patient.first_name} {patient.last_name}</p>
+                      <p className="text-sm text-gray-500 truncate">{patient.email}</p>
+                      <p className="text-sm text-gray-500">{patient.cedula || 'Sin cédula'}</p>
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
+                      patient.is_active !== false
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {patient.is_active !== false ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => openDetailModal(patient)}
+                      className="flex-1 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center justify-center gap-1 text-sm"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                      Ver
+                    </button>
+                    <button
+                      onClick={() => openEditModal(patient)}
+                      className="flex-1 p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition flex items-center justify-center gap-1 text-sm"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => { setCurrentPatient(patient); setShowDeleteModal(true); }}
+                      className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center justify-center gap-1 text-sm"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">

@@ -397,72 +397,73 @@ export default function BillingManagement() {
         )}
 
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Gestión de Facturación</h2>
-            <p className="text-gray-600">Administra facturas y pagos</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Gestión de Facturación</h2>
+            <p className="text-sm sm:text-base text-gray-600">Administra facturas y pagos</p>
           </div>
           <button
             onClick={openGenerateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
           >
             <PlusIcon className="w-5 h-5" />
-            Generar Factura
+            <span className="hidden sm:inline">Generar Factura</span>
+            <span className="sm:hidden">Generar</span>
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <DocumentTextIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Facturas</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Pendientes</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.pending}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500">Total Facturas</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.total}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg">
+                <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Pagados</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.paid}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500">Pendientes</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.pending}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <CurrencyDollarIcon className="w-6 h-6 text-purple-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Por Cobrar</p>
-                <p className="text-2xl font-bold text-gray-800">{formatCurrency(stats.pendingAmount)}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500">Pagados</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.paid}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
+                <CurrencyDollarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500">Por Cobrar</p>
+                <p className="text-sm sm:text-2xl font-bold text-gray-800 truncate">{formatCurrency(stats.pendingAmount)}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+          <div className="flex flex-col gap-3">
+            <div className="relative">
               <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -470,6 +471,7 @@ export default function BillingManagement() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                style={{ fontSize: '16px' }}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -477,7 +479,8 @@ export default function BillingManagement() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                style={{ fontSize: '16px' }}
               >
                 <option value="all">Todos</option>
                 <option value="pending">Pendientes</option>
@@ -502,6 +505,50 @@ export default function BillingManagement() {
               <p className="text-gray-400">Las facturas aparecerán aquí</p>
             </div>
           ) : (
+            <>
+              {/* Mobile Cards */}
+              <div className="lg:hidden divide-y divide-gray-200">
+                {filteredBillings.map((billing) => (
+                  <div key={billing.id} className="p-3 sm:p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 text-sm truncate">
+                          {billing.invoice_number || `#${billing.id?.slice(0, 8)}`}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {billing.patient?.first_name} {billing.patient?.last_name}
+                        </p>
+                      </div>
+                      {getStatusBadge(billing.status)}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs text-gray-500">{formatDate(billing.created_at)}</span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(billing.total_amount)}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openDetailModal(billing)}
+                        className="flex-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                      >
+                        Ver detalle
+                      </button>
+                      {billing.status === 'pending' && (
+                        <button
+                          onClick={() => openPaymentModal(billing)}
+                          className="flex-1 px-3 py-1.5 text-xs bg-green-50 text-green-600 rounded hover:bg-green-100"
+                        >
+                          Registrar pago
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Desktop Table */}
+              <div className="hidden lg:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -574,24 +621,26 @@ export default function BillingManagement() {
                 ))}
               </tbody>
             </table>
+              </div>
+            </>
           )}
         </div>
 
         {/* Payment Modal */}
         {showPaymentModal && selectedBilling && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold text-gray-800">Registrar Pago</h3>
-                <p className="text-sm text-gray-500">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">Registrar Pago</h3>
+                <p className="text-xs sm:text-sm text-gray-500">
                   Factura: {selectedBilling.invoice_number || `#${selectedBilling.id?.slice(0, 8)}`}
                 </p>
               </div>
               
-              <div className="p-6 space-y-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-blue-600">Monto a Pagar</p>
-                  <p className="text-2xl font-bold text-blue-800">
+              <div className="p-4 sm:p-6 space-y-4">
+                <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-blue-600">Monto a Pagar</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-800">
                     {formatCurrency(selectedBilling.total_amount)}
                   </p>
                 </div>
@@ -604,6 +653,7 @@ export default function BillingManagement() {
                     value={paymentData.payment_method}
                     onChange={(e) => setPaymentData({...paymentData, payment_method: e.target.value})}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    style={{ fontSize: '16px' }}
                   >
                     <option value="cash">Efectivo</option>
                     <option value="card">Tarjeta de Crédito/Débito</option>
@@ -622,6 +672,7 @@ export default function BillingManagement() {
                     onChange={(e) => setPaymentData({...paymentData, reference_number: e.target.value})}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Ej: Número de transacción"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
@@ -634,20 +685,21 @@ export default function BillingManagement() {
                     onChange={(e) => setPaymentData({...paymentData, notes: e.target.value})}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     rows={2}
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
               </div>
 
-              <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
+              <div className="p-4 sm:p-6 border-t bg-gray-50 flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
                 <button
                   onClick={() => setShowPaymentModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleProcessPayment}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base"
                 >
                   Confirmar Pago
                 </button>
@@ -660,43 +712,43 @@ export default function BillingManagement() {
         {showDetailModal && selectedBilling && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b flex justify-between items-center">
+              <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Detalle de Factura</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">Detalle de Factura</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {selectedBilling.invoice_number || `#${selectedBilling.id?.slice(0, 8)}`}
                   </p>
                 </div>
                 {getStatusBadge(selectedBilling.status)}
               </div>
               
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Paciente</p>
-                    <p className="font-medium">
+                    <p className="font-medium text-sm sm:text-base">
                       {selectedBilling.patient?.first_name} {selectedBilling.patient?.last_name}
                     </p>
-                    <p className="text-sm text-gray-500">{selectedBilling.patient?.email}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedBilling.patient?.email}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Médico</p>
-                    <p className="font-medium">
+                    <p className="font-medium text-sm sm:text-base">
                       {selectedBilling.doctor?.users?.first_name 
                         ? `Dr. ${selectedBilling.doctor.users.first_name} ${selectedBilling.doctor.users.last_name}`
                         : selectedBilling.doctor_name || 'N/A'}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {selectedBilling.doctor?.specialties?.name || selectedBilling.specialty_name || 'Consulta General'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Fecha de Emisión</p>
-                    <p className="font-medium">{formatDate(selectedBilling.created_at)}</p>
+                    <p className="font-medium text-sm sm:text-base">{formatDate(selectedBilling.created_at)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Estado del Pago</p>
-                    <p className="font-medium">
+                    <p className="font-medium text-sm sm:text-base">
                       {selectedBilling.status === 'paid' ? (
                         <span className="text-green-600">✓ Pagado</span>
                       ) : (
@@ -707,34 +759,34 @@ export default function BillingManagement() {
                 </div>
 
                 {/* Desglose de Montos */}
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium">{formatCurrency(selectedBilling.subtotal || selectedBilling.base_amount)}</span>
                   </div>
                   {selectedBilling.insurance_discount_percentage > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-green-600 text-sm">
                       <span>Descuento Seguro ({selectedBilling.insurance_discount_percentage}%)</span>
                       <span>-{formatCurrency(selectedBilling.insurance_discount_amount)}</span>
                     </div>
                   )}
                   {selectedBilling.tax_amount > 0 && (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Impuestos ({selectedBilling.tax_percentage || 0}%)</span>
                       <span className="font-medium">{formatCurrency(selectedBilling.tax_amount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="font-semibold text-gray-800">Total</span>
-                    <span className="font-bold text-xl">{formatCurrency(selectedBilling.total_amount || selectedBilling.amount)}</span>
+                    <span className="font-semibold text-gray-800 text-sm sm:text-base">Total</span>
+                    <span className="font-bold text-lg sm:text-xl">{formatCurrency(selectedBilling.total_amount || selectedBilling.amount)}</span>
                   </div>
                 </div>
 
                 {/* Información del Seguro */}
                 {(selectedBilling.insurance_provider_id || selectedBilling.insurance_provider) && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-800 mb-2">Información del Seguro</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                    <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Información del Seguro</h4>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                       <div>
                         <p className="text-blue-600">Aseguradora</p>
                         <p className="font-medium text-blue-900">{selectedBilling.insurance_provider?.name || selectedBilling.insurance_provider || 'N/A'}</p>
@@ -756,11 +808,11 @@ export default function BillingManagement() {
                 )}
 
                 {selectedBilling.payment_date && (
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <p className="text-sm text-green-600">Pagado el</p>
-                    <p className="font-medium text-green-800">{formatDate(selectedBilling.payment_date)}</p>
+                  <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+                    <p className="text-xs sm:text-sm text-green-600">Pagado el</p>
+                    <p className="font-medium text-green-800 text-sm sm:text-base">{formatDate(selectedBilling.payment_date)}</p>
                     {selectedBilling.payment_method && (
-                      <p className="text-sm text-green-700 mt-1">Método: {selectedBilling.payment_method}</p>
+                      <p className="text-xs sm:text-sm text-green-700 mt-1">Método: {selectedBilling.payment_method}</p>
                     )}
                   </div>
                 )}
@@ -768,22 +820,22 @@ export default function BillingManagement() {
                 {selectedBilling.notes && (
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Notas</p>
-                    <p className="text-gray-700">{selectedBilling.notes}</p>
+                    <p className="text-gray-700 text-sm">{selectedBilling.notes}</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
+              <div className="p-4 sm:p-6 border-t bg-gray-50 flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
                 <button
                   onClick={() => printInvoice(selectedBilling)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base"
                 >
                   <PrinterIcon className="w-4 h-4" />
                   Imprimir Factura
                 </button>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm sm:text-base"
                 >
                   Cerrar
                 </button>
@@ -795,19 +847,19 @@ export default function BillingManagement() {
         {/* Generate Invoice Modal */}
         {showGenerateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold text-gray-800">Generar Factura</h3>
-                <p className="text-sm text-gray-500">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">Generar Factura</h3>
+                <p className="text-xs sm:text-sm text-gray-500">
                   Seleccione una cita completada para generar su factura
                 </p>
               </div>
               
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 {completedAppointments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <DocumentTextIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No hay citas completadas disponibles</p>
+                    <p className="text-sm">No hay citas completadas disponibles</p>
                   </div>
                 ) : (
                   <div>
@@ -817,7 +869,8 @@ export default function BillingManagement() {
                     <select
                       value={selectedAppointmentId}
                       onChange={(e) => setSelectedAppointmentId(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                      style={{ fontSize: '16px' }}
                     >
                       <option value="">-- Seleccione una cita --</option>
                       {completedAppointments.map((apt) => {
@@ -845,20 +898,20 @@ export default function BillingManagement() {
                 )}
               </div>
 
-              <div className="p-6 border-t bg-gray-50 flex gap-3 justify-end">
+              <div className="p-4 sm:p-6 border-t bg-gray-50 flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
                 <button
                   onClick={() => {
                     setShowGenerateModal(false);
                     setSelectedAppointmentId('');
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleGenerateInvoice}
                   disabled={!selectedAppointmentId || generating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {generating ? 'Generando...' : 'Generar Factura'}
                 </button>

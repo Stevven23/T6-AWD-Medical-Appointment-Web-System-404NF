@@ -132,133 +132,142 @@ export default function AdminLogs() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Registros de Auditoría</h2>
-            <p className="text-gray-600">Historial de acciones en el sistema</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Registros de Auditoría</h2>
+            <p className="text-sm sm:text-base text-gray-600">Historial de acciones en el sistema</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={loadLogs}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base"
             >
-              <ArrowPathIcon className="w-5 h-5" />
-              Actualizar
+              <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Actualizar</span>
             </button>
             <button
               onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base"
             >
-              <ArrowDownTrayIcon className="w-5 h-5" />
-              Exportar CSV
+              <ArrowDownTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Exportar CSV</span>
             </button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <DocumentTextIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Registros</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-full">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Inserciones</p>
-                <p className="text-2xl font-bold text-green-600">{stats.inserts}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Total Registros</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.total}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <InformationCircleIcon className="w-6 h-6 text-blue-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Actualizaciones</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.updates}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Inserciones</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.inserts}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-red-100 rounded-full">
-                <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <InformationCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Eliminaciones</p>
-                <p className="text-2xl font-bold text-red-600">{stats.deletes}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Actualizaciones</p>
+                <p className="text-lg sm:text-2xl font-bold text-blue-600">{stats.updates}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-red-100 rounded-full">
+                <ExclamationTriangleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Eliminaciones</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-600">{stats.deletes}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 items-center bg-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Filtros:</span>
-          </div>
-          
-          <div className="relative flex-1 max-w-xs">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar usuario o descripción..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          
-          <select
-            value={actionFilter}
-            onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todas las acciones</option>
-            <option value="INSERT">INSERT</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
-            <option value="LOGIN">LOGIN</option>
-            <option value="LOGOUT">LOGOUT</option>
-          </select>
-          
-          <select
-            value={tableFilter}
-            onChange={(e) => { setTableFilter(e.target.value); setPage(1); }}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todas las tablas</option>
-            {uniqueTables.map(table => (
-              <option key={table} value={table}>{table}</option>
-            ))}
-          </select>
-          
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-            />
-            <span className="text-gray-400">a</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
-            />
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <FunnelIcon className="w-5 h-5 text-gray-400" />
+              <span className="text-sm font-medium text-gray-700">Filtros:</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="relative">
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar usuario o descripción..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+              
+              <select
+                value={actionFilter}
+                onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                style={{ fontSize: '16px' }}
+              >
+                <option value="all">Todas las acciones</option>
+                <option value="INSERT">INSERT</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="LOGOUT">LOGOUT</option>
+              </select>
+              
+              <select
+                value={tableFilter}
+                onChange={(e) => { setTableFilter(e.target.value); setPage(1); }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                style={{ fontSize: '16px' }}
+              >
+                <option value="all">Todas las tablas</option>
+                {uniqueTables.map(table => (
+                  <option key={table} value={table}>{table}</option>
+                ))}
+              </select>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                  className="flex-1 border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                  style={{ fontSize: '16px' }}
+                />
+                <span className="text-gray-400 hidden sm:inline">a</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                  className="flex-1 border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -275,7 +284,44 @@ export default function AdminLogs() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Mobile Cards View */}
+              <div className="lg:hidden divide-y divide-gray-200">
+                {filteredLogs.map((log) => (
+                  <div 
+                    key={log.id} 
+                    className="p-4 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      setSelectedLog(log);
+                      setShowDetailModal(true);
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {log.users?.first_name} {log.users?.last_name}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{log.users?.email}</p>
+                      </div>
+                      {getActionBadge(log.action)}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <ClockIcon className="w-3 h-3" />
+                        {formatDate(log.timestamp)}
+                      </span>
+                      <code className="bg-gray-100 px-1 py-0.5 rounded">
+                        {log.table_name}
+                      </code>
+                    </div>
+                    {log.description && (
+                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">{log.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -340,7 +386,7 @@ export default function AdminLogs() {
               </div>
               
               {/* Pagination */}
-              <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="p-3 sm:p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p className="text-sm text-gray-500">
                   Página {page} de {totalPages}
                 </p>
@@ -369,53 +415,53 @@ export default function AdminLogs() {
         {showDetailModal && selectedLog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-800">Detalle del Registro</h3>
+              <div className="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between gap-3">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">Detalle del Registro</h3>
                 {getActionBadge(selectedLog.action)}
               </div>
               
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-gray-500">Fecha y Hora</label>
-                    <p className="font-medium text-gray-800">{formatDate(selectedLog.timestamp)}</p>
+                    <p className="font-medium text-gray-800 text-sm sm:text-base">{formatDate(selectedLog.timestamp)}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Usuario</label>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium text-gray-800 text-sm sm:text-base">
                       {selectedLog.users?.first_name} {selectedLog.users?.last_name}
                     </p>
-                    <p className="text-sm text-gray-500">{selectedLog.users?.email}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedLog.users?.email}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Tabla</label>
-                    <code className="bg-gray-100 px-2 py-1 rounded text-sm">{selectedLog.table_name}</code>
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs sm:text-sm">{selectedLog.table_name}</code>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">ID Registro</label>
-                    <p className="font-medium text-gray-800">{selectedLog.record_id || '-'}</p>
+                    <p className="font-medium text-gray-800 text-sm sm:text-base">{selectedLog.record_id || '-'}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">Dirección IP</label>
-                    <p className="font-mono text-gray-800">{selectedLog.ip_address || '-'}</p>
+                    <p className="font-mono text-gray-800 text-sm sm:text-base">{selectedLog.ip_address || '-'}</p>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500">User Agent</label>
-                    <p className="text-sm text-gray-600 truncate">{selectedLog.user_agent || '-'}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">{selectedLog.user_agent || '-'}</p>
                   </div>
                 </div>
 
                 {selectedLog.description && (
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Descripción</label>
-                    <p className="p-3 bg-gray-50 rounded-lg text-gray-700">{selectedLog.description}</p>
+                    <p className="p-3 bg-gray-50 rounded-lg text-gray-700 text-sm">{selectedLog.description}</p>
                   </div>
                 )}
 
                 {selectedLog.old_values && (
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Valores Anteriores</label>
-                    <pre className="p-3 bg-red-50 rounded-lg text-sm text-red-800 overflow-x-auto">
+                    <pre className="p-3 bg-red-50 rounded-lg text-xs sm:text-sm text-red-800 overflow-x-auto">
                       {JSON.stringify(selectedLog.old_values, null, 2)}
                     </pre>
                   </div>
@@ -424,14 +470,14 @@ export default function AdminLogs() {
                 {selectedLog.new_values && (
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Nuevos Valores</label>
-                    <pre className="p-3 bg-green-50 rounded-lg text-sm text-green-800 overflow-x-auto">
+                    <pre className="p-3 bg-green-50 rounded-lg text-xs sm:text-sm text-green-800 overflow-x-auto">
                       {JSON.stringify(selectedLog.new_values, null, 2)}
                     </pre>
                   </div>
                 )}
               </div>
               
-              <div className="p-6 border-t border-gray-200 flex justify-end">
+              <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
                 <button
                   onClick={() => {
                     setShowDetailModal(false);

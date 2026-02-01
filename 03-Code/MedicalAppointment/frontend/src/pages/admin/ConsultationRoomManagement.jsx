@@ -205,62 +205,63 @@ export default function ConsultationRoomManagement() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Salas de Consulta</h2>
-            <p className="text-gray-600">Gestiona las salas disponibles para consultas</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Salas de Consulta</h2>
+            <p className="text-sm sm:text-base text-gray-600">Gestiona las salas disponibles para consultas</p>
           </div>
           <button
             onClick={() => {
               resetForm();
               setShowModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
           >
             <PlusIcon className="w-5 h-5" />
-            Nueva Sala
+            <span className="hidden sm:inline">Nueva Sala</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <BuildingOffice2Icon className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <BuildingOffice2Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Salas</p>
-                <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-full">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Disponibles</p>
-                <p className="text-2xl font-bold text-green-600">{stats.available}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Total</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800">{stats.total}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-red-100 rounded-full">
-                <XCircleIcon className="w-6 h-6 text-red-600" />
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">No Disponibles</p>
-                <p className="text-2xl font-bold text-red-600">{stats.unavailable}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Disponibles</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.available}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-red-100 rounded-full">
+                <XCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">No Disp.</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-600">{stats.unavailable}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search */}
-        <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -268,7 +269,8 @@ export default function ConsultationRoomManagement() {
               placeholder="Buscar salas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              style={{ fontSize: '16px' }}
             />
           </div>
         </div>
@@ -279,7 +281,7 @@ export default function ConsultationRoomManagement() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredRooms.map((room) => {
               const equipmentList = parseEquipment(room.equipment);
               return (
@@ -390,9 +392,9 @@ export default function ConsultationRoomManagement() {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   {modalMode === 'create' ? 'Nueva Sala' : 'Editar Sala'}
                 </h3>
@@ -407,11 +409,12 @@ export default function ConsultationRoomManagement() {
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      style={{ fontSize: '16px' }}
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Número de Sala
@@ -421,6 +424,7 @@ export default function ConsultationRoomManagement() {
                         value={formData.room_number}
                         onChange={(e) => setFormData({...formData, room_number: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div>
@@ -432,11 +436,12 @@ export default function ConsultationRoomManagement() {
                         value={formData.floor}
                         onChange={(e) => setFormData({...formData, floor: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Edificio
@@ -446,6 +451,7 @@ export default function ConsultationRoomManagement() {
                         value={formData.building}
                         onChange={(e) => setFormData({...formData, building: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                     <div>
@@ -458,6 +464,7 @@ export default function ConsultationRoomManagement() {
                         value={formData.capacity}
                         onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ fontSize: '16px' }}
                       />
                     </div>
                   </div>
@@ -473,7 +480,7 @@ export default function ConsultationRoomManagement() {
                           {formData.equipment.map((item, index) => (
                             <span 
                               key={index} 
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded-md"
                             >
                               {item}
                               <button
@@ -494,8 +501,9 @@ export default function ConsultationRoomManagement() {
                           value={equipmentInput}
                           onChange={(e) => setEquipmentInput(e.target.value)}
                           onKeyDown={handleEquipmentKeyDown}
-                          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Agregar equipo (Enter para añadir)"
+                          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          placeholder="Agregar equipo"
+                          style={{ fontSize: '16px' }}
                         />
                         <button
                           type="button"
@@ -516,8 +524,9 @@ export default function ConsultationRoomManagement() {
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                       rows={2}
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
 
@@ -538,13 +547,13 @@ export default function ConsultationRoomManagement() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
                     >
                       {modalMode === 'create' ? 'Crear' : 'Guardar'}
                     </button>

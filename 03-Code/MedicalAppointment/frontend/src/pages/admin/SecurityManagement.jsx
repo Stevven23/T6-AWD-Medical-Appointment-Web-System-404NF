@@ -107,19 +107,21 @@ export default function SecurityManagement() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShieldCheckIcon className="w-8 h-8 text-indigo-600" />
-              Seguridad y Accesos
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <ShieldCheckIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
+              <span className="hidden sm:inline">Seguridad y Accesos</span>
+              <span className="sm:hidden">Seguridad</span>
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Gestión de usuarios, roles, permisos y auditoría del sistema
+            <p className="mt-1 text-xs sm:text-sm text-gray-500">
+              <span className="hidden sm:inline">Gestión de usuarios, roles, permisos y auditoría del sistema</span>
+              <span className="sm:hidden">Usuarios, roles y permisos</span>
             </p>
           </div>
         </div>
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
               title="Total Usuarios"
               value={stats.total_users}
@@ -152,21 +154,21 @@ export default function SecurityManagement() {
         )}
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="-mb-px flex space-x-4 sm:space-x-6 min-w-max" aria-label="Tabs">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   {tab.name}
                 </button>
               );
@@ -196,15 +198,15 @@ function StatCard({ title, value, subtitle, icon: Icon, color }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="w-6 h-6" />
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className={`p-1.5 sm:p-2 rounded-lg ${colorClasses[color]}`}>
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value ?? '-'}</p>
-          <p className="text-xs text-gray-400">{subtitle}</p>
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{title}</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{value ?? '-'}</p>
+          <p className="text-xs text-gray-400 truncate">{subtitle}</p>
         </div>
       </div>
     </div>
@@ -445,8 +447,8 @@ function UsersTab({ showNotification, onDataChange }) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 bg-white p-4 rounded-lg border">
-        <div className="flex-1 min-w-[200px]">
+      <div className="bg-white p-3 sm:p-4 rounded-lg border">
+        <div className="flex flex-col gap-3">
           <div className="relative">
             <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -455,47 +457,138 @@ function UsersTab({ showNotification, onDataChange }) {
               value={filters.search}
               onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              style={{ fontSize: '16px' }}
             />
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <select
+              value={filters.role}
+              onChange={(e) => setFilters(f => ({ ...f, role: e.target.value }))}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+              style={{ fontSize: '16px' }}
+            >
+              <option value="">Todos los roles</option>
+              {roles.map(role => (
+                <option key={role.id} value={role.id}>{role.label || role.name}</option>
+              ))}
+            </select>
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+              style={{ fontSize: '16px' }}
+            >
+              <option value="">Todos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+            <select
+              value={filters.verified}
+              onChange={(e) => setFilters(f => ({ ...f, verified: e.target.value }))}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+              style={{ fontSize: '16px' }}
+            >
+              <option value="">Verificación</option>
+              <option value="verified">Verificados</option>
+              <option value="unverified">No verificados</option>
+            </select>
+            <button
+              onClick={() => setFilters({ search: '', role: '', status: '', verified: '' })}
+              className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+            >
+              Limpiar
+            </button>
+          </div>
         </div>
-        <select
-          value={filters.role}
-          onChange={(e) => setFilters(f => ({ ...f, role: e.target.value }))}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Todos los roles</option>
-          {roles.map(role => (
-            <option key={role.id} value={role.id}>{role.label || role.name}</option>
-          ))}
-        </select>
-        <select
-          value={filters.status}
-          onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-        </select>
-        <select
-          value={filters.verified}
-          onChange={(e) => setFilters(f => ({ ...f, verified: e.target.value }))}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Verificación email</option>
-          <option value="verified">Verificados</option>
-          <option value="unverified">No verificados</option>
-        </select>
-        <button
-          onClick={() => setFilters({ search: '', role: '', status: '', verified: '' })}
-          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-        >
-          Limpiar
-        </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border shadow-sm">
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-lg p-8 text-center text-gray-500">
+            <ArrowPathIcon className="w-6 h-6 animate-spin mx-auto mb-2" />
+            Cargando...
+          </div>
+        ) : users.length === 0 ? (
+          <div className="bg-white rounded-lg p-8 text-center text-gray-500">
+            No se encontraron usuarios
+          </div>
+        ) : (
+          users.map(user => (
+            <div key={user.id} className="bg-white rounded-lg border shadow-sm p-3 sm:p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <UserCircleIcon className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{user.first_name} {user.last_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getRoleBadge(user.role)}`}>
+                  {user.role?.label || user.role?.name || 'Sin rol'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-3 text-xs">
+                {user.is_active ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    <CheckCircleIcon className="w-3 h-3" />Activo
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                    <XCircleIcon className="w-3 h-3" />Inactivo
+                  </span>
+                )}
+                {user.email_verified_at ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    <CheckCircleIcon className="w-3 h-3" />Email
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                    <ExclamationTriangleIcon className="w-3 h-3" />Email
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-1">
+                <button
+                  onClick={() => handleViewUser(user)}
+                  className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Ver
+                </button>
+                <button
+                  onClick={() => openRoleModal(user)}
+                  className="px-2 py-1 text-xs bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100"
+                >
+                  Rol
+                </button>
+                <button
+                  onClick={() => openPasswordModal(user)}
+                  className="px-2 py-1 text-xs bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100"
+                >
+                  Contraseña
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(user)}
+                  className={`px-2 py-1 text-xs rounded ${
+                    user.is_active 
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                      : 'bg-green-50 text-green-600 hover:bg-green-100'
+                  }`}
+                >
+                  {user.is_active ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-lg border shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -612,8 +705,8 @@ function UsersTab({ showNotification, onDataChange }) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
-          <div className="text-sm text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white px-3 sm:px-4 py-3 border rounded-lg">
+          <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
             Mostrando {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}
           </div>
           <div className="flex items-center gap-2">
@@ -622,17 +715,17 @@ function UsersTab({ showNotification, onDataChange }) {
               disabled={pagination.page === 1}
               className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
             >
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="px-4 py-2 text-sm">
-              Página {pagination.page} de {totalPages}
+            <span className="px-3 sm:px-4 py-2 text-xs sm:text-sm">
+              {pagination.page} / {totalPages}
             </span>
             <button
               onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
               disabled={pagination.page >= totalPages}
               className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
             >
-              <ChevronRightIcon className="w-5 h-5" />
+              <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -642,9 +735,9 @@ function UsersTab({ showNotification, onDataChange }) {
       {showDetailModal && selectedUser && (
         <Modal title="Detalle de Usuario" onClose={() => setShowDetailModal(false)} size="lg">
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-                <UserCircleIcon className="w-10 h-10 text-indigo-600" />
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+                <UserCircleIcon className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">{selectedUser.first_name} {selectedUser.last_name}</h3>
@@ -1047,19 +1140,20 @@ function RolesTab({ showNotification, onDataChange }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Catálogo de Roles</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900">Catálogo de Roles</h3>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
         >
-          <PlusIcon className="w-5 h-5" />
-          Nuevo Rol
+          <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Nuevo Rol</span>
+          <span className="sm:hidden">Nuevo</span>
         </button>
       </div>
 
       {/* Roles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {loading ? (
           <div className="col-span-full text-center py-8 text-gray-500">
             <ArrowPathIcon className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -1073,29 +1167,29 @@ function RolesTab({ showNotification, onDataChange }) {
           roles.map(role => (
             <div
               key={role.id}
-              className={`bg-white rounded-lg border p-4 ${isCoreRole(role.code) ? 'border-indigo-200' : ''}`}
+              className={`bg-white rounded-lg border p-3 sm:p-4 ${isCoreRole(role.code) ? 'border-indigo-200' : ''}`}
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isCoreRole(role.code) ? 'bg-indigo-100' : 'bg-gray-100'}`}>
-                    <TagIcon className={`w-6 h-6 ${isCoreRole(role.code) ? 'text-indigo-600' : 'text-gray-600'}`} />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${isCoreRole(role.code) ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+                    <TagIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${isCoreRole(role.code) ? 'text-indigo-600' : 'text-gray-600'}`} />
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{role.label || role.name}</h4>
-                    <p className="text-sm text-gray-500">Código: {role.code}</p>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{role.label || role.name}</h4>
+                    <p className="text-xs sm:text-sm text-gray-500">Código: {role.code}</p>
                   </div>
                 </div>
                 {isCoreRole(role.code) && (
-                  <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Sistema</span>
+                  <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs flex-shrink-0 ml-2">Sistema</span>
                 )}
               </div>
               
               {role.description && (
-                <p className="mt-3 text-sm text-gray-600">{role.description}</p>
+                <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 line-clamp-2">{role.description}</p>
               )}
 
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="mt-3 sm:mt-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                   <UsersIcon className="w-4 h-4" />
                   <span>{role.user_count || 0} usuarios</span>
                 </div>
@@ -1105,14 +1199,14 @@ function RolesTab({ showNotification, onDataChange }) {
                     className="p-1 text-gray-400 hover:text-purple-600"
                     title="Gestionar Permisos"
                   >
-                    <KeyIcon className="w-5 h-5" />
+                    <KeyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   <button
                     onClick={() => openEditModal(role)}
                     className="p-1 text-gray-400 hover:text-indigo-600"
                     title="Editar"
                   >
-                    <PencilSquareIcon className="w-5 h-5" />
+                    <PencilSquareIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   {!isCoreRole(role.code) && (
                     <button
@@ -1120,7 +1214,7 @@ function RolesTab({ showNotification, onDataChange }) {
                       className="p-1 text-gray-400 hover:text-red-600"
                       title="Eliminar"
                     >
-                      <TrashIcon className="w-5 h-5" />
+                      <TrashIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                 </div>
@@ -1373,15 +1467,85 @@ function AdministratorsTab({ showNotification, onDataChange }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Administradores del Sistema</h3>
-          <p className="text-sm text-gray-500">Gestiona los permisos de los administradores</p>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Administradores del Sistema</h3>
+          <p className="text-xs sm:text-sm text-gray-500">Gestiona los permisos de los administradores</p>
         </div>
       </div>
 
-      {/* Administrators List */}
-      <div className="bg-white rounded-lg border overflow-hidden">
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-lg p-8 text-center text-gray-500">
+            <ArrowPathIcon className="w-6 h-6 animate-spin mx-auto mb-2" />
+            Cargando...
+          </div>
+        ) : administrators.length === 0 ? (
+          <div className="bg-white rounded-lg p-8 text-center text-gray-500">
+            No hay administradores registrados
+          </div>
+        ) : (
+          administrators.map(admin => (
+            <div key={admin.id} className="bg-white rounded-lg border p-3 sm:p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <ShieldCheckIcon className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">
+                      {admin.user?.first_name} {admin.user?.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{admin.user?.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleSuperAdmin(admin)}
+                  className="flex-shrink-0 ml-2"
+                >
+                  {admin.is_super_admin ? (
+                    <StarIconSolid className="w-5 h-5 text-yellow-500" />
+                  ) : (
+                    <StarIcon className="w-5 h-5 text-gray-300 hover:text-yellow-500" />
+                  )}
+                </button>
+              </div>
+              
+              <div className="mb-3">
+                {admin.is_super_admin ? (
+                  <span className="text-xs text-gray-500 italic">Todos los permisos</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {(admin.permissions || []).slice(0, 2).map(p => (
+                      <span key={p} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{p}</span>
+                    ))}
+                    {(admin.permissions?.length || 0) > 2 && (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                        +{admin.permissions.length - 2} más
+                      </span>
+                    )}
+                    {(!admin.permissions || admin.permissions.length === 0) && (
+                      <span className="text-xs text-gray-400">Sin permisos específicos</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <button
+                onClick={() => openPermissionsModal(admin)}
+                disabled={admin.is_super_admin}
+                className="w-full px-3 py-1.5 text-xs bg-purple-50 text-purple-600 rounded hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Gestionar Permisos
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-lg border overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -1618,32 +1782,33 @@ function AuditTab({ showNotification }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">Registro de Auditoría</h3>
-          <p className="text-sm text-gray-500">Historial de actividades del sistema</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Registro de Auditoría</h3>
+          <p className="text-xs sm:text-sm text-gray-500">Historial de actividades del sistema</p>
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border ${
+          className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border text-sm ${
             showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'hover:bg-gray-50'
           }`}
         >
-          <FunnelIcon className="w-5 h-5" />
-          Filtros
+          <FunnelIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Filtros</span>
         </button>
       </div>
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white p-4 rounded-lg border space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Acción</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Acción</label>
               <select
                 value={filters.action}
                 onChange={(e) => setFilters(f => ({ ...f, action: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                style={{ fontSize: '16px' }}
               >
                 <option value="">Todas</option>
                 {filterOptions.actions.map(action => (
@@ -1652,11 +1817,12 @@ function AuditTab({ showNotification }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tabla</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tabla</label>
               <select
                 value={filters.table_name}
                 onChange={(e) => setFilters(f => ({ ...f, table_name: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                style={{ fontSize: '16px' }}
               >
                 <option value="">Todas</option>
                 {filterOptions.tables.map(table => (
@@ -1665,27 +1831,29 @@ function AuditTab({ showNotification }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Desde</label>
               <input
                 type="date"
                 value={filters.start_date}
                 onChange={(e) => setFilters(f => ({ ...f, start_date: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Hasta</label>
               <input
                 type="date"
                 value={filters.end_date}
                 onChange={(e) => setFilters(f => ({ ...f, end_date: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 sm:px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                style={{ fontSize: '16px' }}
               />
             </div>
-            <div className="flex items-end">
+            <div className="col-span-2 sm:col-span-1 flex items-end">
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="w-full sm:w-auto px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
               >
                 Limpiar
               </button>
@@ -1694,8 +1862,62 @@ function AuditTab({ showNotification }) {
         </div>
       )}
 
-      {/* Logs Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="lg:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-lg border p-6 text-center text-gray-500">
+            <ArrowPathIcon className="w-6 h-6 animate-spin mx-auto mb-2" />
+            Cargando...
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="bg-white rounded-lg border p-6 text-center text-gray-500">
+            No se encontraron registros de auditoría
+          </div>
+        ) : (
+          logs.map(log => (
+            <div key={log.id} className="bg-white rounded-lg border p-3 sm:p-4">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 text-sm truncate">
+                    {log.user?.first_name} {log.user?.last_name}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{log.user?.email || 'Sistema'}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getActionBadge(log.action)}`}>
+                  {log.action}
+                </span>
+              </div>
+              <div className="space-y-1 text-xs sm:text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Fecha:</span>
+                  <span className="text-gray-700">{new Date(log.timestamp || log.created_at).toLocaleString()}</span>
+                </div>
+                {log.table_name && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Tabla:</span>
+                    <span className="text-gray-700 font-mono text-xs">{log.table_name}</span>
+                  </div>
+                )}
+                {log.description && (
+                  <div className="pt-1">
+                    <span className="text-gray-500 block">Descripción:</span>
+                    <span className="text-gray-700 text-xs line-clamp-2">{log.description}</span>
+                  </div>
+                )}
+                {log.ip_address && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-gray-500">IP:</span>
+                    <span className="text-gray-700 font-mono text-xs">{log.ip_address}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Logs Table */}
+      <div className="hidden lg:block bg-white rounded-lg border overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -1758,8 +1980,8 @@ function AuditTab({ showNotification }) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
-          <div className="text-sm text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white px-3 sm:px-4 py-3 border rounded-lg">
+          <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
             Mostrando {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}
           </div>
           <div className="flex items-center gap-2">
@@ -1801,13 +2023,13 @@ function Modal({ title, children, onClose, size = 'md' }) {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-        <div className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} p-6`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <XMarkIcon className="w-6 h-6 text-gray-400" />
+        <div className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} p-4 sm:p-6 max-h-[90vh] overflow-y-auto`}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{title}</h3>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded flex-shrink-0">
+              <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
             </button>
           </div>
           {children}
@@ -1819,9 +2041,9 @@ function Modal({ title, children, onClose, size = 'md' }) {
 
 function InfoField({ label, value }) {
   return (
-    <div>
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900">{value}</dd>
+    <div className="min-w-0">
+      <dt className="text-xs sm:text-sm font-medium text-gray-500">{label}</dt>
+      <dd className="mt-1 text-xs sm:text-sm text-gray-900 break-words">{value}</dd>
     </div>
   );
 }
@@ -1855,28 +2077,28 @@ function ConfirmModal({ show, title, message, onConfirm, onCancel, type = 'warni
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onCancel} />
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-          <div className="flex items-start gap-4">
-            <div className={`p-2 rounded-full ${style.iconBg}`}>
-              <Icon className={`w-6 h-6 ${style.iconColor}`} />
+        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-4 sm:p-6">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className={`p-2 rounded-full flex-shrink-0 ${style.iconBg}`}>
+              <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${style.iconColor}`} />
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <p className="mt-2 text-sm text-gray-600">{message}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">{title}</h3>
+              <p className="mt-2 text-xs sm:text-sm text-gray-600">{message}</p>
             </div>
           </div>
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-4 sm:mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium"
+              className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm"
             >
               Cancelar
             </button>
             <button
               onClick={onConfirm}
-              className={`px-4 py-2 text-white rounded-lg font-medium ${style.buttonBg}`}
+              className={`w-full sm:w-auto px-4 py-2 text-white rounded-lg font-medium text-sm ${style.buttonBg}`}
             >
               Confirmar
             </button>
