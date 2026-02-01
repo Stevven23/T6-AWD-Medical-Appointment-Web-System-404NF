@@ -159,6 +159,16 @@ export default function Login() {
                 />
               </div>
 
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary-500 hover:text-primary-600 hover:underline transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {error}

@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/public/Home';
 import Login from './pages/public/login.jsx';
 import Register from './pages/public/Register';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
 import CompleteProfile from './pages/public/CompleteProfile';
 import ConfirmAppointment from './pages/public/ConfirmAppointment';
 import AuthCallback from './pages/public/AuthCallback';
@@ -102,6 +104,8 @@ function AppRoutes() {
       />
       <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Admin Routes */}
       <Route

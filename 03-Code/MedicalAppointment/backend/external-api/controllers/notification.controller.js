@@ -278,6 +278,57 @@ class NotificationController {
 
     return ResponseBuilder.success(res, broadcasts);
   });
+
+  /**
+   * POST /notifications/password-reset-link
+   * Send password reset link email (admin-generated)
+   */
+  sendPasswordResetLink = asyncHandler(async (req, res) => {
+    const { email, userName, resetToken, expiresAt } = req.body;
+    const adminName = `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim() || 'Administrador';
+
+    if (!email || !userName || !resetToken) {
+      throw new ValidationError('email, userName y resetToken son requeridos');
+    }
+
+    await emailService.sendAdminPasswordResetLink({
+      email,
+      userName,
+      resetToken,
+      expiresAt,
+      adminName
+    });
+
+    return ResponseBuilder.success(res, { 
+      sent: true,
+      type: 'password_reset_link'
+    }, 200, 'Email con enlace de restablecimiento enviado');
+  });
+
+  /**
+   * POST /notifications/temporary-password
+   * Send temporary password email (admin-generated)
+   */
+  sendTemporaryPassword = asyncHandler(async (req, res) => {
+    const { email, userName, temporaryPassword } = req.body;
+    const adminName = `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim() || 'Administrador';
+
+    if (!email || !userName || !temporaryPassword) {
+      throw new ValidationError('email, userName y temporaryPassword son requeridos');
+    }
+
+    await emailService.sendTemporaryPassword({
+      email,
+      userName,
+      temporaryPassword,
+      adminName
+    });
+
+    return ResponseBuilder.success(res, { 
+      sent: true,
+      type: 'temporary_password'
+    }, 200, 'Email con contraseña temporal enviado');
+  });
 }
 
 module.exports = new NotificationController();

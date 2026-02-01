@@ -716,6 +716,90 @@ class EmailService {
     });
   }
 
+  /**
+   * Send temporary password email (admin-generated)
+   */
+  async sendTemporaryPassword(data) {
+    const { email, userName, temporaryPassword, adminName } = data;
+
+    const content = `
+      <p style="font-size: 16px; color: #374151;">Hola <strong>${userName}</strong>,</p>
+      <p style="color: #4b5563;">El administrador del sistema te ha asignado una nueva contraseña temporal.</p>
+      
+      <div class="info-card warning">
+        <p style="margin: 0 0 15px 0;"><strong>Tu contraseña temporal es:</strong></p>
+        <div style="background: #ffffff; border: 2px dashed #f59e0b; border-radius: 8px; padding: 15px; text-align: center;">
+          <code style="font-size: 20px; font-weight: bold; color: #1f2937; letter-spacing: 2px;">${temporaryPassword}</code>
+        </div>
+        <p style="margin: 15px 0 0 0; color: #92400e; font-size: 14px;">
+          <strong>⚠️ Por seguridad, cambia esta contraseña después de iniciar sesión.</strong>
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${this.frontendUrl}/login" class="btn btn-primary" style="color: #ffffff;">
+          Iniciar Sesión
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px;">
+        Si no esperabas este cambio, contacta al administrador inmediatamente.
+      </p>
+      
+      ${adminName ? `<p style="color: #9ca3af; font-size: 12px;">Generado por: ${adminName}</p>` : ''}
+    `;
+
+    return this._sendEmail({
+      to: email,
+      subject: `🔑 Tu Nueva Contraseña Temporal`,
+      html: this._getEmailTemplate('warning', '🔑', 'Contraseña Temporal Asignada', content)
+    });
+  }
+
+  /**
+   * Send password reset link email (admin-generated token)
+   */
+  async sendAdminPasswordResetLink(data) {
+    const { email, userName, resetToken, expiresAt, adminName } = data;
+
+    const link = `${this.frontendUrl}/reset-password?token=${resetToken}`;
+    const expirationDate = new Date(expiresAt).toLocaleString('es-ES', {
+      dateStyle: 'long',
+      timeStyle: 'short'
+    });
+
+    const content = `
+      <p style="font-size: 16px; color: #374151;">Hola <strong>${userName}</strong>,</p>
+      <p style="color: #4b5563;">El administrador del sistema ha generado un enlace para que puedas restablecer tu contraseña.</p>
+      
+      <div class="info-card primary">
+        <p style="margin: 0;">Haz clic en el botón de abajo para crear una nueva contraseña.</p>
+        <p style="margin: 10px 0 0 0; color: #1e40af;"><strong>📅 Este enlace expira el: ${expirationDate}</strong></p>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${link}" class="btn btn-primary" style="color: #ffffff;">
+          Restablecer Contraseña
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px;">Si no solicitaste este cambio, puedes ignorar este mensaje o contactar al administrador.</p>
+      
+      <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+        Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+        <a href="${link}" style="color: #2563eb; word-break: break-all;">${link}</a>
+      </p>
+      
+      ${adminName ? `<p style="color: #9ca3af; font-size: 12px;">Generado por: ${adminName}</p>` : ''}
+    `;
+
+    return this._sendEmail({
+      to: email,
+      subject: `🔐 Enlace para Restablecer tu Contraseña`,
+      html: this._getEmailTemplate('primary', '🔐', 'Restablecer Contraseña', content)
+    });
+  }
+
   // =========================================================================
   // CONSULTATION EMAILS
   // =========================================================================

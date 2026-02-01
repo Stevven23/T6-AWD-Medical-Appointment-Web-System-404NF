@@ -106,4 +106,26 @@ router.post(
   notificationController.sendCustomNotification
 );
 
+/**
+ * @route POST /notifications/password-reset-link
+ * @desc Send password reset link email (admin-generated)
+ * @access Admin
+ */
+router.post(
+  '/password-reset-link',
+  requireRole('admin'),
+  notificationController.sendPasswordResetLink
+);
+
+/**
+ * @route POST /notifications/temporary-password
+ * @desc Send temporary password email (admin-generated)
+ * @access Admin
+ */
+router.post(
+  '/temporary-password',
+  requireRole('admin'),
+  notificationController.sendTemporaryPassword
+);
+
 module.exports = router;

@@ -27,6 +27,7 @@ import {
   UserCircleIcon,
   ShieldExclamationIcon,
   FunnelIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
@@ -227,6 +228,9 @@ function UsersTab({ showNotification, onDataChange }) {
   const [passwordData, setPasswordData] = useState({ token: '', expiresAt: '' });
   const [newPassword, setNewPassword] = useState('');
   const [copiedToken, setCopiedToken] = useState(false);
+  const [sendTokenByEmail, setSendTokenByEmail] = useState(false);
+  const [sendPasswordByEmail, setSendPasswordByEmail] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null, type: 'warning' });
@@ -316,6 +320,9 @@ function UsersTab({ showNotification, onDataChange }) {
     setSelectedUser(user);
     setNewPassword('');
     setPasswordData({ token: '', expiresAt: '' });
+    setSendTokenByEmail(false);
+    setSendPasswordByEmail(false);
+    setSendingEmail(false);
     setShowPasswordModal(true);
   };
 
@@ -327,8 +334,31 @@ function UsersTab({ showNotification, onDataChange }) {
         expiresAt: result.expires_at
       });
       showNotification('Token de restablecimiento generado');
+
+      // Send email if checkbox is checked
+      if (sendTokenByEmail) {
+        await sendResetLinkEmail(result.token, result.expires_at);
+      }
     } catch (error) {
       showNotification('Error al generar token', 'error');
+    }
+  };
+
+  const sendResetLinkEmail = async (token, expiresAt) => {
+    try {
+      setSendingEmail(true);
+      const { externalApi } = await import('../../services/httpClient');
+      await externalApi.post('/notifications/password-reset-link', {
+        email: selectedUser.email,
+        userName: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email,
+        resetToken: token,
+        expiresAt: expiresAt
+      });
+      showNotification('Email con enlace de restablecimiento enviado');
+    } catch (error) {
+      showNotification('Token generado pero error al enviar email', 'error');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -340,9 +370,32 @@ function UsersTab({ showNotification, onDataChange }) {
     try {
       await SecurityModel.setUserPassword(selectedUser.id, newPassword);
       showNotification('Contraseña establecida exitosamente');
+
+      // Send email if checkbox is checked
+      if (sendPasswordByEmail) {
+        await sendTemporaryPasswordEmail(newPassword);
+      }
+
       setShowPasswordModal(false);
     } catch (error) {
       showNotification(error.response?.data?.error || 'Error al establecer contraseña', 'error');
+    }
+  };
+
+  const sendTemporaryPasswordEmail = async (password) => {
+    try {
+      setSendingEmail(true);
+      const { externalApi } = await import('../../services/httpClient');
+      await externalApi.post('/notifications/temporary-password', {
+        email: selectedUser.email,
+        userName: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email,
+        temporaryPassword: password
+      });
+      showNotification('Email con contraseña temporal enviado');
+    } catch (error) {
+      showNotification('Contraseña establecida pero error al enviar email', 'error');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -673,23 +726,93 @@ function UsersTab({ showNotification, onDataChange }) {
               <p className="text-sm text-gray-500 mb-3">
                 Genera un token que el usuario puede usar para restablecer su contraseña.
               </p>
+              
+              {/* Email checkbox */}
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendTokenByEmail}
+                  onChange={(e) => setSendTokenByEmail(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                />
+                <EnvelopeIcon className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-700">Enviar enlace por correo electrónico</span>
+              </label>
+
               <button
                 onClick={handleGenerateResetToken}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                disabled={sendingEmail}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Generar Token
+                {sendingEmail ? (
+                  <>
+                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Generar Token'
+                )}
               </button>
               {passwordData.token && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <code className="text-sm font-mono">{passwordData.token}</code>
-                    <button onClick={copyToken} className="p-1 hover:text-indigo-600">
-                      {copiedToken ? <CheckIcon className="w-5 h-5 text-green-500" /> : <ClipboardDocumentIcon className="w-5 h-5" />}
-                    </button>
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                  {/* Reset Link */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1">Enlace de restablecimiento:</p>
+                    <div className="flex items-center gap-2 p-2 bg-white border rounded">
+                      <code className="text-xs font-mono text-blue-600 flex-1 break-all">
+                        {window.location.origin}/reset-password?token={passwordData.token}
+                      </code>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/reset-password?token=${passwordData.token}`);
+                          showNotification('Enlace copiado al portapapeles');
+                        }} 
+                        className="p-1.5 hover:bg-gray-100 rounded flex-shrink-0"
+                        title="Copiar enlace"
+                      >
+                        <ClipboardDocumentIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Expira: {new Date(passwordData.expiresAt).toLocaleString()}
+                  {/* Token only */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1">Token (solo):</p>
+                    <div className="flex items-center gap-2 p-2 bg-white border rounded">
+                      <code className="text-xs font-mono flex-1 break-all">{passwordData.token}</code>
+                      <button onClick={copyToken} className="p-1.5 hover:bg-gray-100 rounded flex-shrink-0" title="Copiar token">
+                        {copiedToken ? <CheckIcon className="w-4 h-4 text-green-500" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Expiration */}
+                  <p className="text-xs text-orange-600 font-medium">
+                    ⏱️ Expira: {new Date(passwordData.expiresAt).toLocaleString()}
                   </p>
+                  {/* Instructions */}
+                  <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+                    <strong>Instrucciones:</strong> Copia el enlace y envíalo al usuario por correo o mensaje. 
+                    Al hacer clic, podrá crear una nueva contraseña.
+                  </div>
+                  {/* Send email button (if not sent automatically) */}
+                  {!sendTokenByEmail && (
+                    <button
+                      onClick={() => sendResetLinkEmail(passwordData.token, passwordData.expiresAt)}
+                      disabled={sendingEmail}
+                      className="w-full mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {sendingEmail ? (
+                        <>
+                          <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <EnvelopeIcon className="w-4 h-4" />
+                          Enviar por correo ahora
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -703,6 +826,19 @@ function UsersTab({ showNotification, onDataChange }) {
               <p className="text-sm text-gray-500 mb-3">
                 Establece una nueva contraseña para el usuario. Use con precaución.
               </p>
+
+              {/* Email checkbox */}
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendPasswordByEmail}
+                  onChange={(e) => setSendPasswordByEmail(e.target.checked)}
+                  className="w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+                />
+                <EnvelopeIcon className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-700">Enviar contraseña por correo electrónico</span>
+              </label>
+
               <div className="flex gap-2">
                 <input
                   type="password"
@@ -713,9 +849,17 @@ function UsersTab({ showNotification, onDataChange }) {
                 />
                 <button
                   onClick={handleSetPassword}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  disabled={sendingEmail}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Establecer
+                  {sendingEmail ? (
+                    <>
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    'Establecer'
+                  )}
                 </button>
               </div>
             </div>
