@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { AppointmentModel, PrescriptionModel, NotificationModel } from '../../models';
+import { AppointmentModel, PrescriptionModel, NotificationModel, ScheduleModel, DoctorRatingModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import { 
   BellIcon, 
@@ -14,7 +14,9 @@ import {
   CheckIcon,
   TrashIcon,
   ExclamationTriangleIcon,
-  MegaphoneIcon
+  MegaphoneIcon,
+  CalendarDaysIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
 
@@ -79,6 +81,24 @@ const NOTIFICATION_TYPES = {
     bgColor: 'bg-purple-100',
     iconColor: 'text-purple-600',
     label: 'Cita Hoy'
+  },
+  schedule_approved: {
+    icon: CheckCircleIcon,
+    bgColor: 'bg-green-100',
+    iconColor: 'text-green-600',
+    label: 'Horario Aprobado'
+  },
+  schedule_rejected: {
+    icon: XCircleIcon,
+    bgColor: 'bg-red-100',
+    iconColor: 'text-red-600',
+    label: 'Horario Rechazado'
+  },
+  schedule_pending: {
+    icon: ClockIcon,
+    bgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    label: 'Solicitud Pendiente'
   },
   announcement: {
     icon: MegaphoneIcon,
@@ -233,11 +253,7 @@ export default function DoctorNotifications() {
 
       // Fetch recent ratings for this doctor
       try {
-        const ratingsResponse = await AppointmentModel.getDoctorRatings?.({
-          doctor_id: user?.doctorId || user?.id,
-          limit: 10
-        });
-
+        const ratingsResponse = await DoctorRatingModel.getByDoctor(user?.doctorId || user?.id, { limit: 15 });
         const ratings = ratingsResponse?.data || ratingsResponse || [];
 
         ratings.forEach(rating => {
@@ -247,7 +263,7 @@ export default function DoctorNotifications() {
           if (ratedHoursAgo <= 168) { // Last 7 days
             const patientName = rating.patient?.user?.first_name
               ? `${rating.patient.user.first_name} ${rating.patient.user.last_name}`
-              : 'Paciente';
+              : rating.patient_name || 'Paciente';
             
             generatedNotifications.push({
               id: `rating-${rating.id}`,
@@ -262,6 +278,61 @@ export default function DoctorNotifications() {
         });
       } catch (ratingError) {
         console.log('[DoctorNotifications] Could not fetch ratings:', ratingError.message);
+      }
+
+      // Fetch schedule exception requests status
+      try {
+        const exceptionsResponse = await ScheduleModel.getMyExceptionRequests();
+        const exceptions = Array.isArray(exceptionsResponse) ? exceptionsResponse : exceptionsResponse?.data || [];
+
+        exceptions.forEach(exception => {
+          const exceptionDate = new Date(exception.reviewed_at || exception.created_at);
+          const exceptionHoursAgo = (now - exceptionDate) / (1000 * 60 * 60);
+          
+          // Show approved/rejected in last 7 days, pending always
+          if (exception.status === 'approved' && exceptionHoursAgo <= 168) {
+            const exceptionTypeLabel = exception.exception_type === 'vacation' ? 'vacaciones' : 
+                                       exception.exception_type === 'day_off' ? 'día libre' : 
+                                       exception.exception_type === 'partial' ? 'horario parcial' : 'excepción';
+            generatedNotifications.push({
+              id: `schedule-approved-${exception.id}`,
+              type: 'schedule_approved',
+              title: 'Solicitud de horario aprobada',
+              message: `Tu solicitud de ${exceptionTypeLabel} para el ${new Date(exception.exception_date).toLocaleDateString('es-ES')} ha sido aprobada${exception.admin_notes ? `. Nota: ${exception.admin_notes}` : ''}`,
+              date: exception.reviewed_at || exception.updated_at,
+              relatedId: exception.id,
+              relatedType: 'schedule_exception'
+            });
+          } else if (exception.status === 'rejected' && exceptionHoursAgo <= 168) {
+            const exceptionTypeLabel = exception.exception_type === 'vacation' ? 'vacaciones' : 
+                                       exception.exception_type === 'day_off' ? 'día libre' : 
+                                       exception.exception_type === 'partial' ? 'horario parcial' : 'excepción';
+            generatedNotifications.push({
+              id: `schedule-rejected-${exception.id}`,
+              type: 'schedule_rejected',
+              title: 'Solicitud de horario rechazada',
+              message: `Tu solicitud de ${exceptionTypeLabel} para el ${new Date(exception.exception_date).toLocaleDateString('es-ES')} ha sido rechazada. Motivo: ${exception.admin_notes || 'No especificado'}`,
+              date: exception.reviewed_at || exception.updated_at,
+              relatedId: exception.id,
+              relatedType: 'schedule_exception'
+            });
+          } else if (exception.status === 'pending') {
+            const exceptionTypeLabel = exception.exception_type === 'vacation' ? 'vacaciones' : 
+                                       exception.exception_type === 'day_off' ? 'día libre' : 
+                                       exception.exception_type === 'partial' ? 'horario parcial' : 'excepción';
+            generatedNotifications.push({
+              id: `schedule-pending-${exception.id}`,
+              type: 'schedule_pending',
+              title: 'Solicitud pendiente de aprobación',
+              message: `Tu solicitud de ${exceptionTypeLabel} para el ${new Date(exception.exception_date).toLocaleDateString('es-ES')} está pendiente de revisión por administración`,
+              date: exception.created_at,
+              relatedId: exception.id,
+              relatedType: 'schedule_exception'
+            });
+          }
+        });
+      } catch (exceptionError) {
+        console.log('[DoctorNotifications] Could not fetch schedule exceptions:', exceptionError.message);
       }
 
       // Fetch system/admin notifications from database
@@ -389,6 +460,10 @@ export default function DoctorNotifications() {
         return notifications.filter(n => n.type === 'prescription_renewal' || n.type === 'renewal_pending');
       case 'rating':
         return notifications.filter(n => n.type === 'rating');
+      case 'schedule':
+        return notifications.filter(n => n.type === 'schedule_approved' || n.type === 'schedule_rejected' || n.type === 'schedule_pending');
+      case 'system':
+        return notifications.filter(n => n.type === 'announcement' || n.type === 'system');
       default:
         return notifications;
     }
@@ -397,14 +472,27 @@ export default function DoctorNotifications() {
   const filteredNotifications = getFilteredNotifications();
   const unreadCount = notifications.filter(n => !isRead(n.id)).length;
   const renewalCount = notifications.filter(n => n.type === 'prescription_renewal').length;
+  const ratingCount = notifications.filter(n => n.type === 'rating').length;
+  const scheduleCount = notifications.filter(n => n.type === 'schedule_approved' || n.type === 'schedule_rejected' || n.type === 'schedule_pending').length;
+  const systemCount = notifications.filter(n => n.type === 'announcement' || n.type === 'system').length;
+
+  // Store unread count in localStorage for the layout badge
+  useEffect(() => {
+    localStorage.setItem('doctor_unread_notifications_count', unreadCount.toString());
+    // Dispatch custom event to notify layout
+    window.dispatchEvent(new CustomEvent('notificationCountUpdate', { detail: { count: unreadCount } }));
+  }, [unreadCount]);
 
   // Tabs configuration
   const tabs = [
     { id: 'all', label: 'Todas', count: notifications.length },
     { id: 'unread', label: 'Sin leer', count: unreadCount },
-    { id: 'new_appointment', label: 'Citas Nuevas', count: notifications.filter(n => n.type === 'new_appointment' || n.type === 'appointment_today').length },
+    { id: 'new_appointment', label: 'Citas', count: notifications.filter(n => n.type === 'new_appointment' || n.type === 'appointment_today').length },
     { id: 'cancelled_appointment', label: 'Cancelaciones', count: notifications.filter(n => n.type === 'cancelled_appointment').length },
     { id: 'prescription_renewal', label: 'Renovaciones', count: renewalCount },
+    { id: 'rating', label: 'Calificaciones', count: ratingCount },
+    { id: 'schedule', label: 'Horarios', count: scheduleCount },
+    { id: 'system', label: 'Sistema', count: systemCount },
   ];
 
   return (

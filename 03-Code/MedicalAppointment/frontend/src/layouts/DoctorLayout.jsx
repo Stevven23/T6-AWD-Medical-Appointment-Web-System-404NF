@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { NotificationModel, AppointmentModel, PrescriptionModel, ScheduleModel, DoctorRatingModel } from '../models';
 import {
   HomeIcon,
   CalendarIcon,
@@ -15,34 +16,145 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
+// Storage key for tracking read notifications
+const READ_NOTIFICATIONS_KEY = 'doctor_read_notifications';
+
 export default function DoctorLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [notificationCount, setNotificationCount] = useState(0);
 
-  // Simular carga de notificaciones no leídas
-  useEffect(() => {
-    // TODO: Reemplazar con llamada real a la API de notificaciones
-    const checkNotifications = () => {
-      // Por ahora simular un número aleatorio de notificaciones
-      const storedNotifications = localStorage.getItem('doctor_notifications');
-      if (storedNotifications) {
-        try {
-          const notifications = JSON.parse(storedNotifications);
-          const unread = notifications.filter(n => !n.read).length;
-          setNotificationCount(unread);
-        } catch (e) {
-          setNotificationCount(0);
-        }
+  // Function to calculate unread notification count
+  const calculateUnreadCount = useCallback(async () => {
+    try {
+      const readNotifications = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
+      let totalUnread = 0;
+      const now = new Date();
+
+      // Get appointments to count new ones
+      try {
+        const appointmentsResponse = await AppointmentModel.getDoctorAppointments({ 
+          limit: 30,
+          includeCancelled: 'true'
+        });
+        const appointments = appointmentsResponse?.data || appointmentsResponse || [];
+        
+        appointments.forEach(apt => {
+          const createdAt = new Date(apt.created_at);
+          const createdHoursAgo = (now - createdAt) / (1000 * 60 * 60);
+          
+          // New appointments in last 72 hours
+          if ((apt.status_code === 'scheduled' || apt.status_code === 'confirmed') && createdHoursAgo <= 72) {
+            const notifId = `apt-new-${apt.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+          
+          // Cancelled in last 7 days
+          if (apt.status_code === 'cancelled') {
+            const cancelledAt = new Date(apt.updated_at || apt.created_at);
+            const cancelledHoursAgo = (now - cancelledAt) / (1000 * 60 * 60);
+            if (cancelledHoursAgo <= 168) {
+              const notifId = `apt-cancel-${apt.id}`;
+              if (!readNotifications.includes(notifId)) totalUnread++;
+            }
+          }
+        });
+      } catch (e) {
+        console.log('[DoctorLayout] Could not fetch appointments for count');
       }
-    };
+
+      // Get pending renewals
+      try {
+        const renewalsResponse = await PrescriptionModel.getRenewals({
+          status: 'pending',
+          limit: 20
+        });
+        const renewals = renewalsResponse?.data || renewalsResponse || [];
+        renewals.forEach(r => {
+          const notifId = `renewal-pending-${r.id}`;
+          if (!readNotifications.includes(notifId)) totalUnread++;
+        });
+      } catch (e) {
+        console.log('[DoctorLayout] Could not fetch renewals for count');
+      }
+
+      // Get recent ratings
+      try {
+        const ratingsResponse = await DoctorRatingModel.getByDoctor(user?.doctorId || user?.id, { limit: 10 });
+        const ratings = ratingsResponse?.data || ratingsResponse || [];
+        ratings.forEach(r => {
+          const ratedAt = new Date(r.created_at);
+          const ratedHoursAgo = (now - ratedAt) / (1000 * 60 * 60);
+          if (ratedHoursAgo <= 168) {
+            const notifId = `rating-${r.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[DoctorLayout] Could not fetch ratings for count');
+      }
+
+      // Get schedule exceptions
+      try {
+        const exceptionsResponse = await ScheduleModel.getMyExceptionRequests();
+        const exceptions = Array.isArray(exceptionsResponse) ? exceptionsResponse : exceptionsResponse?.data || [];
+        exceptions.forEach(exc => {
+          const excDate = new Date(exc.reviewed_at || exc.created_at);
+          const excHoursAgo = (now - excDate) / (1000 * 60 * 60);
+          
+          if (exc.status === 'pending') {
+            const notifId = `schedule-pending-${exc.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          } else if ((exc.status === 'approved' || exc.status === 'rejected') && excHoursAgo <= 168) {
+            const notifId = `schedule-${exc.status}-${exc.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[DoctorLayout] Could not fetch schedule exceptions for count');
+      }
+
+      // Get system notifications
+      try {
+        const dbNotifications = await NotificationModel.getUserNotifications({ limit: 30 });
+        dbNotifications.forEach(n => {
+          const notifId = `db-${n.id}`;
+          if (!readNotifications.includes(notifId) && !n.is_read) totalUnread++;
+        });
+      } catch (e) {
+        console.log('[DoctorLayout] Could not fetch system notifications for count');
+      }
+
+      setNotificationCount(totalUnread);
+    } catch (error) {
+      console.error('[DoctorLayout] Error calculating notification count:', error);
+      // Fallback to localStorage value
+      const storedCount = localStorage.getItem('doctor_unread_notifications_count');
+      if (storedCount) {
+        setNotificationCount(parseInt(storedCount, 10) || 0);
+      }
+    }
+  }, [user]);
+
+  // Load notification count on mount and when location changes
+  useEffect(() => {
+    calculateUnreadCount();
     
-    checkNotifications();
-    // Revisar periódicamente
-    const interval = setInterval(checkNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [location.pathname]);
+    // Re-check periodically (every 60 seconds)
+    const interval = setInterval(calculateUnreadCount, 60000);
+    
+    // Listen for custom event from notifications page
+    const handleNotificationUpdate = (event) => {
+      setNotificationCount(event.detail?.count || 0);
+    };
+    window.addEventListener('notificationCountUpdate', handleNotificationUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationCountUpdate', handleNotificationUpdate);
+    };
+  }, [location.pathname, calculateUnreadCount]);
 
   const handleLogout = async () => {
     if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {

@@ -179,6 +179,37 @@ class ScheduleModel {
       return { updated: 0 };
     }
   }
+
+  // ==================== Doctor Exception Requests ====================
+
+  /**
+   * Get current doctor's exception requests
+   * @returns {Promise<Object[]>}
+   */
+  static async getMyExceptionRequests() {
+    const response = await crudApi.get('/schedules/exceptions/my-requests');
+    return response.data?.data || response.data || [];
+  }
+
+  /**
+   * Create exception request (vacation, day off, etc.)
+   * @param {Object} data - Exception data
+   * @returns {Promise<Object>}
+   */
+  static async createExceptionRequest(data) {
+    const response = await crudApi.post('/schedules/exceptions/request', data);
+    return response.data;
+  }
+
+  /**
+   * Cancel doctor's own pending exception request
+   * @param {string} id - Exception ID
+   * @returns {Promise<Object>}
+   */
+  static async cancelMyRequest(id) {
+    const response = await crudApi.delete(`/schedules/exceptions/request/${id}`);
+    return response.data;
+  }
 }
 
 export default ScheduleModel;

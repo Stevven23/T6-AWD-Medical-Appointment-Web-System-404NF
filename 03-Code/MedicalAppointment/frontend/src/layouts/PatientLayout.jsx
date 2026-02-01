@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { NotificationModel, AppointmentModel, PrescriptionModel, MedicalRecordModel, BillingModel } from '../models';
 import {
   HomeIcon,
   CalendarIcon,
@@ -13,13 +14,149 @@ import {
   XMarkIcon,
   CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+// Storage key for tracking read notifications
+const READ_NOTIFICATIONS_KEY = 'patient_read_notifications';
 
 export default function PatientLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Function to calculate unread notification count
+  const calculateUnreadCount = useCallback(async () => {
+    try {
+      const readNotifications = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
+      let totalUnread = 0;
+      const now = new Date();
+
+      // Get appointments for notifications
+      try {
+        const appointmentsResponse = await AppointmentModel.getPatientAppointments({ limit: 30 });
+        const appointments = appointmentsResponse?.data || appointmentsResponse || [];
+        
+        appointments.forEach(apt => {
+          // Confirmed appointments
+          if (apt.status_code === 'scheduled' || apt.status_code === 'confirmed') {
+            const notifId = `apt-confirmed-${apt.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+            
+            // Reminder for upcoming
+            const aptDate = new Date(apt.scheduled_start);
+            const hoursUntil = (aptDate - now) / (1000 * 60 * 60);
+            if (hoursUntil > 0 && hoursUntil <= 48) {
+              const reminderNotifId = `apt-reminder-${apt.id}`;
+              if (!readNotifications.includes(reminderNotifId)) totalUnread++;
+            }
+          }
+          
+          // Cancelled appointments
+          if (apt.status_code === 'cancelled') {
+            const notifId = `apt-cancelled-${apt.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[PatientLayout] Could not fetch appointments for count');
+      }
+
+      // Get renewal notifications
+      try {
+        const renewalsResponse = await PrescriptionModel.getRenewals({ limit: 10 });
+        const renewals = renewalsResponse?.data || renewalsResponse || [];
+        renewals.forEach(r => {
+          const reviewDate = new Date(r.reviewed_at || r.updated_at || r.created_at);
+          const hoursAgo = (now - reviewDate) / (1000 * 60 * 60);
+          
+          if (r.status === 'approved' || r.status === 'rejected') {
+            if (hoursAgo <= 168) {
+              const notifId = `renewal-${r.status}-${r.id}`;
+              if (!readNotifications.includes(notifId)) totalUnread++;
+            }
+          } else if (r.status === 'pending') {
+            const notifId = `renewal-pending-${r.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[PatientLayout] Could not fetch renewals for count');
+      }
+
+      // Get lab results
+      try {
+        const labReportsResponse = await MedicalRecordModel.getLabReports();
+        const labReports = labReportsResponse?.data || labReportsResponse || [];
+        labReports.forEach(report => {
+          const reportDate = new Date(report.created_at);
+          const hoursAgo = (now - reportDate) / (1000 * 60 * 60);
+          if (report.status === 'completed' && hoursAgo <= 168) {
+            const notifId = `lab-ready-${report.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[PatientLayout] Could not fetch lab reports for count');
+      }
+
+      // Get billing notifications
+      try {
+        const billingsResponse = await BillingModel.getAll({ limit: 20 });
+        const billings = billingsResponse?.data || billingsResponse || [];
+        billings.forEach(billing => {
+          const billingDate = new Date(billing.created_at);
+          const hoursAgo = (now - billingDate) / (1000 * 60 * 60);
+          if (billing.status === 'pending' && hoursAgo <= 168) {
+            const notifId = `billing-new-${billing.id}`;
+            if (!readNotifications.includes(notifId)) totalUnread++;
+          }
+        });
+      } catch (e) {
+        console.log('[PatientLayout] Could not fetch billings for count');
+      }
+
+      // Get system notifications
+      try {
+        const dbNotifications = await NotificationModel.getUserNotifications({ limit: 20 });
+        dbNotifications.forEach(n => {
+          const notifId = `db-${n.id}`;
+          if (!readNotifications.includes(notifId) && !n.is_read) totalUnread++;
+        });
+      } catch (e) {
+        console.log('[PatientLayout] Could not fetch system notifications for count');
+      }
+
+      setNotificationCount(totalUnread);
+    } catch (error) {
+      console.error('[PatientLayout] Error calculating notification count:', error);
+      // Fallback to localStorage value
+      const storedCount = localStorage.getItem('patient_unread_notifications_count');
+      if (storedCount) {
+        setNotificationCount(parseInt(storedCount, 10) || 0);
+      }
+    }
+  }, []);
+
+  // Load notification count on mount and when location changes
+  useEffect(() => {
+    calculateUnreadCount();
+    
+    // Re-check periodically (every 60 seconds)
+    const interval = setInterval(calculateUnreadCount, 60000);
+    
+    // Listen for custom event from notifications page
+    const handleNotificationUpdate = (event) => {
+      setNotificationCount(event.detail?.count || 0);
+    };
+    window.addEventListener('patientNotificationCountUpdate', handleNotificationUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('patientNotificationCountUpdate', handleNotificationUpdate);
+    };
+  }, [location.pathname, calculateUnreadCount]);
 
   const handleLogout = async () => {
     if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
@@ -109,6 +246,7 @@ export default function PatientLayout({ children }) {
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path || 
                              location.pathname.startsWith(item.path + '/');
+              const isNotifications = item.path === '/patient/notifications';
               return (
                 <Link
                   key={item.path}
@@ -125,7 +263,12 @@ export default function PatientLayout({ children }) {
                     }`}
                     aria-hidden="true"
                   />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {isNotifications && notificationCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white min-w-[20px]">
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -212,6 +355,7 @@ export default function PatientLayout({ children }) {
                 {menuItems.map((item) => {
                   const isActive = location.pathname === item.path ||
                                  location.pathname.startsWith(item.path + '/');
+                  const isNotifications = item.path === '/patient/notifications';
                   return (
                     <Link
                       key={item.path}
@@ -229,7 +373,12 @@ export default function PatientLayout({ children }) {
                         }`}
                         aria-hidden="true"
                       />
-                      {item.label}
+                      <span className="flex-1">{item.label}</span>
+                      {isNotifications && notificationCount > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white min-w-[20px]">
+                          {notificationCount > 99 ? '99+' : notificationCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

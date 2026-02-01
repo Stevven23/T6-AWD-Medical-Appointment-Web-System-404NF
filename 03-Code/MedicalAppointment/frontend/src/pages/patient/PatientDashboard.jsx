@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PatientLayout from '../../layouts/PatientLayout';
-import { AppointmentModel, MedicalRecordModel, PrescriptionModel, PatientModel } from '../../models';
+import { AppointmentModel, MedicalRecordModel, PrescriptionModel, PatientModel, NotificationModel, BillingModel } from '../../models';
 import { useAuth } from '../../context/AuthContext';
 import {
   CalendarIcon,
@@ -13,8 +13,13 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
+  BellIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+
+// Storage key for tracking read notifications
+const READ_NOTIFICATIONS_KEY = 'patient_read_notifications';
 
 export default function PatientDashboard() {
   const { user } = useAuth();
@@ -28,6 +33,7 @@ export default function PatientDashboard() {
   const [nextAppointment, setNextAppointment] = useState(null);
   const [recentHistory, setRecentHistory] = useState([]);
   const [healthSummary, setHealthSummary] = useState(null);
+  const [recentNotifications, setRecentNotifications] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -38,12 +44,15 @@ export default function PatientDashboard() {
       setLoading(true);
       
       // Cargar todos los datos en paralelo para mejor rendimiento
-      const [appointmentsRes, prescriptionsRes, labReportsRes, consultationNotesRes, profileRes] = await Promise.allSettled([
+      const [appointmentsRes, prescriptionsRes, labReportsRes, consultationNotesRes, profileRes, renewalsRes, billingsRes, dbNotificationsRes] = await Promise.allSettled([
         AppointmentModel.getPatientAppointments(),
         PrescriptionModel.getPatientPrescriptions(),
         MedicalRecordModel.getLabReports(),
         MedicalRecordModel.getConsultationNotes(),
-        PatientModel.getProfile()
+        PatientModel.getProfile(),
+        PrescriptionModel.getRenewals({ limit: 10 }),
+        BillingModel.getAll({ limit: 20 }),
+        NotificationModel.getUserNotifications({ limit: 10 })
       ]);
 
       // Procesar citas
@@ -134,6 +143,146 @@ export default function PatientDashboard() {
       if (upcoming.length > 0) {
         setNextAppointment(upcoming[0]);
       }
+
+      // --- Generate recent notifications ---
+      const readNotifications = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
+      const allNotifications = [];
+
+      // Appointment notifications
+      appointments.forEach(apt => {
+        if (apt.status_code === 'scheduled' || apt.status_code === 'confirmed') {
+          const notifId = `apt-confirmed-${apt.id}`;
+          const aptDate = new Date(apt.scheduled_start);
+          const hoursUntil = (aptDate - now) / (1000 * 60 * 60);
+          
+          if (hoursUntil > 0 && hoursUntil <= 24) {
+            allNotifications.push({
+              id: `apt-reminder-${apt.id}`,
+              type: 'appointment_reminder',
+              title: 'Recordatorio de cita',
+              message: `Tu cita con Dr. ${apt.doctor_first_name || ''} ${apt.doctor_last_name || ''} es en ${Math.round(hoursUntil)} horas`,
+              timestamp: now,
+              isRead: readNotifications.includes(`apt-reminder-${apt.id}`),
+              icon: ClockIcon,
+              color: 'yellow'
+            });
+          }
+
+          allNotifications.push({
+            id: notifId,
+            type: 'appointment_confirmed',
+            title: 'Cita confirmada',
+            message: `Cita con Dr. ${apt.doctor_first_name || ''} ${apt.doctor_last_name || ''} - ${apt.specialty_name || 'Especialidad'}`,
+            timestamp: new Date(apt.created_at || apt.scheduled_start),
+            isRead: readNotifications.includes(notifId),
+            icon: CalendarIcon,
+            color: 'blue'
+          });
+        }
+
+        if (apt.status_code === 'cancelled') {
+          const notifId = `apt-cancelled-${apt.id}`;
+          allNotifications.push({
+            id: notifId,
+            type: 'appointment_cancelled',
+            title: 'Cita cancelada',
+            message: `La cita con Dr. ${apt.doctor_first_name || ''} ${apt.doctor_last_name || ''} ha sido cancelada`,
+            timestamp: new Date(apt.updated_at || apt.created_at),
+            isRead: readNotifications.includes(notifId),
+            icon: XCircleIcon,
+            color: 'red'
+          });
+        }
+      });
+
+      // Renewal notifications
+      const renewals = renewalsRes.status === 'fulfilled' ? (renewalsRes.value?.data || renewalsRes.value || []) : [];
+      renewals.forEach(r => {
+        if (r.status === 'approved') {
+          const notifId = `renewal-approved-${r.id}`;
+          allNotifications.push({
+            id: notifId,
+            type: 'renewal_approved',
+            title: 'Renovación aprobada',
+            message: r.prescription_medication ? `Tu solicitud de ${r.prescription_medication} fue aprobada` : 'Tu solicitud de renovación fue aprobada',
+            timestamp: new Date(r.reviewed_at || r.updated_at || r.created_at),
+            isRead: readNotifications.includes(notifId),
+            icon: CheckCircleIcon,
+            color: 'green'
+          });
+        } else if (r.status === 'rejected') {
+          const notifId = `renewal-rejected-${r.id}`;
+          allNotifications.push({
+            id: notifId,
+            type: 'renewal_rejected',
+            title: 'Renovación rechazada',
+            message: r.prescription_medication ? `Tu solicitud de ${r.prescription_medication} fue rechazada` : 'Tu solicitud de renovación fue rechazada',
+            timestamp: new Date(r.reviewed_at || r.updated_at || r.created_at),
+            isRead: readNotifications.includes(notifId),
+            icon: XCircleIcon,
+            color: 'red'
+          });
+        }
+      });
+
+      // Lab results notifications
+      labReports.forEach(report => {
+        if (report.status === 'completed') {
+          const notifId = `lab-ready-${report.id}`;
+          allNotifications.push({
+            id: notifId,
+            type: 'lab_results_ready',
+            title: 'Resultados disponibles',
+            message: `Los resultados de ${report.test_type || report.report_type || 'laboratorio'} están listos`,
+            timestamp: new Date(report.updated_at || report.created_at),
+            isRead: readNotifications.includes(notifId),
+            icon: BeakerIcon,
+            color: 'purple'
+          });
+        }
+      });
+
+      // Billing notifications
+      const billings = billingsRes.status === 'fulfilled' ? (billingsRes.value?.data || billingsRes.value || []) : [];
+      billings.forEach(billing => {
+        if (billing.status === 'pending') {
+          const notifId = `billing-new-${billing.id}`;
+          allNotifications.push({
+            id: notifId,
+            type: 'billing_new',
+            title: 'Nueva factura',
+            message: `Tienes una factura pendiente de $${billing.total_amount?.toFixed(2) || '0.00'}`,
+            timestamp: new Date(billing.created_at),
+            isRead: readNotifications.includes(notifId),
+            icon: CurrencyDollarIcon,
+            color: 'orange'
+          });
+        }
+      });
+
+      // Database notifications
+      const dbNotifications = dbNotificationsRes.status === 'fulfilled' ? (dbNotificationsRes.value || []) : [];
+      dbNotifications.forEach(n => {
+        const notifId = `db-${n.id}`;
+        allNotifications.push({
+          id: notifId,
+          type: n.type || 'system',
+          title: n.title,
+          message: n.message,
+          timestamp: new Date(n.created_at),
+          isRead: readNotifications.includes(notifId) || n.is_read,
+          icon: BellIcon,
+          color: 'gray'
+        });
+      });
+
+      // Sort by timestamp and take recent unread ones
+      const sortedNotifications = allNotifications
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .filter(n => !n.isRead)
+        .slice(0, 5);
+
+      setRecentNotifications(sortedNotifications);
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -327,15 +476,58 @@ export default function PatientDashboard() {
 
             {/* Notifications */}
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Notificaciones</h2>
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="bg-green-100 rounded-full p-4 inline-flex mb-3">
-                    <CheckCircleIcon className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="text-gray-600">No tienes notificaciones pendientes</p>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Notificaciones</h2>
+                <Link to="/patient/notifications" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  Ver todas →
+                </Link>
               </div>
+              {recentNotifications.length > 0 ? (
+                <div className="space-y-3">
+                  {recentNotifications.map((notification) => {
+                    const Icon = notification.icon;
+                    const colorClasses = {
+                      blue: 'bg-blue-100 text-blue-600',
+                      green: 'bg-green-100 text-green-600',
+                      red: 'bg-red-100 text-red-600',
+                      yellow: 'bg-yellow-100 text-yellow-600',
+                      purple: 'bg-purple-100 text-purple-600',
+                      orange: 'bg-orange-100 text-orange-600',
+                      gray: 'bg-gray-100 text-gray-600',
+                    };
+                    const iconColor = colorClasses[notification.color] || colorClasses.gray;
+                    
+                    return (
+                      <div key={notification.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className={`p-2 rounded-full flex-shrink-0 ${iconColor}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
+                          <p className="text-gray-600 text-xs truncate">{notification.message}</p>
+                          <p className="text-gray-400 text-xs mt-1">
+                            {new Date(notification.timestamp).toLocaleDateString('es-EC', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="bg-green-100 rounded-full p-4 inline-flex mb-3">
+                      <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                    </div>
+                    <p className="text-gray-600">No tienes notificaciones pendientes</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

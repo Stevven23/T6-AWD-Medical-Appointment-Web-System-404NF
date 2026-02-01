@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DoctorLayout from '../../layouts/DoctorLayout';
-import { AppointmentModel, DoctorModel } from '../../models';
+import { AppointmentModel, DoctorModel, PrescriptionModel, DoctorRatingModel, ScheduleModel, NotificationModel } from '../../models';
+import { useAuth } from '../../context/AuthContext';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -15,15 +16,24 @@ import {
   BeakerIcon,
   ChartBarIcon,
   ExclamationCircleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  StarIcon,
+  ArrowPathIcon,
+  XCircleIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline';
+
+// Storage key for tracking read notifications
+const READ_NOTIFICATIONS_KEY = 'doctor_read_notifications';
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [pendingActions, setPendingActions] = useState([]);
+  const [recentNotifications, setRecentNotifications] = useState([]);
   const [stats, setStats] = useState({
     todayCount: 0,
     weekCount: 0,
@@ -35,6 +45,7 @@ export default function DoctorDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchRecentNotifications();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -132,6 +143,213 @@ export default function DoctorDashboard() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Fetch recent notifications for the dashboard
+   */
+  const fetchRecentNotifications = async () => {
+    try {
+      const readNotifications = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
+      const notifications = [];
+      const now = new Date();
+
+      // Get recent appointments for notifications
+      try {
+        const appointmentsResponse = await AppointmentModel.getDoctorAppointments({ 
+          limit: 20,
+          includeCancelled: 'true'
+        });
+        const appointments = appointmentsResponse?.data || appointmentsResponse || [];
+        
+        appointments.forEach(apt => {
+          const createdAt = new Date(apt.created_at);
+          const createdHoursAgo = (now - createdAt) / (1000 * 60 * 60);
+          const patientName = apt.patient_name || apt.patient?.user?.first_name 
+            ? `${apt.patient?.user?.first_name || ''} ${apt.patient?.user?.last_name || ''}`.trim() 
+            : 'Paciente';
+
+          // New appointments in last 48 hours
+          if ((apt.status_code === 'scheduled' || apt.status_code === 'confirmed') && createdHoursAgo <= 48) {
+            const notifId = `apt-new-${apt.id}`;
+            notifications.push({
+              id: notifId,
+              type: 'new_appointment',
+              title: 'Nueva cita agendada',
+              message: `${patientName} ha agendado una cita`,
+              date: apt.created_at,
+              isRead: readNotifications.includes(notifId)
+            });
+          }
+
+          // Cancelled appointments in last 48 hours
+          if (apt.status_code === 'cancelled') {
+            const cancelledAt = new Date(apt.updated_at || apt.created_at);
+            const cancelledHoursAgo = (now - cancelledAt) / (1000 * 60 * 60);
+            if (cancelledHoursAgo <= 48) {
+              const notifId = `apt-cancel-${apt.id}`;
+              notifications.push({
+                id: notifId,
+                type: 'cancelled',
+                title: 'Cita cancelada',
+                message: `${patientName} canceló su cita`,
+                date: apt.updated_at || apt.created_at,
+                isRead: readNotifications.includes(notifId)
+              });
+            }
+          }
+        });
+      } catch (e) {
+        console.log('[Dashboard] Could not fetch appointments notifications');
+      }
+
+      // Get pending renewals
+      try {
+        const renewalsResponse = await PrescriptionModel.getRenewals({
+          status: 'pending',
+          limit: 5
+        });
+        const renewals = renewalsResponse?.data || renewalsResponse || [];
+        renewals.forEach(r => {
+          const notifId = `renewal-pending-${r.id}`;
+          const patientName = r.patient?.user?.first_name 
+            ? `${r.patient.user.first_name} ${r.patient.user.last_name}` 
+            : 'Paciente';
+          notifications.push({
+            id: notifId,
+            type: 'renewal',
+            title: 'Solicitud de renovación',
+            message: `${patientName} solicita renovación`,
+            date: r.created_at,
+            isRead: readNotifications.includes(notifId)
+          });
+        });
+      } catch (e) {
+        console.log('[Dashboard] Could not fetch renewals notifications');
+      }
+
+      // Get recent ratings
+      try {
+        const ratingsResponse = await DoctorRatingModel.getByDoctor(user?.doctorId || user?.id, { limit: 5 });
+        const ratings = ratingsResponse?.data || ratingsResponse || [];
+        ratings.forEach(r => {
+          const ratedAt = new Date(r.created_at);
+          const ratedHoursAgo = (now - ratedAt) / (1000 * 60 * 60);
+          if (ratedHoursAgo <= 72) {
+            const notifId = `rating-${r.id}`;
+            notifications.push({
+              id: notifId,
+              type: 'rating',
+              title: 'Nueva calificación',
+              message: `Calificación de ${r.rating} estrellas`,
+              date: r.created_at,
+              isRead: readNotifications.includes(notifId)
+            });
+          }
+        });
+      } catch (e) {
+        console.log('[Dashboard] Could not fetch ratings notifications');
+      }
+
+      // Get schedule exceptions
+      try {
+        const exceptionsResponse = await ScheduleModel.getMyExceptionRequests();
+        const exceptions = Array.isArray(exceptionsResponse) ? exceptionsResponse : exceptionsResponse?.data || [];
+        exceptions.forEach(exc => {
+          const excDate = new Date(exc.reviewed_at || exc.created_at);
+          const excHoursAgo = (now - excDate) / (1000 * 60 * 60);
+          
+          if (exc.status === 'approved' && excHoursAgo <= 72) {
+            const notifId = `schedule-approved-${exc.id}`;
+            notifications.push({
+              id: notifId,
+              type: 'schedule_approved',
+              title: 'Solicitud aprobada',
+              message: 'Tu solicitud de horario fue aprobada',
+              date: exc.reviewed_at || exc.updated_at,
+              isRead: readNotifications.includes(notifId)
+            });
+          } else if (exc.status === 'rejected' && excHoursAgo <= 72) {
+            const notifId = `schedule-rejected-${exc.id}`;
+            notifications.push({
+              id: notifId,
+              type: 'schedule_rejected',
+              title: 'Solicitud rechazada',
+              message: 'Tu solicitud de horario fue rechazada',
+              date: exc.reviewed_at || exc.updated_at,
+              isRead: readNotifications.includes(notifId)
+            });
+          }
+        });
+      } catch (e) {
+        console.log('[Dashboard] Could not fetch schedule exceptions notifications');
+      }
+
+      // Get system notifications
+      try {
+        const dbNotifications = await NotificationModel.getUserNotifications({ limit: 5 });
+        dbNotifications.forEach(n => {
+          const notifId = `db-${n.id}`;
+          notifications.push({
+            id: notifId,
+            type: 'system',
+            title: n.title,
+            message: n.message?.substring(0, 50) + (n.message?.length > 50 ? '...' : ''),
+            date: n.created_at,
+            isRead: readNotifications.includes(notifId) || n.is_read
+          });
+        });
+      } catch (e) {
+        console.log('[Dashboard] Could not fetch system notifications');
+      }
+
+      // Sort by date and get top 5
+      notifications.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setRecentNotifications(notifications.slice(0, 5));
+    } catch (error) {
+      console.error('[Dashboard] Error fetching notifications:', error);
+    }
+  };
+
+  /**
+   * Get time ago string from date
+   */
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffMs = now - past;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  };
+
+  /**
+   * Get notification icon and color based on type
+   */
+  const getNotificationStyle = (type) => {
+    switch (type) {
+      case 'new_appointment':
+        return { icon: CalendarIcon, bg: 'bg-blue-100', color: 'text-blue-600' };
+      case 'cancelled':
+        return { icon: XCircleIcon, bg: 'bg-red-100', color: 'text-red-600' };
+      case 'renewal':
+        return { icon: ArrowPathIcon, bg: 'bg-yellow-100', color: 'text-yellow-600' };
+      case 'rating':
+        return { icon: StarIcon, bg: 'bg-green-100', color: 'text-green-600' };
+      case 'schedule_approved':
+        return { icon: CheckCircleIcon, bg: 'bg-green-100', color: 'text-green-600' };
+      case 'schedule_rejected':
+        return { icon: XCircleIcon, bg: 'bg-red-100', color: 'text-red-600' };
+      case 'system':
+        return { icon: MegaphoneIcon, bg: 'bg-indigo-100', color: 'text-indigo-600' };
+      default:
+        return { icon: BellAlertIcon, bg: 'bg-gray-100', color: 'text-gray-600' };
     }
   };
 
@@ -481,6 +699,54 @@ export default function DoctorDashboard() {
                   <span className="font-bold text-green-600">{stats.completedToday}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Recent Notifications */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <BellAlertIcon className="w-5 h-5 text-blue-500" />
+                  Notificaciones
+                </h4>
+                <Link to="/doctor/notifications" className="text-xs text-blue-600 hover:text-blue-700">
+                  Ver todas
+                </Link>
+              </div>
+              {recentNotifications.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No hay notificaciones recientes</p>
+              ) : (
+                <div className="space-y-2">
+                  {recentNotifications.map((notif) => {
+                    const style = getNotificationStyle(notif.type);
+                    const IconComponent = style.icon;
+                    return (
+                      <Link
+                        key={notif.id}
+                        to="/doctor/notifications"
+                        className={`flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition ${
+                          !notif.isRead ? 'bg-blue-50/50' : ''
+                        }`}
+                      >
+                        <div className={`p-1.5 rounded-lg ${style.bg} flex-shrink-0`}>
+                          <IconComponent className={`w-4 h-4 ${style.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <p className={`text-xs font-medium truncate ${!notif.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
+                              {notif.title}
+                            </p>
+                            {!notif.isRead && (
+                              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0"></span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate">{notif.message}</p>
+                        </div>
+                        <span className="text-xs text-gray-400 flex-shrink-0">{getTimeAgo(notif.date)}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
